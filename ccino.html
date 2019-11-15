@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<!-- <script src="./config/ccino/vue.min.js"></script> -->
+	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+	<title>Ccino dps</title>
+	<style>
+		body{
+			width:100%;
+			height:100%;
+			overflow:hidden;
+		}
+		.noselect {
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			-khtml-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none; 
+		}
+		#resizer{
+			position:absolute;
+			right:-5px;
+			bottom:-5px;
+			width:12px;
+			height:12px;
+			background-color:rgba(128,128,128,0.6);
+			transform:rotate(45deg);
+		}
+		#container{
+			color:white;
+			text-shadow: 0px 0px 3px #DAA520;
+			font-size:13px;
+			line-height:1.6;
+			background-color:rgba(0,0,0,0.3);
+			border-radius:8px;
+			margin-right:8px;
+			padding:3px;
+		}
+		.hover-scale:hover{
+			transform: scale(1.2);
+		}
+		.triangle-up {
+			width: 0;
+			height: 0;
+			margin:0 3px;
+			display:inline-block;
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+			border-bottom: 10px solid #FFFFDD;
+			cursor: pointer;
+		}
+		.triangle-down {
+			margin:0 3px;
+			width: 0;
+			height: 0;
+			display:inline-block;
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+			border-top: 10px solid #FFFFDD;
+			cursor: pointer;
+		}
+		.circle{
+			margin:0 3px;
+			width:10px;
+			height:10px;
+			background-color:#FFFFDD;
+			box-shadow:0 0 3px #DAA520;
+			display:inline-block;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+		.title{
+			font-size:1.2;
+			padding:3px 0px;
+			position:relative;
+		}
+		.title-border{
+			height:1px;
+			background-color:white;
+			box-shadow:0 0 3px #DAA520;
+			margin-bottom:5px;
+		}
+		.at-right{
+			position:absolute;
+			right:3px;
+			top:3px;
+		}
+		.dps-table{
+			width:100%;
+			border-collapse: collapse;
+			border-spacing:0;
+			padding:0;
+		}
+		.dps-table tr{
+			position:relative;
+		}
+		.dps-table tr,.dps-table tr td{
+			border-spacing: 0;
+			padding: 0;
+			vertical-align: middle;
+			line-height: 15px;
+			white-space:nowrap;
+			text-overflow:ellipsis;
+		}
+		.dps-table tr td{
+			padding-left:1px;
+		}
+		.dps-table .job-img{
+			width:20px;
+			height:20px;
+		}
+		.filler{
+			background-color:rgba(255,255,255,0.2);
+			position: absolute;
+			left:0;
+			height:20px;
+			border-radius: 5px;
+			margin-top: -23px;
+			margin-left: 12px;
+			border:1px solid rgba(255,255,255,0.4);
+			z-index:-1;
+		}
+		.text-center{
+			text-align: center;
+		}
+		.bgdps{
+			background-color:rgba(255,128,128,0.3);
+		}
+		.bghealer{
+			background-color:rgba(128,255,128,0.3);
+		}
+		.bgtank{
+			background-color:rgba(128,128,255,0.3);
+		}
+		.combatants-enter,
+		.combatants-leave-to {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+
+		.combatants-enter-active,
+		.combatants-leave-active {
+			transition: all 0.5s ease;
+		}
+				
+		.combatants-move {
+			transition: all 0.5s ease;
+		}
+
+	</style>
+</head>
+<body class="noselect">
+	<div id="resizer"></div>
+	<div id="container" :style="{fontSize:fontSize+'px'}">
+		<div class="title">
+			<span v-if="!encounter.title">
+				暂无数据
+			</span>
+			<template v-else>
+				<span v-if="isActive">*</span>
+				{{encounter.CurrentZoneName}} - {{encounter.duration}}
+				<span class="at-right">
+					<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
+					{{encounter.dps|round}}</span>
+			</template>
+			
+			<span style="margin-left:10px;" class="triangle-up hover-scale" @click="up"></span>
+			<span class="triangle-down hover-scale" @click="down"></span>
+			<span class="circle hover-scale" @click="mini"></span>
+			<span class="hover-scale" style="display:inline-block" @click="changeDataType">
+				{{dataType=='D'?'伤':'奶'}}
+			</span>
+		</div>
+		<template v-if="!miniStyle">
+			<div class="title-border"></div>
+			<table class="dps-table">
+				<tr v-for="c in combatants">
+					<td width="20px">
+						<img class="job-img" 
+						:src="'./icons/'+(c.Job||'Err')+'.png'" 
+						onerror="this.style.opacity='0'"/>
+						<div :class="jobType[c.Job]" class="filler" :style="{width:'calc('+ getPercentWidth(c) + '% - 18px)'}"></div>
+					</td>
+					<td width="30%">{{c.name}}</td>
+					<td width="20%" class="text-center">
+						<template v-if="dataType=='D'">
+							{{c.dps|round}}
+						</template>
+						<template v-else>
+							{{c.enchps|round}}
+						</template>
+					</td>
+					<td>
+						<template v-if="dataType=='D'">直 {{c.DirectHitPct}}</template>
+						<template v-else>过 {{c.OverHealPct}}</template>
+					</td>
+					<td>
+						<template v-if="dataType=='D'">暴 {{c["crithit%"]}}</template>
+						<template v-else>承 {{c["damagetaken-*"]}}</template>
+					</td>
+					<td>死 {{c.deaths}}</td>
+				</tr>
+			</table>
+		</template>
+	</div>
+
+	<script>
+		var jobType={
+		  bgtank:["Gla", "Pld", "Mrd", "War", "Drk"],
+		  bgdps:["Pgl", "Mnk", "Lnc", "Drg", "Arc", "Brd", "Rog", "Nin", "Acn", "Smn", "Thm", "Blm", "Mch", "Sam", "Rdm"],
+		  bghealer:["Cnj", "Whm", "Sch", "Ast"],
+		};
+		for(var i in jobType){
+		  var jts=jobType[i]
+		  for(var j=0;j<jts.length;++j){
+			jobType[jts[j]]=i;
+		  }
+		}
+		var vueapp=new Vue({
+			el:"#container",
+			data:{
+			    jobType:jobType,
+				isActive:false,
+				fontSize:localStorage.getItem("ccino_fontSize")||13,
+				encounter:{},
+				combatants:[],
+				yourData:{},
+				miniStyle:false,
+				dataType:"D", //D:DPS N:奶
+			},
+			methods:{
+				up:function(){
+					++this.fontSize;
+					localStorage.setItem("ccino_fontSize",this.fontSize);
+				},
+				down:function(){
+					--this.fontSize;
+					localStorage.setItem("ccino_fontSize",this.fontSize);
+				},
+				mini:function(){
+					this.miniStyle=!this.miniStyle;
+				},
+				changeDataType:function(){
+					if(this.dataType=='D'){
+						this.dataType='N';
+					}else{
+						this.dataType='D';
+					}
+					if(vueapp.dataType=='D'){
+						this.combatants.sort(function(a,b){return b.dps-a.dps});
+					}else{
+						this.combatants.sort(function(a,b){return b.enchps-a.enchps});
+					}
+				},
+				getPercentWidth:function(c){
+					try{
+						if(this.dataType=='D')
+							return Math.round((c.dps/this.combatants[0].dps)*10000)/100;
+						else
+							return Math.round((c.enchps/this.combatants[0].enchps)*10000)/100;
+					}catch(e){
+						return 0;
+					}
+				}
+			},
+			computed:{
+				myDps:function(){
+					return this.yourData.dps||0;
+				},
+				myOrder:function(){
+					return this.combatants.indexOf(this.yourData)+1;
+				},
+			},
+			filters:{
+				round:function(val){
+					return Math.round(val);
+				}
+			}
+		});
+		document.addEventListener("onOverlayDataUpdate", function (e) {
+			vueapp.encounter = e.detail.Encounter;
+			vueapp.isActive=e.detail.isActive;
+			var combatants=[];
+			for(var i in e.detail.Combatant){
+				var c=e.detail.Combatant[i];
+				if(c.name!="Limit Break"
+				&&!isNaN(+c.dps)){
+					combatants.push(c);
+				}
+			}
+			vueapp.yourData=e.detail.Combatant.YOU||{};
+			if(vueapp.dataType=='D'){
+				combatants.sort(function(a,b){return b.dps-a.dps});
+			}else{
+				combatants.sort(function(a,b){return b.enchps-a.enchps});
+			}
+			Vue.set(vueapp,"combatants",combatants);
+		});
+		setInterval(function(){
+			if(!vueapp.miniStyle){
+				vueapp.miniStyle=true;
+				vueapp.$nextTick(function(){
+					vueapp.miniStyle=false;
+				})
+			}
+		},1000);
+	</script>
+</body>
+</html>
