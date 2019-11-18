@@ -161,6 +161,8 @@
                     <button @click="addRow(series)">新行</button>
                     <button @click="deleteSeries(i)">删除</button> 
                     <button @click="copySeries(i)">复制</button>
+                    <span style="cursor: pointer; user-select: none;" @click="seriesToIndex(i,i-1)">⇧</span>
+                    <span style="cursor: pointer; user-select: none;" @click="seriesToIndex(i,i+1)">⇩</span> 
                 </caption>
                 <tr>
                     <th>列名</th>
@@ -208,6 +210,8 @@
                     </td>
                     <td>
                         <button @click="deleteRow(series,i)">删除</button>
+                        <span style="cursor: pointer; user-select: none;" @click="columnToIndex(series,i,i-1)">⇧</span>
+                        <span style="cursor: pointer; user-select: none;" @click="columnToIndex(series,i,i+1)">⇩</span> 
                     </td>
                 </tr>
             </table>
@@ -222,6 +226,7 @@
                 <button @click="revert">重置</button>
                 <span style="margin:20px;"></span>
                 <button @click="showImportOption">配置信息</button>
+                <button @click="revertDefault">重置默认</button>
             </div>
         </div>
         <div class="option-pad-mask" v-if="showOptionPad"></div>
@@ -238,7 +243,6 @@
 
     <script>
         var option=JSON.parse(localStorage.getItem("CCINO_DPS_OPTION"));
-          //{"fontSize":13,"showColumnHeader":true,"colors":{"tank":"rgba(128,128,255,0.3)","dps":"rgba(255,128,128,0.3)","healer":"rgba(128,255,128,0.3)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
         console.log(option);
         function copy(o){
             return JSON.parse(JSON.stringify(o));
@@ -257,6 +261,34 @@
                 valueDict:[["duration","战斗时间"],["dps","DPS(数值)"],["dps-*","DPS(格式化)"],["Last10DPS","10秒dps"],["Last30DPS","30秒dps"],["Last60DPS","60秒dps"],["damage%","伤比"],["damage%","伤害量"],["maxhit","最大伤害值"],["crithit%","暴击率"],["crithit","暴击次数"],["CritDirectHitCount","直+暴次数"],["CritDirectHitPct","直+暴几率"],["DirectHitCount","直击次数"],["DirectHitPct","直击几率"],["enchps-*","秒疗(格式化)"],["enchps","秒疗(数值)"],["healed","疗量"],["healed%","疗比"],["OverHealPct","过量"],["critheal%","治疗暴击率"],["critheal","治疗暴击次数"],["maxheal","最大治疗量"],["maxheal-*","最大治疗量(格式化)"],["BlockPct","格挡几率"],["healstaken-*","受治疗量"],["damagetaken-*","承伤"],["deaths","死亡次数"]],
             },
             methods:{
+                seriesToIndex:function(oldIndex,newIndex){
+                    if(newIndex>=this.option.series.length){
+                        newIndex=this.option.series.length-1;
+                    }
+                    if(newIndex<0){
+                        newIndex=0;
+                    }
+                    if(oldIndex==newIndex) return;
+                    var series=this.option.series[oldIndex];
+                    Vue.set(this.option.series,oldIndex,this.option.series[newIndex]);
+                    Vue.set(this.option.series,newIndex,series);
+                },
+                columnToIndex:function(series,oldIndex,newIndex){
+                    if(newIndex>=series.columns.length){
+                        newIndex=series.columns.length-1;
+                    }
+                    if(newIndex<0){
+                        newIndex=0;
+                    }
+                    if(oldIndex==newIndex) return;
+                    var column=series.columns[oldIndex];
+                    Vue.set(series.columns,oldIndex,series.columns[newIndex]);
+                    Vue.set(series.columns,newIndex,column);
+                    
+                },
+                revertDefault:function(){
+                    this.option={"fontSize":13,"showColumnHeader":true,"colors":{"tank":"rgba(128,128,255,0.3)","dps":"rgba(255,128,128,0.3)","healer":"rgba(128,255,128,0.3)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
+                },
                 selectAll:function(){
                     var dom=document.getElementById("option_pad_textarea");
                     dom.focus();
