@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<!-- <script src="./config/ccino/vue.min.js"></script> -->
+	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+    <title>Ccino dps setting</title>
+    <style>
+        .item .label{
+            display:inline-block;
+            width:100px;
+            text-align: right;
+        }
+        .item .value{
+            display:inline-block;
+        }
+        table td,table th{
+            text-align: center;
+        }
+        table *{
+            padding:3px;
+        }
+        table{
+            margin:15px 0;
+            border-collapse: collapse;
+        }
+        table tr{
+            border-top:1px solid #ddd;
+        }
+        table tr:first-child,table tr:nth-child(2){
+            border-top:2px solid #ccc;
+        }
+        table tr td,table tr th{
+            border-right:1px solid #ddd;
+        }
+        [v-cloak]{
+            display: none;
+        }
+        table input{
+            width:50px;
+        }
+        .option-pad{
+            position:fixed;
+            background-color:white; 
+            width:80%;
+            height:50%;
+            left:10%;
+            top:10%;
+            border-radius:10px;
+            box-shadow: 0px 0px 10px black;
+            padding:30px 20px;
+            z-index:10;
+        }
+        .option-pad-mask{
+            z-index:9;
+            background-color:rgba(0,0,0,0.3);
+            position:fixed;
+            width:100%;
+            height:100%;
+            top:0;
+            left:0;
+        }
+        .option-pad-close{
+            display:inline-block;
+            width:10px;height:10px;
+            box-shadow: 0px 0px 5px red;
+            border-radius: 5px;
+            position:absolute;
+            top:10px;
+            right:10px;
+            cursor: pointer;
+        }
+        .option-pad-close:hover{
+            transform: scale(1.2);
+        }
+
+    </style>
+</head>
+<body>
+	<div id="container" v-cloak>
+        <div class="item">
+            <div class="label">
+                字体大小
+            </div>
+            <div class="value">
+                <input type="number"  max="100" min="9" v-model="option.fontSize"/>
+                px
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label">
+                颜色显示
+            </div>
+            <div class="value">
+                <button @click="revertModify('colors')">撤销修改</button>
+            </div>
+        </div>
+        <div class="item">
+            <div class="label">
+                透明度
+            </div>
+            <div class="value">
+                <input type="number" min="0" max="100" v-model="colorOpacity"/>
+                %
+            </div>
+        </div>
+        <div class="item">
+            <div class="label">
+                坦克
+            </div>
+            <div class="value">
+                <input type="color" :value="rgba2color(option.colors.tank).color" @change="option.colors.tank=color2rgba($event.target.value)"/>
+            </div>
+        </div>
+        <div class="item">
+            <div class="label">
+                奶妈
+            </div>
+            <div class="value">
+                <input type="color" :value="rgba2color(option.colors.healer).color" @change="option.colors.healer=color2rgba($event.target.value)"/>
+            </div>
+        </div>
+        <div class="item">
+            <div class="label">
+                DPS
+            </div>
+            <div class="value">
+                <input type="color" :value="rgba2color(option.colors.dps).color" @change="option.colors.dps=color2rgba($event.target.value)"/>
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label">
+                显示标题
+            </div>
+            <div class="value">
+                <input type="checkbox" v-model="option.showColumnHeader"/>
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label">系列
+                
+            </div>
+            <div class="value">
+                <button @click="addSeries">增加系列</button>
+                <button @click="revertModify('series')">撤销修改</button>
+                <div class="value" style="margin-left:20px;">
+                    <input id="delete-confirm" type="checkbox" v-model="deleteConfirm"/>
+                    <label for="delete-confirm">删除确认</label>
+                </div>
+            </div>
+        </div>
+        <div class="item" style="padding-left:100px;">
+            <table v-for="series,i in option.series" style="width:100%;">
+                <caption style="color:gray;text-align: left;">
+                    系列名: <input v-model="series.name"/> 
+                    <button @click="addRow(series)">新行</button>
+                    <button @click="deleteSeries(i)">删除</button> 
+                    <button @click="copySeries(i)">复制</button>
+                </caption>
+                <tr>
+                    <th>列名</th>
+                    <th>属性</th>
+                    <th style="width:50px;">取整</th>
+                    <th>宽度</th>
+                    <th>前缀</th>
+                    <th>后缀</th>
+                    <th>对齐</th>
+                    <th style="cursor:pointer; color:#0062f5;" @click="series.orderAsc=!series.orderAsc">
+                        排序<template v-if="series.orderAsc">▲</template><template v-else>▼</template>
+                    </th>
+                    <th>操作</th>
+                </tr>
+                <tr v-for="column,i in series.columns">
+                    <td width="50px">
+                        <input type="text" v-model="column.name"/>
+                    </td>
+                    <td width="150px">
+                        <select v-model="column.value">
+                            <option v-for="vd in valueDict" :value="vd[0]">{{vd[1]}}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="checkbox" v-model="column.round">
+                    </td>
+                    <td>
+                        <input type="number" max="100" min="0" v-model="column.size"/>
+                    </td>
+                    <td >
+                        <input type="text" v-model="column.prefix"/>
+                    </td>
+                    <td >
+                        <input type="text" v-model="column.suffix"/>
+                    </td>
+                    <td>
+                        <select v-model="column.align">
+                            <option value="left">居左</option>
+                            <option value="center">居中</option>
+                            <option value="right">居右</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="radio" :name="series.name" :value="i" v-model="series.orderBy"/>
+                    </td>
+                    <td>
+                        <button @click="deleteRow(series,i)">删除</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="item">
+                <hr>
+            <div class="label">
+            </div>
+            <div class="value">
+                <button @click="save">保存</button>
+                <button @click="revert">重置</button>
+                <span style="margin:20px;"></span>
+                <button @click="showImportOption">配置信息</button>
+            </div>
+        </div>
+        <div class="option-pad-mask" v-if="showOptionPad"></div>
+        <div class="option-pad" v-if="showOptionPad" v-cloak>
+            <span class="option-pad-close" @click="showOptionPad=false"></span>
+            <textarea id="option_pad_textarea" v-model="optionStr" style="width:100%;height:calc(100% - 30px);resize:none"></textarea>
+            
+            <button @click="importOption">导入配置</button>
+            <span style="margin:20px;"></span>
+            <button @click="selectAll">全选</button>
+            <button @click="showOptionPad=false">关闭</button>
+        </div>
+	</div>
+
+    <script>
+        var option=JSON.parse(localStorage.getItem("CCINO_DPS_OPTION"));
+          //{"fontSize":13,"showColumnHeader":true,"colors":{"tank":"rgba(128,128,255,0.3)","dps":"rgba(255,128,128,0.3)","healer":"rgba(128,255,128,0.3)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
+        console.log(option);
+        function copy(o){
+            return JSON.parse(JSON.stringify(o));
+        }
+        function save(){
+            localStorage.setItem("CCINO_DPS_OPTION",JSON.stringify(option))
+        }
+        var vueapp=new Vue({
+            el:"#container",
+            data:{
+                option:copy(option),
+                colorOpacity:20,
+                deleteConfirm:true,
+                showOptionPad:false,
+                optionStr:"",
+                valueDict:[["duration","战斗时间"],["dps","DPS(数值)"],["dps-*","DPS(格式化)"],["Last10DPS","10秒dps"],["Last30DPS","30秒dps"],["Last60DPS","60秒dps"],["damage%","伤比"],["damage%","伤害量"],["maxhit","最大伤害值"],["crithit%","暴击率"],["crithit","暴击次数"],["CritDirectHitCount","直+暴次数"],["CritDirectHitPct","直+暴几率"],["DirectHitCount","直击次数"],["DirectHitPct","直击几率"],["enchps-*","秒疗(格式化)"],["enchps","秒疗(数值)"],["healed","疗量"],["healed%","疗比"],["OverHealPct","过量"],["critheal%","治疗暴击率"],["critheal","治疗暴击次数"],["maxheal","最大治疗量"],["maxheal-*","最大治疗量(格式化)"],["BlockPct","格挡几率"],["healstaken-*","受治疗量"],["damagetaken-*","承伤"],["deaths","死亡次数"]],
+            },
+            methods:{
+                selectAll:function(){
+                    var dom=document.getElementById("option_pad_textarea");
+                    dom.focus();
+                    dom.select();
+                    dom.scrollTo(0,0);
+                },
+                showImportOption:function(){
+                    this.optionStr=JSON.stringify(this.option,null,2);
+                    this.showOptionPad=true;
+                    this.$nextTick(function(){
+                        vueapp.selectAll();
+                    })
+                },
+                importOption:function(){
+                    if(confirm("是否确认进行导入?")){
+                        try{
+                            var newOption=JSON.parse(this.optionStr);
+                            this.option=newOption;
+                            alert("导入成功");
+                        }catch(e){
+                            console.error(e);
+                            alert("该数据存在异常无法导入:\n"+((typeof e == "string")?e:""));
+                        }
+                    }
+                },
+                save:function(){
+                    option=copy(this.option);
+                    save();
+                    if(window.parent){
+                        window.parent.close(window);
+                    }
+                },
+                revert:function(){
+                    this.option=copy(option);
+                },
+                revertModify:function(prop){
+                    this.option[prop]=copy(option[prop]);
+                },
+                deleteRow:function(series,i){
+                    if(!this.deleteConfirm||confirm("是否确认删除该行?")){
+                        series.columns.splice(i,1);
+                    }
+                },
+                addRow:function(series){
+                    series.columns.push({
+                    });
+                },
+                addSeries:function(){
+                    this.option.series.push({
+                        name:"系列"+(this.option.series.length+1),
+                        columns:[],
+                        orderBy:0,
+                    });
+                },
+                copySeries:function(i){
+                    this.option.series.splice(i,0,copy(this.option.series[i]));
+                },
+                deleteSeries:function(i){
+                    if(!this.deleteConfirm||confirm("是否确认删除该系列?")){
+                        this.option.series.splice(i,1);
+                    }
+                },
+                color2rgba:function(color){
+                    var red,green,blue;
+                    red=parseInt(color.substr(1,2),16);
+                    green=parseInt(color.substr(3,2),16);
+                    blue=parseInt(color.substr(5,2),16);
+                    return "rgba("+red+","+green+","+blue+","+vueapp.colorOpacity/100+")";
+                },
+                rgba2color:function(rgba){
+                    var reg=/\s*rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*((.|\d)+)\s*\)/.exec(rgba);
+                    if(reg){
+                        return {
+                            color:"#"+padLeft((+reg[1]).toString(16),'0',2)
+                                     +padLeft((+reg[2]).toString(16),'0',2)
+                                     +padLeft((+reg[3]).toString(16),'0',2),
+                            alpha:(+reg[4])*100
+                        }
+                    }
+                },
+            }
+        });
+        vueapp.colorOpacity=vueapp.rgba2color(option.colors.tank).alpha;
+        function padLeft(s,c,length){
+            while(s.length<length){
+                s=c+s
+            }
+            return s;
+        }
+    </script>
+</body>
+</html>
