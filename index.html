@@ -25,10 +25,14 @@
 			</template>
 
 			<span class="circle hover-scale" @click="mini"></span>
-			<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
-			 :class="{'active-series':currentSeries==series}">
-				{{series.name}}
-			</span>
+			<span style="cursor: pointer;" @click="openSetting">┅</span>
+			
+			<template v-if="option.series.length>1">
+				<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
+				:class="{'active-series':currentSeries==series}">
+					{{series.name}}
+				</span>
+			</template>
 		</div>
 		<div v-show="!miniStyle">
 			<div class="title-border"></div>
