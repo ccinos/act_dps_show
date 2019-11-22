@@ -75,7 +75,7 @@ body{
     border-radius: 5px;
     border:1px solid rgba(255,255,255,0.4);
     z-index:-1;
-    transition: width 1s;
+    /* transition: width 1s; */
 }
 .text-center{
     text-align: center;

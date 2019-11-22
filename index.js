@@ -209,23 +209,36 @@ function getOption(option){
           }
       });
   }
-  document.addEventListener("onOverlayDataUpdate", function (e) {
-      vueapp.encounter = e.detail.Encounter;
-      vueapp.isActive=e.detail.isActive;
-      var combatants=[];
-      for(var i in e.detail.Combatant){
-          var c=e.detail.Combatant[i];
-          if(c.name!="Limit Break"
-              &&!isNaN(+c.dps)){
-              if(c.Job&&c.Job.length>=1){
-                  c.Job=c.Job.substr(0,1).toUpperCase()+c.Job.substr(1);
-              }
-              combatants.push(c);
-          }
+  function update(e){
+    vueapp.encounter = e.detail.Encounter;
+    vueapp.isActive=e.detail.isActive;
+    var combatants=[];
+    for(var i in e.detail.Combatant){
+        var c=e.detail.Combatant[i];
+        if(c.name!="Limit Break"
+            &&!isNaN(+c.dps)){
+            if(c.Job&&c.Job.length>=1){
+                c.Job=c.Job.substr(0,1).toUpperCase()+c.Job.substr(1);
+            }
+            combatants.push(c);
+        }
+    }
+    vueapp.yourData=e.detail.Combatant.YOU||{};
+    SortCombatants(combatants);
+    Vue.set(vueapp,"combatants",combatants);
+  }
+
+
+  var currentEvent;
+  var timer=setInterval(function(){
+      if(currentEvent){
+        update(currentEvent);
+        currentEvent=undefined;
       }
-      vueapp.yourData=e.detail.Combatant.YOU||{};
-      SortCombatants(combatants);
-      Vue.set(vueapp,"combatants",combatants);
+  },1000);
+  
+  document.addEventListener("onOverlayDataUpdate", function (e) {
+      currentEvent=e;
   });
   // setInterval(function(){
   // 	if(!vueapp.miniStyle){
