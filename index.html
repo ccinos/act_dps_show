@@ -54,8 +54,8 @@
 						<div class="filler" :style="{width: getPercentWidth(c) + '%', 
 							backgroundColor:option.colors[jobType[c.Job]]}"></div>
 					</li>
-					<li style="flex: 0 0 30%;">
-							{{c.name}}
+					<li style="flex: 0 0 30%;" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
+						{{c.name}}
 					</li>
 					<li v-for="column in currentSeries.columns" 
 						:style="{textAlign:column.textAlign||'left',

@@ -138,3 +138,8 @@ ul li{
     height: 1.8em;
     line-height: 1.8em;
 }
+
+.hidden-text{
+    color:transparent;
+    text-shadow: 0px 0px 10px #DAA520;
+}
