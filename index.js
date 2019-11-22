@@ -71,7 +71,33 @@ if(savedOption){
     savedOption=JSON.parse(savedOption);
 }
 function getOption(option){
-    return Object.assign(JSON.parse(JSON.stringify(defaultOption)),option);
+    option=Object.assign(JSON.parse(JSON.stringify(defaultOption)),option);
+    //列设置宽度
+    try{
+        for(var series of option.series){
+            if(!series) continue;
+            var remain_size=0
+            series.columns.forEach(function(c){
+                if(c.size){
+                    var size=+c.size;
+                    if(!isNaN(size))
+                        remain_size+= size;
+                }
+            });
+            remain_size=65-remain_size;
+            if(remain_size<0) remain_size=10;
+            var nosizeSeries=series.columns.filter(function(c){return !c.size});
+            if(nosizeSeries.length>0){
+                var size=Math.round(remain_size/nosizeSeries.length*100)/100;
+                nosizeSeries.forEach(function(c){
+                    c.size=""+size;
+                })
+            }
+        }
+    }catch(e){
+        console.error(e);
+    }
+    return option;
 }
   for(var i in jobType){
     var jts=jobType[i]

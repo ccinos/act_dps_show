@@ -38,12 +38,12 @@ body{
 
 .circle{
     margin:0 3px;
-    width:10px;
-    height:10px;
+    width:0.8em;
+    height:0.8em;
     background-color:#FFFFDD;
     box-shadow:0 0 3px #DAA520;
     display:inline-block;
-    border-radius: 5px;
+    border-radius: 0.4em;
     cursor: pointer;
 }
 .title{
@@ -62,40 +62,20 @@ body{
     right:3px;
     top:3px;
 }
-.dps-table{
-    width:100%;
-    border-collapse: collapse;
-    border-spacing:0;
-    padding:0;
-}
-.dps-table tr{
-    position:relative;
-}
-.dps-table tr,.dps-table tr td{
-    border-spacing: 0;
-    padding: 0;
-    vertical-align: middle;
-    line-height: 15px;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-}
-.dps-table tr td{
-    padding-left:1px;
-}
-.dps-table .job-img{
-    width:20px;
-    height:20px;
+.job-img{
+    width:1.5em;
+    height:1.5em;
 }
 .filler{
     background-color:rgba(255,255,255,0.2);
     position: absolute;
     left:0;
-    height:20px;
+    top:0;
+    height:1.6em;
     border-radius: 5px;
-    margin-top: -23px;
-    margin-left: 12px;
     border:1px solid rgba(255,255,255,0.4);
     z-index:-1;
+    transition: width 1s;
 }
 .text-center{
     text-align: center;
@@ -131,6 +111,30 @@ body{
     color:#80ffff;
 }
 
-.ccino-form-control{
-    
+.flip-list-move {
+    transition: transform 1s;
+}
+.flip-list-enter,
+.flip-list-leave-to {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.flip-list-enter-active,
+.flip-list-leave-active {
+    transition: all 0.5s ease;
+}
+
+
+ul{
+    list-style:none; 
+    padding:0px; 
+    margin:0px;
+    display:flex;
+    position: relative;
+}
+ul li{
+    flex:auto;
+    height: 1.8em;
+    line-height: 1.8em;
 }

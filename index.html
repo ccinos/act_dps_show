@@ -7,7 +7,7 @@
 	<!-- <script src="./config/ccino/vue.min.js"></script> -->
 	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
 	<title>Ccino dps</title>
-	<link href="./index.css" rel="stylesheet" />
+	<link href="./index.css?v=1" rel="stylesheet" />
 </head>
 <body class="noselect">
 	<div id="resizer"></div>
@@ -35,34 +35,38 @@
 		</div>
 		<div v-show="!miniStyle">
 			<div class="title-border"></div>
-			<table class="dps-table">
-				<tr v-if="option.showColumnHeader">
-					<th width="20px"></th>
-					<th width="30%"></th>
-					<th v-for="column in currentSeries.columns" :width="column.size?column.size+'%':'auto'"
-						:style="{textAlign:column.textAlign||'left'}">
-						<template>{{column.name}}</template>
-					</th>
-				</tr>
-				<tr v-for="c in combatants">
-					<td width="20px">
+
+			<ul v-if="option.showColumnHeader" style="font-weight: bold;">
+				<li style="flex: 0 0 1.5em;"></li>
+				<li style="flex: 0 0 30%;"></li>
+				<li v-for="column in currentSeries.columns" 
+					:style="{textAlign:column.textAlign||'left',
+						flex:column.size?('0 0 '+column.size+'%'):('auto')}">
+					<template>{{column.name}}</template>
+				</li>
+			</ul>
+			<div is="transition-group" name="flip-list">
+				<ul v-for="c in combatants" :key="c.name">
+					<li style="flex: 0 0 1.5em;" >
 						<img class="job-img" 
 						:src="'./icons/'+(c.Job||'Err')+'.png'" 
 						onerror="this.style.opacity='0'"/>
-						<div class="filler" :style="{width:'calc('+ getPercentWidth(c) + '% - 18px)', 
+						<div class="filler" :style="{width: getPercentWidth(c) + '%', 
 							backgroundColor:option.colors[jobType[c.Job]]}"></div>
-						
-					</td>
-					<td width="30%">{{c.name}}</td>
-					<td v-for="column in currentSeries.columns" :width="column.size?column.size+'%':'auto'"
-						:style="{textAlign:column.textAlign||'left'}">
+					</li>
+					<li style="flex: 0 0 30%;">
+							{{c.name}}
+					</li>
+					<li v-for="column in currentSeries.columns" 
+						:style="{textAlign:column.textAlign||'left',
+								flex:column.size?('0 0 '+column.size+'%'):('auto')}">
 						<template>{{column.prefix}}</template>
 						<template v-if="column.round">{{c[column.value] | round}}</template>
 						<template v-else>{{c[column.value]}}</template>
 						<template>{{column.suffix}}</template>
-					</td>
-				</tr>
-			</table>
+					</li>
+				</ul>
+			</div>
 		</div>
 	</div>
 
