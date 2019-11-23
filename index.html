@@ -45,7 +45,7 @@
 					<template>{{column.name}}</template>
 				</li>
 			</ul>
-			<div is="transition-group" name="flip-list">
+			<div is="transition-group" :name="option.animationOff?'':'flip-list'">
 				<ul v-for="c in combatants" :key="c.name">
 					<li style="flex: 0 0 1.5em;" >
 						<img class="job-img" 
