@@ -57,10 +57,21 @@ body{
     box-shadow:0 0 3px #DAA520;
     margin-bottom:5px;
 }
+
 .at-right{
     position:absolute;
     right:3px;
     top:3px;
+}
+@media screen and (max-width: 320px) {
+    .at-right {
+        position: relative;
+        right:0;
+        top:0;
+        display: block;
+        width:100%;
+        text-align: right;
+    }
 }
 .job-img{
     width:1.5em;

@@ -18,10 +18,9 @@
 			</span>
 			<template v-else>
 				<span v-if="isActive">*</span>
-				{{encounter.CurrentZoneName}} - {{encounter.duration}}
-				<span class="at-right">
-					<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
-					{{encounter.dps|round}}</span>
+				<span>
+					{{encounter.CurrentZoneName}} - {{encounter.duration}}
+				</span>
 			</template>
 
 			<span class="circle hover-scale" @click="mini"></span>
@@ -31,6 +30,12 @@
 				:class="{'active-series':currentSeries==series}">
 					{{series.name}}
 				</span>
+			</template>
+
+			<template v-if="encounter.title">
+				<span class="at-right">
+					<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
+					{{encounter.dps|round}}</span>
 			</template>
 		</div>
 		<div v-show="!miniStyle">
