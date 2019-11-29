@@ -1,12 +1,23 @@
 var jobType={
-    tank:["Gla", "Pld", "Mrd", "War", "Drk","Gnb"],
-    dps:["Pgl", "Mnk", "Lnc", "Drg", "Arc", "Brd", "Rog", "Nin", "Acn", "Smn", "Thm", "Blm", "Mch", "Sam", "Rdm", "Dnc"],
-    healer:["Cnj", "Whm", "Sch", "Ast"],
+    tank:["War","Mrd", "Drk","Pld","Gla","Gnb"],
+    dps:["Pgl", "Mnk", "Lnc", "Drg","Rog", "Nin","Sam","Arc", "Brd","Mch",  "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm"],
+    healer:["Whm","Cnj","Ast","Sch"],
   };
+var jobSort=[].concat(jobType.tank,jobType.healer,jobType.dps);
+for(var i in jobType){
+    var jts=jobType[i]
+    for(var j=0;j<jts.length;++j){
+      jobType[jts[j]]=i;
+    }
+  }
+for(var i in jobSort){
+    jobSort[jobSort[i]]=+i;
+}
 var defaultOption={
     fontSize:13, 
     showColumnHeader:false,
     nameColumnWidth:30,
+    orderByJob:false,
     colors:{
         tank:"rgba(128,128,255,0.3)",
         dps:"rgba(255,128,128,0.3)",
@@ -118,12 +129,7 @@ function getOption(option){
     }
     return option;
 }
-  for(var i in jobType){
-    var jts=jobType[i]
-    for(var j=0;j<jts.length;++j){
-      jobType[jts[j]]=i;
-    }
-  }
+
   var vueapp=new Vue({
       el:"#container",
       data:{
@@ -131,12 +137,14 @@ function getOption(option){
           isActive:false,
           encounter:{},
           combatants:[],
+          combatant_max:{},
           yourData:{},
           miniStyle:false,
           currentSeriesIndex:0,
           settingWindow:null,
           option:getOption(savedOption),
           bodyWidth:300,
+          titleWidth:200,
       },
       methods:{
           openSetting:function(){
@@ -144,8 +152,8 @@ function getOption(option){
                 vueapp.settingWindow.focus();
                 return;
             } 
-            var lastMiniStyle=this.miniStyle;
-            this.miniStyle=true;
+            // var lastMiniStyle=this.miniStyle;
+            // this.miniStyle=true;
             vueapp.settingWindow=openWindow("./setting.html","_blank",860,800);
             localStorage.setItem("CCINO_DPS_OPTION",JSON.stringify(vueapp.option));
             var loop=setInterval(function(){
@@ -154,7 +162,8 @@ function getOption(option){
                     vueapp.settingWindow=null;
                     
                     vueapp.option=getOption(JSON.parse(localStorage.getItem("CCINO_DPS_OPTION"))); 
-                    vueapp.miniStyle=lastMiniStyle;
+                    SortCombatants(vueapp.combatants);
+                    // vueapp.miniStyle=lastMiniStyle;
                 }
             },300);
           },
@@ -171,7 +180,8 @@ function getOption(option){
               try{
                   var sortColumn=this.orderBy.sortColumn;
                   var orderAsc=this.orderBy.orderAsc;
-                  return Math.round((parseFloat(c[sortColumn])/parseFloat(this.combatants[orderAsc?(this.combatants.length-1):0][sortColumn]))*10000)/100; 
+                  return Math.round((parseFloat(c[sortColumn])/parseFloat(this.combatant_max[sortColumn]))*10000)/100; 
+                  
               }catch(e){
                   return 0;
               }
@@ -189,9 +199,13 @@ function getOption(option){
           },
           orderBy:function(){
               try{
-                  return {
-                      sortColumn:this.currentSeries.columns[this.currentSeries.orderBy].value,
-                      orderAsc:this.currentSeries.orderAsc
+                  if(this.currentSeries.orderBy!=null){
+                    return {
+                        sortColumn:this.currentSeries.columns[this.currentSeries.orderBy].value,
+                        orderAsc:this.currentSeries.orderAsc
+                    }
+                  }else{
+                      return null;
                   }
               }catch(e){
                   return {
@@ -201,8 +215,7 @@ function getOption(option){
               }
           },
           titleNextLine:function(){
-            var width=18+document.getElementById("title-left").offsetWidth+document.getElementById("title-right").offsetWidth;
-            return this.bodyWidth<width;
+            return this.bodyWidth<this.titleWidth;
           }
       },
       filters:{
@@ -215,23 +228,36 @@ function getOption(option){
     return window.open(url,name,'height='+iHeight+',,innerHeight='+iHeight+',width='+iWidth+',innerWidth='+iWidth+',toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no');
  }
   function SortCombatants(combatants){
-      var sortColumn=vueapp.orderBy.sortColumn;
-      var orderAsc=vueapp.orderBy.orderAsc;
-      combatants.sort(function(a,b){
-          var val_a=parseFloat(a[sortColumn]);
-          var val_b=parseFloat(b[sortColumn]);
-          if(isNaN(val_a)||isNaN(val_b)){
-              val_a=a[sortColumn];
-              val_b=b[sortColumn];
-          }
-          if(orderAsc^(val_a<val_b)){
-              return 1;
-          }else if(orderAsc^(val_a>val_b)){
-              return -1;
-          }else{
-              return 0;
-          }
-      });
+      if(vueapp.orderBy){
+        var sortColumn=vueapp.orderBy.sortColumn;
+        var orderAsc=vueapp.orderBy.orderAsc;
+        combatants.sort(function(a,b){
+            var val_a=parseFloat(a[sortColumn]);
+            var val_b=parseFloat(b[sortColumn]);
+            if(isNaN(val_a)||isNaN(val_b)){
+                val_a=a[sortColumn];
+                val_b=b[sortColumn];
+            }
+            if(orderAsc^(val_a<val_b)){
+                return 1;
+            }else if(orderAsc^(val_a>val_b)){
+                return -1;
+            }else{
+                return 0;
+            }
+        });
+        vueapp.combatant_max=combatants[orderAsc?combatants.length-1:0];
+      }
+      if(vueapp.option.orderByJob){
+        combatants.sort(function(a,b){
+            var val_a=a.name=='YOU'?-1:jobSort[a.Job];
+            var val_b=b.name=='YOU'?-1:jobSort[b.Job];
+            if(val_a==val_b){
+                return a.name<b.name?-1:1;
+            }
+            return val_a-val_b;
+        })
+      }
   }
   function update(e){
     vueapp.encounter = e.detail.Encounter;
@@ -257,13 +283,14 @@ function getOption(option){
   var timer=setInterval(function(){
       if(currentEvent){
         update(currentEvent);
-        updateBodySize();
+        vueapp.$nextTick(updateBodySize);
         currentEvent=undefined;
       }
   },1000);
   
 function updateBodySize(){
     vueapp.bodyWidth=document.body.offsetWidth;
+    vueapp.titleWidth=18+document.getElementById("title-left").offsetWidth+document.getElementById("title-right").offsetWidth;
 }
   document.addEventListener("onOverlayDataUpdate", function (e) {
       currentEvent=e;

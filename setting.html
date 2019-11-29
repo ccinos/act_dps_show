@@ -89,17 +89,23 @@
                 <input type="number"  max="100" min="9" v-model="option.fontSize"/>
                 px
             </div>
-            <div class="label" style="width:150px;margin-left:50px;">
+            <div class="label" style="width:150px;margin-left:30px;">
                 隐藏其他玩家
             </div>
             <div class="value">
                 <input type="checkbox"  v-model="option.hiddenOthers"/>
             </div>
-            <div class="label" style="margin-left:50px;">
+            <div class="label" style="margin-left:30px;">
                 关闭动画
             </div>
             <div class="value">
                 <input type="checkbox"  v-model="option.animationOff"/>
+            </div>
+            <div class="label" style="margin-left:30px;" title="理论上与队伍列表顺序相同（职业相同时有时会产生顺序错误）">
+                按职业排序
+            </div>
+            <div class="value">
+                <input type="checkbox"  v-model="option.orderByJob"/>
             </div>
         </div>
         <hr>
@@ -189,7 +195,7 @@
                         </select>
                     </td>
                     <td>
-                        <input type="radio" :name="series.name" :value="i" v-model="series.orderBy"/>
+                        <input type="radio" :name="series.name" :value="i" v-model="series.orderBy" @contextmenu="radioRightClick(series,i)"/>
                     </td>
                     <td>
                         <button @click="deleteRow(series,i)">删除</button>
@@ -227,7 +233,6 @@
 
     <script>
         var option=JSON.parse(localStorage.getItem("CCINO_DPS_OPTION"));
-        console.log(option);
         function copy(o){
             return JSON.parse(JSON.stringify(o));
         }
@@ -246,6 +251,13 @@
                 valueDict:[["duration","战斗时间"],["dps","DPS(数值)"],["dps-*","DPS(格式化)"],["Last10DPS","10秒dps"],["Last30DPS","30秒dps"],["Last60DPS","60秒dps"],["damage%","伤比"],["damage%","伤害量"],["maxhit","最大伤害值"],["crithit%","暴击率"],["crithit","暴击次数"],["CritDirectHitCount","直+暴次数"],["CritDirectHitPct","直+暴几率"],["DirectHitCount","直击次数"],["DirectHitPct","直击几率"],["enchps-*","秒疗(格式化)"],["enchps","秒疗(数值)"],["healed","疗量"],["healed%","疗比"],["OverHealPct","过量"],["critheal%","治疗暴击率"],["critheal","治疗暴击次数"],["maxheal","最大治疗量"],["maxheal-*","最大治疗量(格式化)"],["BlockPct","格挡几率"],["healstaken-*","受治疗量"],["damagetaken-*","承伤"],["deaths","死亡次数"]],
             },
             methods:{
+                radioRightClick:function(series,i){
+                    if(series.orderBy==i){
+                        series.orderBy=null;
+                    }else{
+                        series.orderBy=i;
+                    }
+                },
                 seriesToIndex:function(oldIndex,newIndex){
                     if(newIndex>=this.option.series.length){
                         newIndex=this.option.series.length-1;
