@@ -4,12 +4,14 @@ var jobType={
     healer:["Cnj", "Whm", "Sch", "Ast"],
   };
 var defaultOption={
-    fontSize:13,
+    fontSize:13, 
     showColumnHeader:false,
+    nameColumnWidth:30,
     colors:{
         tank:"rgba(128,128,255,0.3)",
         dps:"rgba(255,128,128,0.3)",
-        healer:"rgba(128,255,128,0.3)"
+        healer:"rgba(128,255,128,0.3)",
+        background:"rgba(0,0,0,0.2)"
     },
     series:[{
             name:"伤害",
@@ -70,8 +72,25 @@ var savedOption=localStorage.getItem("CCINO_DPS_OPTION");
 if(savedOption){
     savedOption=JSON.parse(savedOption);
 }
+function mergeObj(dest,src){
+    var type=Object.prototype.toString.call(src);
+    if(type=="[object Object]"||type=="[object Array]"){
+        for(var i in src){
+            if(src.hasOwnProperty(i)){
+                type=Object.prototype.toString.call(src[i]);
+                if(type=="[object Object]"){
+                    dest[i]=mergeObj(dest[i]||{},src[i]);
+                }else{
+                    dest[i]=src[i];
+                }
+            }
+        }
+        
+    }
+    return dest;
+}
 function getOption(option){
-    option=Object.assign(JSON.parse(JSON.stringify(defaultOption)),option);
+    option=mergeObj(JSON.parse(JSON.stringify(defaultOption)),option);
     //列设置宽度
     try{
         for(var series of option.series){
@@ -84,7 +103,7 @@ function getOption(option){
                         remain_size+= size;
                 }
             });
-            remain_size=65-remain_size;
+            remain_size=(95-option.nameColumnWidth||30)-remain_size;
             if(remain_size<0) remain_size=10;
             var nosizeSeries=series.columns.filter(function(c){return !c.size});
             if(nosizeSeries.length>0){
@@ -238,15 +257,18 @@ function getOption(option){
   var timer=setInterval(function(){
       if(currentEvent){
         update(currentEvent);
+        updateBodySize();
         currentEvent=undefined;
       }
   },1000);
   
-
+function updateBodySize(){
+    vueapp.bodyWidth=document.body.offsetWidth;
+}
   document.addEventListener("onOverlayDataUpdate", function (e) {
       currentEvent=e;
   });
   window.onresize=function(){
-    vueapp.bodyWidth=document.body.offsetWidth;
+    updateBodySize();
   }
-  vueapp.bodyWidth=document.body.offsetWidth;
+  

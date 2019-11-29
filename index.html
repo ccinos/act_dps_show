@@ -12,7 +12,7 @@
 </head>
 <body class="noselect">
 	<div id="resizer"></div>
-	<div id="container" :style="{fontSize:option.fontSize+'px'}">
+	<div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}">
 		<div class="title" @dblclick="openSetting">
 			<span id="title-left">
 				<span v-if="!encounter.title">
@@ -49,7 +49,7 @@
 
 			<ul v-if="option.showColumnHeader" style="font-weight: bold;">
 				<li style="flex: 0 0 1.5em;"></li>
-				<li style="flex: 0 0 30%;"></li>
+				<li :style="{flex: '0 0 '+option.nameColumnWidth+'%'}"></li>
 				<li v-for="column in currentSeries.columns" 
 					:style="{textAlign:column.textAlign||'left',
 						flex:column.size?('0 0 '+column.size+'%'):('auto')}">
@@ -65,7 +65,7 @@
 						<div class="filler" :style="{width: getPercentWidth(c) + '%', 
 							backgroundColor:option.colors[jobType[c.Job]]}"></div>
 					</li>
-					<li style="flex: 0 0 30%;" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
+					<li :style="{flex: '0 0 '+option.nameColumnWidth+'%'}" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
 						{{c.name}}
 					</li>
 					<li v-for="column in currentSeries.columns" 

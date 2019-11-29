@@ -103,54 +103,24 @@
             </div>
         </div>
         <hr>
-        <!-- <div class="item">
-            <div class="label">
-                颜色显示
-            </div>
-            <div class="value">
-                <button @click="revertModify('colors')">撤销修改</button>
-            </div>
-        </div>
-        <div class="item">
-            <div class="label">
-                透明度
-            </div>
-            <div class="value">
-                <input type="number" min="0" max="100" v-model="colorOpacity"/>
-                %
-            </div>
-        </div>
-        <div class="item">
-            <div class="label">
-                坦克
-            </div>
-            <div class="value">
-                <input type="color" :value="rgba2color(option.colors.tank).color" @change="option.colors.tank=color2rgba($event.target.value)"/>
-            </div>
-        </div>
-        <div class="item">
-            <div class="label">
-                奶妈
-            </div>
-            <div class="value">
-                <input type="color" :value="rgba2color(option.colors.healer).color" @change="option.colors.healer=color2rgba($event.target.value)"/>
-            </div>
-        </div>
-        <div class="item">
-            <div class="label">
-                DPS
-            </div>
-            <div class="value">
-                <input type="color" :value="rgba2color(option.colors.dps).color" @change="option.colors.dps=color2rgba($event.target.value)"/>
-            </div>
-        </div>
-        <hr> -->
         <div class="item">
             <div class="label">
                 显示标题
             </div>
             <div class="value">
                 <input type="checkbox" v-model="option.showColumnHeader"/>
+            </div>
+            <div class="label" style="width:150px;margin-left:50px;">
+                背景透明度
+            </div>
+            <div class="value">
+                <input type="range" max="100" min="0" v-model="backgroundAlpha"/>{{backgroundAlpha}}
+            </div>
+            <div class="label" style="margin-left:50px;">
+                名字列宽度
+            </div>
+            <div class="value">
+                <input type="range" max="95" min="0" v-model="option.nameColumnWidth"/>{{option.nameColumnWidth}}
             </div>
         </div>
         <hr>
@@ -269,6 +239,7 @@
             data:{
                 option:copy(option),
                 colorOpacity:20,
+                backgroundAlpha:30,
                 deleteConfirm:true,
                 showOptionPad:false,
                 optionStr:"",
@@ -330,6 +301,10 @@
                 },
                 save:function(){
                     option=copy(this.option);
+                    if(!option.colors){
+                        option.colors={};
+                    }
+                    option.colors.background="rgba(0,0,0,"+vueapp.backgroundAlpha/100+")"
                     save();
                     if(window.parent){
                         window.parent.close(window);
@@ -386,6 +361,12 @@
             }
         });
         vueapp.colorOpacity=vueapp.rgba2color(option.colors.tank).alpha;
+        if(option.colors.background){
+            var color=vueapp.rgba2color(option.colors.background);
+            vueapp.backgroundAlpha=color.alpha;
+        }else{
+            vueapp.backgroundAlpha=30;
+        }
         function padLeft(s,c,length){
             while(s.length<length){
                 s=c+s

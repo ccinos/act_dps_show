@@ -146,6 +146,9 @@ ul li{
     flex:auto;
     height: 1.8em;
     line-height: 1.8em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .hidden-text{
