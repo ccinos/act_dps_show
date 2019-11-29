@@ -14,30 +14,35 @@
 	<div id="resizer"></div>
 	<div id="container" :style="{fontSize:option.fontSize+'px'}">
 		<div class="title" @dblclick="openSetting">
-			<span v-if="!encounter.title">
-				暂无数据
+			<span id="title-left">
+				<span v-if="!encounter.title">
+					暂无数据
+				</span>
+				<template v-else>
+					<span v-if="isActive">*</span>
+					<span>
+						{{encounter.CurrentZoneName}} - {{encounter.duration}}
+					</span>
+				</template>
+
+				<span class="circle hover-scale" @click="mini"></span>
+				
+				<template v-if="option.series.length>1">
+					<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
+					:class="{'active-series':currentSeries==series}">
+						{{series.name}}
+					</span>
+				</template>
 			</span>
-			<template v-else>
-				<span v-if="isActive">*</span>
-				<span>
-					{{encounter.CurrentZoneName}} - {{encounter.duration}}
-				</span>
-			</template>
 
-			<span class="circle hover-scale" @click="mini"></span>
-			
-			<template v-if="option.series.length>1">
-				<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
-				:class="{'active-series':currentSeries==series}">
-					{{series.name}}
-				</span>
-			</template>
-
-			<template v-if="encounter.title">
-				<span class="at-right">
-					<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
-					{{encounter.dps|round}}</span>
-			</template>
+			<span v-show="encounter.title">
+				<span :class="{'at-right-nextline':titleNextLine,
+							'at-right':!titleNextLine}" >
+					<span id="title-right">
+						<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
+						{{encounter.dps|round}}</span>
+					</span>
+			</span>
 		</div>
 		<div v-show="!miniStyle">
 			<div class="title-border"></div>

@@ -116,7 +116,8 @@ function getOption(option){
           miniStyle:false,
           currentSeriesIndex:0,
           settingWindow:null,
-          option:getOption(savedOption)
+          option:getOption(savedOption),
+          bodyWidth:300,
       },
       methods:{
           openSetting:function(){
@@ -179,6 +180,10 @@ function getOption(option){
                       orderAsc:false
                   }
               }
+          },
+          titleNextLine:function(){
+            var width=18+document.getElementById("title-left").offsetWidth+document.getElementById("title-right").offsetWidth;
+            return this.bodyWidth<width;
           }
       },
       filters:{
@@ -237,14 +242,11 @@ function getOption(option){
       }
   },1000);
   
+
   document.addEventListener("onOverlayDataUpdate", function (e) {
       currentEvent=e;
   });
-  // setInterval(function(){
-  // 	if(!vueapp.miniStyle){
-  // 		vueapp.miniStyle=true;
-  // 		vueapp.$nextTick(function(){
-  // 			vueapp.miniStyle=false;
-  // 		})
-  // 	}
-  // },1000);
+  window.onresize=function(){
+    vueapp.bodyWidth=document.body.offsetWidth;
+  }
+  vueapp.bodyWidth=document.body.offsetWidth;
