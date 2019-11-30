@@ -47,7 +47,7 @@
 		<div v-show="!miniStyle">
 			<div class="title-border"></div>
 
-			<ul v-if="option.showColumnHeader" style="font-weight: bold;">
+			<ul v-if="showColumnHeader" style="font-weight: bold;">
 				<li style="flex: 0 0 1.5em;"></li>
 				<li :style="{flex: '0 0 '+option.nameColumnWidth+'%'}"></li>
 				<li v-for="column in currentSeries.columns" 

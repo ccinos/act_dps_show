@@ -197,6 +197,12 @@ function getOption(option){
           currentSeries:function(){
               return this.option.series[this.currentSeriesIndex];
           },
+          showColumnHeader:function(){
+              if(this.currentSeries.showColumnHeader!=null){
+                  return this.currentSeries.showColumnHeader;
+              }
+              return this.option.showColumnHeader;
+          },
           orderBy:function(){
               try{
                   if(this.currentSeries.orderBy!=null){
@@ -220,7 +226,10 @@ function getOption(option){
       },
       filters:{
           round:function(val){
-              return Math.round(val);
+              try{
+                return Math.round(val);
+              }catch(e){ }
+              return val;
           }
       }
   });
