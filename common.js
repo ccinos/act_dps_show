@@ -9,3 +9,9 @@ var _hmt = _hmt || [];
   var s = document.getElementsByTagName("script")[0]; 
   s.parentNode.insertBefore(hm, s);
 })();
+function padLeft(s,c,length){
+  while(s.length<length){
+      s=c+s
+  }
+  return s;
+}

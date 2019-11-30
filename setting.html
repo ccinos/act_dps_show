@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="./common.js"></script>
+    <script src="./common.js?v=3"></script>
 	<!-- <script src="./config/ccino/vue.min.js"></script> -->
 	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
     <title>Ccino dps setting</title>
@@ -127,6 +127,21 @@
             </div>
             <div class="value">
                 <input type="range" max="95" min="0" v-model="option.nameColumnWidth"/>{{option.nameColumnWidth}}
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label" title="按职业颜色进行显示，取消后是职能颜色">
+                职业颜色
+            </div>
+            <div class="value">
+                <input type="checkbox" v-model="option.useJobColor"/>
+            </div>
+            <div class="label" style="width:150px;margin-left:50px;">
+                数据条透明度
+            </div>
+            <div class="value">
+                <input type="range" max="100" min="0" v-model="option.backgroundAlpha"/>{{option.backgroundAlpha}}
             </div>
         </div>
         <hr>
@@ -303,7 +318,7 @@
                     
                 },
                 revertDefault:function(){
-                    this.option={"fontSize":13,"showColumnHeader":false,"nameColumnWidth":30,"orderByJob":false,"colors":{"tank":"rgba(128,128,255,0.3)","dps":"rgba(255,128,128,0.3)","healer":"rgba(128,255,128,0.3)","background":"rgba(0,0,0,0.2)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
+                    this.option={"fontSize":13,"showColumnHeader":false,"nameColumnWidth":30,"backgroundAlpha":30,"useJobColor":false,"orderByJob":false,"colors":{"tank":"#8080ff","dps":"#ff8080","healer":"#80ff80","background":"rgba(0,0,0,0.2)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
                 },
                 selectAll:function(){
                     var dom=document.getElementById("option_pad_textarea");
@@ -398,12 +413,7 @@
         }else{
             vueapp.backgroundAlpha=30;
         }
-        function padLeft(s,c,length){
-            while(s.length<length){
-                s=c+s
-            }
-            return s;
-        }
+        
     </script>
 </body>
 </html>

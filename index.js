@@ -4,6 +4,13 @@ var jobType={
     healer:["Whm","Cnj","Ast","Sch"],
   };
 var jobSort=[].concat(jobType.tank,jobType.healer,jobType.dps);
+var jobColor={
+    Blm:"#A579D6",Mnk:"#d69c00",Sam:"#e46d04",Mch:"#6EE1D6",
+    Nin:"#AF1964",Drg:"#4164CD",Smn:"#2D9B78",Brd:"#91BA5E",
+    Dnc:"#E2B0AF",Rdm:"#e87b7b",Gnb:"#796D30",Pld:"#A8D2E6",
+    War:"#cf2621",Drk:"#D126CC",Whm:"#FFF0DC",Sch:"#8657FF",
+    Ast:"#FFE74A"
+}
 for(var i in jobType){
     var jts=jobType[i]
     for(var j=0;j<jts.length;++j){
@@ -17,11 +24,13 @@ var defaultOption={
     fontSize:13, 
     showColumnHeader:false,
     nameColumnWidth:30,
+    backgroundAlpha:30,
+    useJobColor:false,
     orderByJob:false,
     colors:{
-        tank:"rgba(128,128,255,0.3)",
-        dps:"rgba(255,128,128,0.3)",
-        healer:"rgba(128,255,128,0.3)",
+        tank:"#8080ff",
+        dps:"#ff8080",
+        healer:"#80ff80",
         background:"rgba(0,0,0,0.2)"
     },
     series:[{
@@ -166,6 +175,36 @@ function getOption(option){
                     // vueapp.miniStyle=lastMiniStyle;
                 }
             },300);
+          },
+          getJobColor:function(job){
+              if(this.option.useJobColor){
+                return this.color2rgba(jobColor[job]||"#ffffff");
+              }else{
+                return this.color2rgba(this.option.colors[jobType[job]]);
+              }
+          },
+          color2rgba:function(color){
+            if(color.startsWith("rgba")){
+                color=this.rgba2color(color).color;
+            }else if(!color.startsWith("#")){
+                return color;
+            }
+            var red,green,blue;
+            red=parseInt(color.substr(1,2),16);
+            green=parseInt(color.substr(3,2),16);
+            blue=parseInt(color.substr(5,2),16);
+            return "rgba("+red+","+green+","+blue+","+((this.option.backgroundAlpha)/100)+")";
+          },
+          rgba2color:function(rgba){
+            var reg=/\s*rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*((.|\d)+)\s*\)/.exec(rgba);
+            if(reg){
+                return {
+                    color:"#"+padLeft((+reg[1]).toString(16),'0',2)
+                             +padLeft((+reg[2]).toString(16),'0',2)
+                             +padLeft((+reg[3]).toString(16),'0',2),
+                    alpha:(+reg[4])*100
+                }
+            }
           },
           mini:function(){
               this.miniStyle=!this.miniStyle;

@@ -5,10 +5,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<!-- <script src="./config/ccino/vue.min.js"></script> -->
-	<script src="./common.js?v=2"></script>
+	<script src="./common.js?v=3"></script>
 	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
 	<title>Ccino dps</title>
-	<link href="./index.css?v=2" rel="stylesheet" />
+	<link href="./index.css?v=3" rel="stylesheet" />
 </head>
 <body class="noselect">
 	<div id="resizer"></div>
@@ -63,7 +63,7 @@
 						:src="'./icons/'+(c.Job||'Err')+'.png'" 
 						onerror="this.style.opacity='0'"/>
 						<div class="filler" :style="{width: getPercentWidth(c) + '%', 
-							backgroundColor:option.colors[jobType[c.Job]]}"></div>
+							backgroundColor:getJobColor(c.Job)}"></div>
 					</li>
 					<li :style="{flex: '0 0 '+option.nameColumnWidth+'%'}" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
 						{{c.name}}
@@ -81,6 +81,6 @@
 		</div>
 	</div>
 
-	<script src="./index.js?v=2"></script>
+	<script src="./index.js?v=3"></script>
 </body>
 </html>
