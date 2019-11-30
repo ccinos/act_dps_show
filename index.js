@@ -154,7 +154,7 @@ function getOption(option){
             } 
             // var lastMiniStyle=this.miniStyle;
             // this.miniStyle=true;
-            vueapp.settingWindow=openWindow("./setting.html","_blank",860,800);
+            vueapp.settingWindow=openWindow("./setting.html","_blank",960,800);
             localStorage.setItem("CCINO_DPS_OPTION",JSON.stringify(vueapp.option));
             var loop=setInterval(function(){
                 if(!vueapp.settingWindow || vueapp.settingWindow.closed){

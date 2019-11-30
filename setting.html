@@ -161,7 +161,7 @@
                     <th>列名</th>
                     <th>属性</th>
                     <th style="width:50px;">取整</th>
-                    <th>宽度</th>
+                    <th>宽度 <span style="cursor:pointer" @click="clearAllColumnSize(series)">{{columnMaxSize(series)}}</span></th>
                     <th>前缀</th>
                     <th>后缀</th>
                     <th>对齐</th>
@@ -183,7 +183,7 @@
                         <input type="checkbox" v-model="column.round">
                     </td>
                     <td>
-                        <input type="number" max="100" min="0" v-model="column.size"/>
+                        <input type="number" :max="columnMaxSize(series,i)" min="0" v-model="column.size"/>
                     </td>
                     <td >
                         <input type="text" v-model="column.prefix"/>
@@ -256,6 +256,20 @@
                 valueDict:[["duration","战斗时间"],["dps","DPS(数值)"],["dps-*","DPS(格式化)"],["Last10DPS","10秒dps"],["Last30DPS","30秒dps"],["Last60DPS","60秒dps"],["damage%","伤比"],["damage%","伤害量"],["maxhit","最大伤害值"],["crithit%","暴击率"],["crithit","暴击次数"],["CritDirectHitCount","直+暴次数"],["CritDirectHitPct","直+暴几率"],["DirectHitCount","直击次数"],["DirectHitPct","直击几率"],["enchps-*","秒疗(格式化)"],["enchps","秒疗(数值)"],["healed","疗量"],["healed%","疗比"],["OverHealPct","过量"],["critheal%","治疗暴击率"],["critheal","治疗暴击次数"],["maxheal","最大治疗量"],["maxheal-*","最大治疗量(格式化)"],["BlockPct","格挡几率"],["healstaken-*","受治疗量"],["damagetaken-*","承伤"],["deaths","死亡次数"]],
             },
             methods:{
+                clearAllColumnSize:function(series){
+                    for(var i in series.columns){
+                        series.columns[i].size=null;
+                    }
+                },
+                columnMaxSize:function(series,i){
+                    var size=+this.option.nameColumnWidth;
+                    for(var j in series.columns){
+                        if(i!=j){
+                            size+= +series.columns[j].size;
+                        }
+                    }
+                    return Math.round(95-size);
+                },
                 radioRightClick:function(series,i){
                     if(series.orderBy==i){
                         series.orderBy=null;

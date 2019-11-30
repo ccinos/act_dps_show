@@ -5,14 +5,14 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<!-- <script src="./config/ccino/vue.min.js"></script> -->
-	<script src="./common.js"></script>
+	<script src="./common.js?v=2"></script>
 	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
 	<title>Ccino dps</title>
-	<link href="./index.css?v=1" rel="stylesheet" />
+	<link href="./index.css?v=2" rel="stylesheet" />
 </head>
 <body class="noselect">
 	<div id="resizer"></div>
-	<div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}">
+	<div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}" v-cloak>
 		<div class="title" @dblclick="openSetting">
 			<span id="title-left">
 				<span v-if="!encounter.title">
@@ -81,6 +81,6 @@
 		</div>
 	</div>
 
-	<script src="./index.js"></script>
+	<script src="./index.js?v=2"></script>
 </body>
 </html>
