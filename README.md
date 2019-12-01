@@ -25,7 +25,7 @@ dps美化模板，时不时的会更新。
 ![使用职业颜色代替职能颜色](https://ccinos.gitee.io/act_dps_show/readme/colorbyjob.png)
 
 动画效果:
-![动画效果](https://ccinos.gitee.io/act_dps_show/readme/animate.png)
+![动画效果](https://ccinos.gitee.io/act_dps_show/readme/animate.gif)
 
 自定义显示内容设置:
 ![自定义显示内容设置](https://ccinos.gitee.io/act_dps_show/readme/setting.png)
