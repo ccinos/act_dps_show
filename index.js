@@ -154,6 +154,7 @@ function getOption(option){
           option:getOption(savedOption),
           bodyWidth:300,
           titleWidth:200,
+          myOrder:1,
       },
       methods:{
           openSetting:function(){
@@ -230,9 +231,6 @@ function getOption(option){
           myDps:function(){
               return this.yourData.dps||0;
           },
-          myOrder:function(){
-              return this.combatants.indexOf(this.yourData)+1;
-          },
           currentSeries:function(){
               return this.option.series[this.currentSeriesIndex];
           },
@@ -295,6 +293,7 @@ function getOption(option){
             }
         });
         vueapp.combatant_max=combatants[orderAsc?combatants.length-1:0];
+        vueapp.myOrder=combatants.indexOf(vueapp.yourData)+1;
       }
       if(vueapp.option.orderByJob){
         combatants.sort(function(a,b){
