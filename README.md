@@ -1,4 +1,6 @@
 # act_dps_show
+#### 有建议可以发送到 5327373@qq.com 直接加q也可以
+
 for ff14 
 dps美化模板，时不时的会更新。
 使用方式：
@@ -31,7 +33,6 @@ dps美化模板，时不时的会更新。
 ![自定义显示内容设置](https://ccinos.gitee.io/act_dps_show/readme/setting.png)
 
 ---
-### 有建议可以发送到 5327373@qq.com 直接加q也可以
 
 
 # 推荐配置
