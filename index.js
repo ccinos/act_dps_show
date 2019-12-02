@@ -4,13 +4,6 @@ var jobType={
     healer:["Whm","Cnj","Ast","Sch"],
   };
 var jobSort=[].concat(jobType.tank,jobType.healer,jobType.dps);
-var jobColor={
-    Blm:"#A579D6",Mnk:"#d69c00",Sam:"#e46d04",Mch:"#6EE1D6",
-    Nin:"#AF1964",Drg:"#4164CD",Smn:"#2D9B78",Brd:"#91BA5E",
-    Dnc:"#E2B0AF",Rdm:"#e87b7b",Gnb:"#796D30",Pld:"#A8D2E6",
-    War:"#cf2621",Drk:"#D126CC",Whm:"#FFF0DC",Sch:"#8657FF",
-    Ast:"#FFE74A"
-}
 for(var i in jobType){
     var jts=jobType[i]
     for(var j=0;j<jts.length;++j){
@@ -27,6 +20,13 @@ var defaultOption={
     backgroundAlpha:30,
     useJobColor:false,
     orderByJob:false,
+    jobColor:{
+        Blm:"#A579D6",Mnk:"#d69c00",Sam:"#e46d04",Mch:"#6EE1D6",
+        Nin:"#AF1964",Drg:"#4164CD",Smn:"#2D9B78",Brd:"#91BA5E",
+        Dnc:"#E2B0AF",Rdm:"#e87b7b",Gnb:"#796D30",Pld:"#A8D2E6",
+        War:"#cf2621",Drk:"#D126CC",Whm:"#FFF0DC",Sch:"#8657FF",
+        Ast:"#FFE74A"
+    },
     colors:{
         tank:"#8080ff",
         dps:"#ff8080",
@@ -91,23 +91,6 @@ var defaultOption={
 var savedOption=localStorage.getItem("CCINO_DPS_OPTION");
 if(savedOption){
     savedOption=JSON.parse(savedOption);
-}
-function mergeObj(dest,src){
-    var type=Object.prototype.toString.call(src);
-    if(type=="[object Object]"||type=="[object Array]"){
-        for(var i in src){
-            if(src.hasOwnProperty(i)){
-                type=Object.prototype.toString.call(src[i]);
-                if(type=="[object Object]"){
-                    dest[i]=mergeObj(dest[i]||{},src[i]);
-                }else{
-                    dest[i]=src[i];
-                }
-            }
-        }
-        
-    }
-    return dest;
 }
 function getOption(option){
     option=mergeObj(JSON.parse(JSON.stringify(defaultOption)),option);
@@ -179,7 +162,7 @@ function getOption(option){
           },
           getJobColor:function(job){
               if(this.option.useJobColor){
-                return this.color2rgba(jobColor[job]||"#ffffff");
+                return this.color2rgba(this.option.jobColor[job]||"#ffffff");
               }else{
                 return this.color2rgba(this.option.colors[jobType[job]]);
               }

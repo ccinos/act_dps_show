@@ -15,3 +15,20 @@ function padLeft(s,c,length){
   }
   return s;
 }
+function mergeObj(dest,src){
+  var type=Object.prototype.toString.call(src);
+  if(type=="[object Object]"||type=="[object Array]"){
+      for(var i in src){
+          if(src.hasOwnProperty(i)){
+              type=Object.prototype.toString.call(src[i]);
+              if(type=="[object Object]"){
+                  dest[i]=mergeObj(dest[i]||{},src[i]);
+              }else{
+                  dest[i]=src[i];
+              }
+          }
+      }
+      
+  }
+  return dest;
+}

@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="./common.js?v=3"></script>
+    <script src="./common.js?v=4"></script>
 	<!-- <script src="./config/ccino/vue.min.js"></script> -->
 	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
     <title>Ccino dps setting</title>
@@ -243,7 +243,8 @@
             <span class="option-pad-close" @click="showOptionPad=false"></span>
             <textarea id="option_pad_textarea" v-model="optionStr" style="width:100%;height:calc(100% - 30px);resize:none"></textarea>
             
-            <button @click="importOption">导入配置</button>
+            <button @click="replaceOption" title="完全将配置替换为当前输入内容">覆盖配置</button>
+            <button @click="importOption" title="将当前输入内容更新到当前配置中">导入配置</button>
             <span style="margin:20px;"></span>
             <button @click="selectAll">全选</button>
             <button @click="showOptionPad=false">关闭</button>
@@ -333,11 +334,23 @@
                         vueapp.selectAll();
                     })
                 },
-                importOption:function(){
-                    if(confirm("是否确认进行导入?")){
+                replaceOption:function(){
+                    if(confirm("是否确认进行导入?\n导入后会完全替换为现有配置")){
                         try{
                             var newOption=JSON.parse(this.optionStr);
                             this.option=newOption;
+                            alert("导入成功");
+                        }catch(e){
+                            console.error(e);
+                            alert("该数据存在异常无法导入:\n"+((typeof e == "string")?e:""));
+                        }
+                    }
+                },
+                importOption:function(){
+                    if(confirm("是否确认进行导入?\n会将内容属性更新到现有配置中")){
+                        try{
+                            var newOption=JSON.parse(this.optionStr);
+                            this.option=mergeObj(this.option,newOption);
                             alert("导入成功");
                         }catch(e){
                             console.error(e);
