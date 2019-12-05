@@ -322,10 +322,39 @@ function updateBodySize(){
     vueapp.bodyWidth=document.body.offsetWidth;
     vueapp.titleWidth=18+document.getElementById("title-left").offsetWidth+document.getElementById("title-right").offsetWidth;
 }
-  document.addEventListener("onOverlayDataUpdate", function (e) {
-      currentEvent=e;
-  });
-  window.onresize=function(){
+window.onresize=function(){
     updateBodySize();
-  }
+}
+  
+
+(function (){
+    var uri = /[?&]HOST_PORT=(wss?:\/\/[^&\/]+)/.exec(location.search);
+    uri=uri&&uri[1];
+    if(uri){
+        var ws=new WebSocket(uri);
+        ws.onmessage = e => {
+            var d;
+            try {
+                d = JSON.parse(e.data)
+            } catch(err) {
+                console.error(err, e.data)
+                return
+            }
+            if(d.type === 'broadcast') {
+                if(d.msgtype=="CombatData"){
+                    currentEvent={ detail:d.msg };
+                }
+            }
+        }
+        ws.onerror = e => {
+            ws.close()
+            console.error(e)
+        }
+    }else{
+        document.addEventListener("onOverlayDataUpdate", function (e) {
+            currentEvent=e;
+        });
+    }
+}())
+
   
