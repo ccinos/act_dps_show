@@ -331,8 +331,14 @@ window.onresize=function(){
     var uri = /[?&]HOST_PORT=(wss?:\/\/[^&\/]+)/.exec(location.search);
     uri=uri&&uri[1];
     if(uri){
+        if(uri === 'ws://:10501') {
+            uri = 'ws://localhost:10501'
+        }
+        uri += '/MiniParse'
         var ws=new WebSocket(uri);
         ws.onmessage = e => {
+            if(e.data==='.')
+                return;
             var d;
             try {
                 d = JSON.parse(e.data)
