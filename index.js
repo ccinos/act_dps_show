@@ -168,9 +168,9 @@ function getOption(option){
               }
           },
           color2rgba:function(color){
-            if(color.startsWith("rgba")){
+            if(color.substr(0,4)=="rgba"){
                 color=this.rgba2color(color).color;
-            }else if(!color.startsWith("#")){
+            }else if(color.substr[0]!="#"){
                 return color;
             }
             var red,green,blue;
@@ -336,7 +336,7 @@ window.onresize=function(){
         }
         uri += '/MiniParse'
         var ws=new WebSocket(uri);
-        ws.onmessage = e => {
+        ws.onmessage = function(e){
             if(e.data==='.')
                 return;
             var d;
@@ -352,7 +352,7 @@ window.onresize=function(){
                 }
             }
         }
-        ws.onerror = e => {
+        ws.onerror = function(e){
             ws.close()
             console.error(e)
         }
