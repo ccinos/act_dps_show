@@ -170,7 +170,7 @@ function getOption(option){
           color2rgba:function(color){
             if(color.substr(0,4)=="rgba"){
                 color=this.rgba2color(color).color;
-            }else if(color.substr[0]!="#"){
+            }else if(color[0]!="#"){
                 return color;
             }
             var red,green,blue;
