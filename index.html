@@ -27,18 +27,20 @@
 
 				<span class="circle hover-scale" @click="mini"></span>
 				
-				<template v-if="option.series.length>1">
-					<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
-					:class="{'active-series':currentSeries==series}">
-						{{series.name}}
-					</span>
-				</template>
+				
 			</span>
 
 			<span v-show="encounter.title">
+				
 				<span :class="{'at-right-nextline':titleNextLine,
 							'at-right':!titleNextLine}" >
 					<span id="title-right">
+						<template v-if="option.series.length>1">
+							<span class="series-names" v-for="series,i in option.series" @click="changeDataType(i)"
+							:class="{'active-series':currentSeries==series}">
+								{{series.name}}
+							</span>
+						</template>
 						<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
 						{{encounter.dps|round}}</span>
 					</span>
