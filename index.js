@@ -125,6 +125,7 @@ function getOption(option) {
 var vueapp = new Vue({
     el: "#container",
     data: {
+        resizable:true,
         jobType: jobType,
         isActive: false,
         encounter: {},
@@ -361,5 +362,9 @@ window.onresize = function () {
             currentEvent = e;
         });
     }
+
+    document.addEventListener("onOverlayStateUpdate", function (e) {
+        vueapp.resizable=!e.detail.isLocked;
+    });
 }())
 
