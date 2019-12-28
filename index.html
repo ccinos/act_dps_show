@@ -16,7 +16,7 @@
 		<div class="title" @dblclick="openSetting">
 			<span id="title-left">
 				<span v-if="!encounter.title">
-					暂无数据
+					暂无数据 <span v-if="!option._knownSetting">(双击打开设置页面)</span>
 				</span>
 				<template v-else>
 					<!-- <span v-if="isActive">*</span> -->

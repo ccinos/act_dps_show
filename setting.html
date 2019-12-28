@@ -257,6 +257,7 @@
             return JSON.parse(JSON.stringify(o));
         }
         function save(){
+            option._knownSetting=true;
             localStorage.setItem("CCINO_DPS_OPTION",JSON.stringify(option))
         }
         var vueapp=new Vue({

@@ -152,6 +152,7 @@ var vueapp = new Vue({
             localStorage.setItem("CCINO_DPS_OPTION", JSON.stringify(vueapp.option));
             var loop = setInterval(function () {
                 if (!vueapp.settingWindow || vueapp.settingWindow.closed) {
+
                     clearInterval(loop);
                     vueapp.settingWindow = null;
 
