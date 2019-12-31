@@ -143,6 +143,15 @@
             <div class="value">
                 <input type="range" max="100" min="0" v-model="option.backgroundAlpha"/>{{option.backgroundAlpha}}
             </div>
+            <div class="label" style="margin-left:50px;">
+                数据条样式
+            </div>
+            <div class="value">
+                <select v-model="option.dataBarStyle">
+                    <option value="fill">填充</option>
+                    <option value="line">线形</option>
+                </select>
+            </div>
         </div>
         <hr>
         <div class="item">

@@ -79,12 +79,18 @@ body{
     background-color:rgba(255,255,255,0.2);
     position: absolute;
     left:0;
-    top:0;
-    height:1.5em;
     border-radius: 5px;
     border:1px solid rgba(255,255,255,0.4);
     z-index:-1;
     transition: width 0.5s;
+}
+.filler-fill{
+    top:0;
+    height:1.5em;
+}
+.filler-line{
+    bottom:0;
+    height:0.1em;
 }
 .text-center{
     text-align: center;
