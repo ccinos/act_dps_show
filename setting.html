@@ -151,6 +151,9 @@
                     <option value="fill">填充</option>
                     <option value="line">线形</option>
                 </select>
+                <template v-if="option.dataBarStyle=='line'">
+                    <input type="number" v-model="option.dataBarHeight" min="1" style="width:30px"/>px
+                </template>
             </div>
         </div>
         <hr>

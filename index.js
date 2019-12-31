@@ -21,6 +21,7 @@ var defaultOption = {
     useJobColor: false,
     orderByJob: false,
     dataBarStyle: "fill",
+    dataBarHeight:2,
     jobColor: {
         Blm: "#A579D6", Mnk: "#d69c00", Sam: "#e46d04", Mch: "#6EE1D6",
         Nin: "#AF1964", Drg: "#4164CD", Smn: "#2D9B78", Brd: "#91BA5E",
@@ -214,6 +215,13 @@ var vueapp = new Vue({
         }
     },
     computed: {
+        dataBarHeight:function(){
+            if(this.option.dataBarStyle=='line'){
+                return (this.option.dataBarHeight||2)+"px";
+            }else{
+                return "1.5em";
+            }
+        },
         myDps: function () {
             return this.yourData.dps || 0;
         },
