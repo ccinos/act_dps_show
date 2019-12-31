@@ -64,7 +64,7 @@
 						<img class="job-img" 
 						:src="'./icons/'+(c.Job||'Err')+'.png'" 
 						onerror="this.style.opacity='0'"/>
-						<div class="filler" :class="{'filler-fill':dataBarStyle=='fill'
+						<div class="filler" :class="{'filler-fill':dataBarStyle=='fill',
 													'filler-line':dataBarStyle=='line'}" :style="{width: getPercentWidth(c) + '%', 
 							backgroundColor:getJobColor(c.Job)}"></div>
 					</li>
