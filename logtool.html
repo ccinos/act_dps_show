@@ -28,6 +28,9 @@
     <script>
         var defaultOption = {
             fontSize: 13,
+            colors: {
+                background: "rgba(0,0,0,0.2)"
+            }
         };
         var savedOption = localStorage.getItem("CCINO_DPS_OPTION");
         if (savedOption) {
@@ -35,31 +38,6 @@
         }
         function getOption(option) {
             option = mergeObj(JSON.parse(JSON.stringify(defaultOption)), option);
-            //列设置宽度
-            try {
-                for (var series of option.series) {
-                    if (!series) continue;
-                    var remain_size = 0
-                    series.columns.forEach(function (c) {
-                        if (c.size) {
-                            var size = +c.size;
-                            if (!isNaN(size))
-                                remain_size += size;
-                        }
-                    });
-                    remain_size = (95 - option.nameColumnWidth || 30) - remain_size;
-                    if (remain_size < 0) remain_size = 10;
-                    var nosizeSeries = series.columns.filter(function (c) { return !c.size });
-                    if (nosizeSeries.length > 0) {
-                        var size = Math.round(remain_size / nosizeSeries.length * 100) / 100;
-                        nosizeSeries.forEach(function (c) {
-                            c.size = "" + size;
-                        })
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            }
             return option;
         }
         var vueapp = new Vue({
