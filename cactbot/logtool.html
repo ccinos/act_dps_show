@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="./defaults.css">
+    <link rel="stylesheet" href="./resize_handle.css">
+    <script src="./common.js"></script>
+    <script src="../common.js"></script>
+    <script src="./resize_handle.js"></script>
+    <script src="../vue.min.js"></script>
+    <link href="../index.css?v=6" rel="stylesheet" />
+</head>
+<body>
+    <div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}" v-cloak>
+        <div  v-if="infoData.character">
+            <ul>
+                <li style="flex: 0 0 80%;text-align: left;" >{{infoData.character.name}}❀{{infoData.character.server}}</li>
+                <li style="flex: 0 0 20%;text-align: center;" >{{infoData.highestLog||"无"}}</li>
+            </ul>
+            <div class="title-border"></div>
+            <ul v-for="rank in infoData.rankings">
+                <li style="flex: 0 0 50%;text-align: center;" >{{rank.encounterName}}</li>
+                <li style="flex: 0 0 30%;text-align: center;" >{{rank.spec}}</li>
+                <li style="flex: 0 0 20%;text-align: center;" >{{rank.percentile}}</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        var defaultOption = {
+            fontSize: 13,
+        };
+        var savedOption = localStorage.getItem("CCINO_DPS_OPTION");
+        if (savedOption) {
+            savedOption = JSON.parse(savedOption);
+        }
+        function getOption(option) {
+            option = mergeObj(JSON.parse(JSON.stringify(defaultOption)), option);
+            //列设置宽度
+            try {
+                for (var series of option.series) {
+                    if (!series) continue;
+                    var remain_size = 0
+                    series.columns.forEach(function (c) {
+                        if (c.size) {
+                            var size = +c.size;
+                            if (!isNaN(size))
+                                remain_size += size;
+                        }
+                    });
+                    remain_size = (95 - option.nameColumnWidth || 30) - remain_size;
+                    if (remain_size < 0) remain_size = 10;
+                    var nosizeSeries = series.columns.filter(function (c) { return !c.size });
+                    if (nosizeSeries.length > 0) {
+                        var size = Math.round(remain_size / nosizeSeries.length * 100) / 100;
+                        nosizeSeries.forEach(function (c) {
+                            c.size = "" + size;
+                        })
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            return option;
+        }
+        var vueapp = new Vue({
+            el: "#container",
+            data: {
+                option: getOption(savedOption),
+                infoData:{},
+            },
+            methods: {}
+        });
+        addOverlayListener('onLogEvent', function(e) {
+            for (let i = 0; i < e.detail.logs.length; i++) {
+                let r = e.detail.logs[i].match('^CCINO_LOG_TOOL_INFO:(.*)');
+                if (r) {
+                    vueapp.infoData=JSON.parse(r[1]);
+                }
+            }
+        });
+    </script>
+</body>

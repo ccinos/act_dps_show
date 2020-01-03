@@ -165,6 +165,9 @@ var vueapp = new Vue({
             }, 300);
         },
         getJobColor: function (job) {
+            if(!job){
+                return "#ffffff";
+            }
             if (this.option.useJobColor) {
                 return this.color2rgba(this.option.jobColor[job] || "#ffffff");
             } else {
