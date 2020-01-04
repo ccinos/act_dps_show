@@ -2,6 +2,7 @@ body{
     width:100%;
     height:100%;
     overflow:hidden;
+    font-family: -webkit-pictograph,serif;
 }
 .noselect {
     -webkit-touch-callout: none;
@@ -74,6 +75,10 @@ body{
 .job-img{
     width:1.5em;
     height:1.5em;
+}
+.log-job-img{
+    width:1.2em;
+    height:1.2em;
 }
 .filler{
     background-color:rgba(255,255,255,0.2);
@@ -163,4 +168,40 @@ ul li{
 }
 [v-cloak]{
     display:none;
+}
+ul li.log-data{
+    flex: 0 0 70%;
+    text-align: left;
+    white-space: normal;
+    overflow:auto;
+    text-emphasis: none;
+    height:auto;
+}
+span.log-data{
+    font-size: 1.1em;
+    font-weight: bold;
+    font-family: Avenir,Arial,sans-serif;
+    text-shadow: 0 0 3px black;
+}
+
+.log-100{
+    color:rgb(229,204,128);
+}
+.log-99{
+    color:rgb(226,104,168);
+}
+.log-95{
+    color:rgb(255,128,0);
+}
+.log-75{
+    color:rgb(163,53,238);
+}
+.log-50{
+    color:rgb(0,112,255);
+}
+.log-25{
+    color: rgb(30,255,0);
+}
+.log-9{
+    color: #666;
 }

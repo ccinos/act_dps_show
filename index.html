@@ -4,11 +4,11 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<!-- <script src="./config/ccino/vue.min.js"></script> -->
+	<script src="./cactbot/common.js?v=1"></script>
 	<script src="./common.js?v=5"></script>
-	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+	<script src="./vue.min.js"></script>
 	<title>Ccino dps</title>
-	<link href="./index.css?v=6" rel="stylesheet" />
+	<link href="./index.css?v=7" rel="stylesheet" />
 </head>
 <body class="noselect">
 	<div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}" v-cloak>
@@ -82,9 +82,34 @@
 					</li>
 				</ul>
 			</div>
+			<div v-if="logData&&logData.character">
+				<div style="margin-top:50px;"></div>
+				<ul>
+					<li style="flex: 0 0 80%;text-align: left;" >{{logData.character.name}}❀{{logData.character.server}}</li>
+					<li style="flex: 0 0 20%;text-align: center;" ><span class="log-data" :class="getLogsGrade(logData.highestLog)">{{logData.highestLog||"无"}}</span></li>
+				</ul>
+				<template v-if="option.logsInfoShowDetail">
+					<div class="title-border"></div>
+					<ul v-for="ranks,encounterName in logData.rankings_format">
+						
+						<li :style="{flex: '0 0 '+(option.logsInfoEncounterNameWidth||30)+'%'}" style="text-align: left;" >{{encounterName}} </li>
+						<li class="log-data" :style="{flex: '0 0 '+(100-(option.logsInfoEncounterNameWidth||30))+'%'}">
+							<span v-for="rank in ranks" style="white-space: nowrap;
+							display: inline-block;">
+								<img class="log-job-img" 
+									:src="'./icons/'+(rank.job||'Err')+'.png'" 
+									onerror="this.style.opacity='0'"/>
+								<span :class="getLogsGrade(rank.logs)" class="log-data">{{rank.logs}}</span>
+								&nbsp;
+							</span>
+						</li>
+						
+					</ul>
+				</template>
+			</div>
 		</div>
 	</div>
 
-	<script src="./index.js?v=6.1"></script>
+	<script src="./index.js?v=7"></script>
 </body>
 </html>

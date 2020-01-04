@@ -12,25 +12,60 @@
 </head>
 <body class="noselect">
     <div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}" v-cloak>
-        <div  v-if="infoData.character">
+        <div v-if="logData&&logData.character">
             <ul>
-                <li style="flex: 0 0 80%;text-align: left;" >{{infoData.character.name}}❀{{infoData.character.server}}</li>
-                <li style="flex: 0 0 20%;text-align: center;" >{{infoData.highestLog||"无"}}</li>
+                <li style="flex: 0 0 80%;text-align: left;" >{{logData.character.name}}❀{{logData.character.server}}</li>
+                <li style="flex: 0 0 20%;text-align: center;" ><span class="log-data" :class="getLogsGrade(logData.highestLog)">{{logData.highestLog||"无"}}</span></li>
             </ul>
-            <div class="title-border"></div>
-            <ul v-for="rank in infoData.rankings">
-                <li style="flex: 0 0 50%;text-align: center;" >{{rank.encounterName}}</li>
-                <li style="flex: 0 0 30%;text-align: center;" >{{rank.spec}}</li>
-                <li style="flex: 0 0 20%;text-align: center;" >{{rank.percentile}}</li>
-            </ul>
+            <template v-if="option.logsInfoShowDetail">
+                <div class="title-border"></div>
+                <ul v-for="ranks,encounterName in logData.rankings_format">
+                    
+                    <li :style="{flex: '0 0 '+(option.logsInfoEncounterNameWidth||30)+'%'}" style="text-align: left;" >{{encounterName}} </li>
+                    <li class="log-data" :style="{flex: '0 0 '+(100-(option.logsInfoEncounterNameWidth||30))+'%'}">
+                        <span v-for="rank in ranks" style="white-space: nowrap;
+                        display: inline-block;">
+                            <img class="log-job-img" 
+                                :src="'./icons/'+(rank.job||'Err')+'.png'" 
+                                onerror="this.style.opacity='0'"/>
+                            <span :class="getLogsGrade(rank.logs)" class="log-data">{{rank.logs}}</span>
+                            &nbsp;
+                        </span>
+                    </li>
+                    
+                </ul>
+            </template>
         </div>
     </div>
     <script>
+        var jobNameCnToType={
+            "占星术士":"Ast",
+            "吟游诗人":"Brd",
+            "黑魔法师":"Blm",
+            "暗黑骑士":"Drk",
+            "龙骑士":"Drg",
+            "机工士":"Mch",
+            "武僧":"Mnk",
+            "忍者":"Nin",
+            "骑士":"Pld",
+            "学者":"Sch",
+            "召唤师":"Smn",
+            "战士":"War",
+            "白魔法师":"Whm",
+            "赤魔法师":"Rdm",
+            "武士":"Sam",
+            "舞者":"Dnc",
+            "绝枪战士":"Gnb"
+        }
         var defaultOption = {
             fontSize: 13,
             colors: {
                 background: "rgba(0,0,0,0.2)"
-            }
+            },
+            supportLogsInfo:false,
+            logsInfoShownDuration:10,
+            logsInfoEncounterNameWidth:30,
+            logsInfoShowDetail:true,
         };
         var savedOption = localStorage.getItem("CCINO_DPS_OPTION");
         if (savedOption) {
@@ -44,17 +79,68 @@
             el: "#container",
             data: {
                 option: getOption(savedOption),
-                infoData:{},
+                logData:{},
             },
-            methods: {}
-        });
-        addOverlayListener('onLogEvent', function(e) {
-            for (let i = 0; i < e.detail.logs.length; i++) {
-                let r = e.detail.logs[i].match('^CCINO_LOG_TOOL_INFO:(.*)');
-                if (r) {
-                    vueapp.infoData=JSON.parse(r[1]);
+            methods: {
+                getLogsGrade:function(log){
+                    var grades=[100,99,95,75,50,25];
+                    for(let g of grades){
+                        if(log>=g){
+                            return "log-"+g;
+                        }
+                    }
+                    return "log-9";
                 }
             }
         });
+        (function(){
+            let timer;
+            function resetLogShowTimer(){
+                if(timer!=null){
+                    clearInterval(timer);
+                    timer=null;
+                }
+                timer=setInterval(function(){
+                    clearInterval(timer);
+                    vueapp.logData={};
+                },Math.round((vueapp.option.logsInfoShownDuration||10)*1000));
+            }
+            window.resetLogShowTimer=resetLogShowTimer;
+            function updateLogData(logData){
+                logData.rankings_format={};
+                for(let ranking of logData.rankings){
+                    if(!logData.rankings_format[ranking.encounterName]){
+                        logData.rankings_format[ranking.encounterName]=[];
+                    }
+                    logData.rankings_format[ranking.encounterName].push({
+                        logs:ranking.percentile,
+                        job:jobNameCnToType[ranking.spec],
+                        spec:ranking.spec
+                    });
+                }
+                vueapp.logData=logData;
+                resetLogShowTimer();
+            }
+            function logInfoCallback(e){
+                for (let i = 0; i < e.detail.logs.length; i++) {
+                    let r = e.detail.logs[i].match('^CCINO_LOG_TOOL_INFO:(.*)');
+                    if (r) {
+                        updateLogData(JSON.parse(r[1]));
+                    }
+                }
+            }
+            window.setLogInfoSupport=function(){
+                if(removeOverlayListener){ //先尝试删除
+                    removeOverlayListener('onLogEvent', logInfoCallback);
+                }
+                if(vueapp.option.supportLogsInfo){ //如果需要支持则添加
+                    if(addOverlayListener){
+                        addOverlayListener('onLogEvent', logInfoCallback);
+                    }
+                }
+            }
+
+            setLogInfoSupport();
+        }())
     </script>
 </body>

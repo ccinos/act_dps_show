@@ -222,9 +222,8 @@ let Util = {
         call: 'subscribe',
         events: Object.keys(subscribers),
       }, null);
-
-      for (let [msg, resolve] of q)
-        sendMessage(msg, resolve);
+      for (let _q of q)
+        sendMessage(_q[0], _q[1]);
     };
 
     waitForApi();

@@ -158,6 +158,32 @@
         </div>
         <hr>
         <div class="item">
+            <div class="label">
+                Logs显示
+            </div>
+            <div class="value">
+                <input type="checkbox"  v-model="option.supportLogsInfo"/>
+                (需插件支持和ngld悬浮窗)
+                <label>
+                <input type="checkbox"  v-model="option.logsInfoShowDetail"/>详情</label>
+            </div>
+
+            <div class="label" style="width:100px;margin-left:30px;">
+                显示时间
+            </div>
+            <div class="value">
+                <input type="number"  min="1" v-model="option.logsInfoShownDuration" style="width:60px"/>
+                秒
+            </div>
+            <div class="label" style="margin-left:50px;">
+                副本名宽度
+            </div>
+            <div class="value">
+                <input type="range" max="70" min="0" v-model="option.logsInfoEncounterNameWidth"/>{{option.logsInfoEncounterNameWidth}}
+            </div>
+        </div>
+        <hr>
+        <div class="item">
             <div class="label">系列
                 
             </div>
@@ -332,7 +358,87 @@
                     
                 },
                 revertDefault:function(){
-                    this.option={"fontSize":13,"showColumnHeader":false,"nameColumnWidth":30,"backgroundAlpha":30,"useJobColor":false,"orderByJob":false,"colors":{"tank":"#8080ff","dps":"#ff8080","healer":"#80ff80","background":"rgba(0,0,0,0.2)"},"series":[{"name":"伤害","columns":[{"name":"DPS","value":"dps","round":true,"size":20},{"name":"直击","value":"DirectHitPct","prefix":"直","size":15},{"name":"暴击","value":"crithit%","prefix":"暴","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false},{"name":"奶量","columns":[{"name":"HPS","value":"enchps","round":true,"size":20},{"name":"过量","value":"OverHealPct","prefix":"过","size":15},{"name":"承伤","value":"damagetaken-*","prefix":"承","size":15},{"name":"倒地","value":"deaths","suffix":"死","textAlign":"center"}],"orderBy":0,"orderAsc":false}]};
+                    this.option={
+                        fontSize: 13,
+                        showColumnHeader: false,
+                        nameColumnWidth: 30,
+                        backgroundAlpha: 30,
+                        useJobColor: false,
+                        orderByJob: false,
+                        supportLogsInfo:false,
+                        logsInfoShownDuration:10,
+                        logsInfoEncounterNameWidth:30,
+                        logsInfoShowDetail:true,
+                        dataBarStyle: "fill",
+                        dataBarHeight:2,
+                        jobColor: {
+                            Blm: "#A579D6", Mnk: "#d69c00", Sam: "#e46d04", Mch: "#6EE1D6",
+                            Nin: "#AF1964", Drg: "#4164CD", Smn: "#2D9B78", Brd: "#91BA5E",
+                            Dnc: "#E2B0AF", Rdm: "#e87b7b", Gnb: "#796D30", Pld: "#A8D2E6",
+                            War: "#cf2621", Drk: "#D126CC", Whm: "#FFF0DC", Sch: "#8657FF",
+                            Ast: "#FFE74A"
+                        },
+                        colors: {
+                            tank: "#8080ff",
+                            dps: "#ff8080",
+                            healer: "#80ff80",
+                            background: "rgba(0,0,0,0.2)"
+                        },
+                        series: [{
+                            name: "伤害",
+                            columns: [{
+                                name: "DPS",
+                                value: "dps",
+                                round: true,
+                                size: 20,
+                            }, {
+                                name: "直击",
+                                value: "DirectHitPct",
+                                prefix: "直",
+                                size: 15,
+                            }, {
+                                name: "暴击",
+                                value: "crithit%",
+                                prefix: "暴",
+                                size: 15,
+                            }, {
+                                name: "倒地",
+                                value: "deaths",
+                                suffix: "死",
+                                textAlign: "center"
+                            }
+                            ],
+                            orderBy: 0,
+                            orderAsc: false,
+                        }, {
+                            name: "奶量",
+                            columns: [{
+                                name: "HPS",
+                                value: "enchps",
+                                round: true,
+                                size: 20,
+                            }, {
+                                name: "过量",
+                                value: "OverHealPct",
+                                prefix: "过",
+                                size: 15,
+                            }, {
+                                name: "承伤",
+                                value: "damagetaken-*",
+                                prefix: "承",
+                                size: 15,
+                            }, {
+                                name: "倒地",
+                                value: "deaths",
+                                suffix: "死",
+                                textAlign: "center"
+                            }
+                            ],
+                            orderBy: 0,
+                            orderAsc: false,
+                        }
+                        ]
+                    };
                 },
                 selectAll:function(){
                     var dom=document.getElementById("option_pad_textarea");

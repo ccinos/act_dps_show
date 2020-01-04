@@ -3,6 +3,25 @@ var jobType = {
     dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm"],
     healer: ["Whm", "Cnj", "Ast", "Sch"],
 };
+var jobNameCnToType={
+    "占星术士":"Ast",
+    "吟游诗人":"Brd",
+    "黑魔法师":"Blm",
+    "暗黑骑士":"Drk",
+    "龙骑士":"Drg",
+    "机工士":"Mch",
+    "武僧":"Mnk",
+    "忍者":"Nin",
+    "骑士":"Pld",
+    "学者":"Sch",
+    "召唤师":"Smn",
+    "战士":"War",
+    "白魔法师":"Whm",
+    "赤魔法师":"Rdm",
+    "武士":"Sam",
+    "舞者":"Dnc",
+    "绝枪战士":"Gnb"
+}
 var jobSort = [].concat(jobType.tank, jobType.healer, jobType.dps);
 for (var i in jobType) {
     var jts = jobType[i]
@@ -20,6 +39,10 @@ var defaultOption = {
     backgroundAlpha: 30,
     useJobColor: false,
     orderByJob: false,
+    supportLogsInfo:false,
+    logsInfoShownDuration:10,
+    logsInfoEncounterNameWidth:30,
+    logsInfoShowDetail:true,
     dataBarStyle: "fill",
     dataBarHeight:2,
     jobColor: {
@@ -134,6 +157,7 @@ var vueapp = new Vue({
         combatants: [],
         combatant_max: {},
         yourData: {},
+        logData:{},
         miniStyle: false,
         currentSeriesIndex: 0,
         settingWindow: null,
@@ -148,8 +172,6 @@ var vueapp = new Vue({
                 vueapp.settingWindow.focus();
                 return;
             }
-            // var lastMiniStyle=this.miniStyle;
-            // this.miniStyle=true;
             vueapp.settingWindow = openWindow("./setting.html", "_blank", 960, 800);
             localStorage.setItem("CCINO_DPS_OPTION", JSON.stringify(vueapp.option));
             var loop = setInterval(function () {
@@ -160,7 +182,8 @@ var vueapp = new Vue({
 
                     vueapp.option = getOption(JSON.parse(localStorage.getItem("CCINO_DPS_OPTION")));
                     SortCombatants(vueapp.combatants);
-                    // vueapp.miniStyle=lastMiniStyle;
+                    setLogInfoSupport();
+                    resetLogShowTimer();
                 }
             }, 300);
         },
@@ -215,6 +238,15 @@ var vueapp = new Vue({
             } catch (e) {
                 return 0;
             }
+        },
+        getLogsGrade:function(log){
+            var grades=[100,99,95,75,50,25];
+            for(let g of grades){
+                if(log>=g){
+                    return "log-"+g;
+                }
+            }
+            return "log-9";
         }
     },
     computed: {
@@ -268,7 +300,7 @@ var vueapp = new Vue({
     }
 });
 function openWindow(url, name, iWidth, iHeight) {
-    return window.open(url, name, 'height=' + iHeight + ',,innerHeight=' + iHeight + ',width=' + iWidth + ',innerWidth=' + iWidth + ',toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no');
+    return window.open(url, name, 'height=' + iHeight + ',innerHeight=' + iHeight + ',width=' + iWidth + ',innerWidth=' + iWidth + ',toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no');
 }
 function SortCombatants(combatants) {
     if (vueapp.orderBy) {
@@ -341,6 +373,9 @@ window.onresize = function () {
 }
 
 
+
+
+
 (function () {
     var uri = /[?&]HOST_PORT=(wss?:\/\/[^&\/]+)/.exec(location.search);
     uri = uri && uri[1];
@@ -379,5 +414,63 @@ window.onresize = function () {
     document.addEventListener("onOverlayStateUpdate", function (e) {
         vueapp.resizable=!e.detail.isLocked;
     });
+
+    addOverlayListener('CombatData', function(e) {
+        let dps = parseFloat(e.Encounter.encdps);
+        if (dps <= 0 || dps === Infinity)
+        return;
+        currentEvent = { detail: e };
+    });
+    
+    let timer;
+    function resetLogShowTimer(){
+        if(timer!=null){
+            clearInterval(timer);
+            timer=null;
+        }
+        timer=setInterval(function(){
+            clearInterval(timer);
+            vueapp.logData={};
+        },Math.round((vueapp.option.logsInfoShownDuration||10)*1000));
+    }
+    window.resetLogShowTimer=resetLogShowTimer;
+    function updateLogData(logData){
+        //进行logData处理
+        // rankings_format:{ encounterName:[ { percentile:97,spec:"Pld" } ] } 
+        logData.rankings_format={};
+        for(let ranking of logData.rankings){
+            if(!logData.rankings_format[ranking.encounterName]){
+                logData.rankings_format[ranking.encounterName]=[];
+            }
+            logData.rankings_format[ranking.encounterName].push({
+                logs:ranking.percentile,
+                job:jobNameCnToType[ranking.spec],
+                spec:ranking.spec
+            });
+        }
+        vueapp.logData=logData;
+        resetLogShowTimer();
+    }
+    function logInfoCallback(e){
+        for (let i = 0; i < e.detail.logs.length; i++) {
+            let r = e.detail.logs[i].match('^CCINO_LOG_TOOL_INFO:(.*)');
+            if (r) {
+                updateLogData(JSON.parse(r[1]));
+            }
+        }
+    }
+    window.setLogInfoSupport=function(){
+        if(removeOverlayListener){ //先尝试删除
+            removeOverlayListener('onLogEvent', logInfoCallback);
+        }
+        if(vueapp.option.supportLogsInfo){ //如果需要支持则添加
+            if(addOverlayListener){
+                addOverlayListener('onLogEvent', logInfoCallback);
+            }
+        }
+    }
+
+    setLogInfoSupport();
+
 }())
 
