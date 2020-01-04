@@ -130,13 +130,8 @@
                 }
             }
             window.setLogInfoSupport=function(){
-                if(removeOverlayListener){ //先尝试删除
-                    removeOverlayListener('onLogEvent', logInfoCallback);
-                }
-                if(vueapp.option.supportLogsInfo){ //如果需要支持则添加
-                    if(addOverlayListener){
-                        addOverlayListener('onLogEvent', logInfoCallback);
-                    }
+                if(addOverlayListener){
+                    addOverlayListener('onLogEvent', logInfoCallback);
                 }
             }
 
