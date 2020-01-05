@@ -1,3 +1,5 @@
+'use strict';
+
 var jobType = {
     tank: ["War", "Mrd", "Drk", "Pld", "Gla", "Gnb"],
     dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm"],

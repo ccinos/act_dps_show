@@ -8,6 +8,7 @@
     <script src="./common.js"></script>
     <script src="./cactbot/resize_handle.js"></script>
     <script src="./vue.min.js"></script>
+    <script src="./vue_ccino_select.js"></script>
     <link href="./index.css?v=6" rel="stylesheet" />
 </head>
 <body class="noselect">
@@ -36,6 +37,7 @@
                 </ul>
             </template>
         </div>
+
     </div>
     <script>
         var jobNameCnToType={
@@ -75,11 +77,15 @@
             option = mergeObj(JSON.parse(JSON.stringify(defaultOption)), option);
             return option;
         }
+
         var vueapp = new Vue({
             el: "#container",
             data: {
                 option: getOption(savedOption),
                 logData:{},
+                testSelect:[1,2,3,4,5,6,7],
+                testSelect2:["萌芽池","红玉海"],
+                testSelectValue:"",
             },
             methods: {
                 getLogsGrade:function(log){
