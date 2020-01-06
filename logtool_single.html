@@ -191,10 +191,11 @@
             }
             function checkLogs(fullname){
                 getRankings(fullname,function(logData){
+                    let speakLog=logData.highestLog||"无log";
                     if(callOverlayHandler){
                         callOverlayHandler({
                             call: 'cactbotSay',
-                            text: `${logData.character.name}:${logData.highestLog}`,
+                            text: `${logData.character.name}:${speakLog}`,
                         });
                     }
                 });
