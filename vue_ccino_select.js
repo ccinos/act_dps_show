@@ -15,7 +15,8 @@ Vue.component('ccino-select', {
     },
     template:`
   <div class="select" :class="{'select-open':open,'select-closed':!open}">
-    <div class="select-value" @click="open=true">
+    <div class="select-value" @click="open=!open">
+        <slot name="prefix" v-bind:value="value"></slot>
         <slot v-bind:value="value">
             {{ value }} &nbsp;
         </slot>

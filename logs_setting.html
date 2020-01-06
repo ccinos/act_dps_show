@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="./common.js?v=5"></script>
+	<!-- <script src="./config/ccino/vue.min.js"></script> -->
+	<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+    <title>Ccino dps setting</title>
+    <style>
+        .item .label{
+            display:inline-block;
+            width:100px;
+            text-align: right;
+        }
+        .item .value{
+            display:inline-block;
+        }
+        table td,table th{
+            text-align: center;
+        }
+        table *{
+            padding:3px;
+        }
+        table{
+            margin:15px 0;
+            border-collapse: collapse;
+        }
+        table tr{
+            border-top:1px solid #ddd;
+        }
+        table tr:first-child,table tr:nth-child(2){
+            border-top:2px solid #ccc;
+        }
+        table tr td,table tr th{
+            border-right:1px solid #ddd;
+        }
+        [v-cloak]{
+            display: none;
+        }
+        table input{
+            width:50px;
+        }
+        .option-pad{
+            position:fixed;
+            background-color:white; 
+            width:80%;
+            height:50%;
+            left:10%;
+            top:10%;
+            border-radius:10px;
+            box-shadow: 0px 0px 10px black;
+            padding:30px 20px;
+            z-index:10;
+        }
+        .option-pad-mask{
+            z-index:9;
+            background-color:rgba(0,0,0,0.3);
+            position:fixed;
+            width:100%;
+            height:100%;
+            top:0;
+            left:0;
+        }
+        .option-pad-close{
+            display:inline-block;
+            width:10px;height:10px;
+            box-shadow: 0px 0px 5px red;
+            border-radius: 5px;
+            position:absolute;
+            top:10px;
+            right:10px;
+            cursor: pointer;
+        }
+        .option-pad-close:hover{
+            transform: scale(1.2);
+        }
+
+    </style>
+</head>
+<body>
+	<div id="container" v-cloak>
+        <div class="item">
+            <div class="label">
+                apiKey
+            </div>
+            <div class="value">
+                <input type="text" v-model="option.apiKey"/>
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label">
+                字体大小
+            </div>
+            <div class="value">
+                <input type="number"  max="100" min="9" v-model="option.fontSize"/>
+                px
+            </div>
+            <div class="label" style="width:150px;margin-left:50px;">
+                背景透明度
+            </div>
+            <div class="value">
+                <input type="range" max="100" min="0" v-model="backgroundAlpha"/>{{backgroundAlpha}}
+            </div>
+        </div>
+        <hr>
+        <div class="item">
+            <div class="label" style="width:100px;">
+                显示时间
+            </div>
+            <div class="value">
+                <input type="number"  min="1" v-model="option.logsInfoShownDuration" style="width:60px"/>
+                秒
+            </div>
+            <div class="label" style="margin-left:50px;">
+                副本名宽度
+            </div>
+            <div class="value">
+                <input type="range" max="70" min="0" v-model="option.logsInfoEncounterNameWidth"/>{{option.logsInfoEncounterNameWidth}}
+            </div>
+        </div>
+        
+        <div class="item">
+                <hr>
+            <div class="label">
+            </div>
+            <div class="value">
+                <button @click="save">保存</button>
+                <button @click="revert">重置</button>
+                <span style="margin:20px;"></span>
+                <button @click="showImportOption">配置信息</button>
+                <button @click="revertDefault">重置默认</button>
+                <a href="javascript:;">使用反馈: 5327373@qq.com</a>
+            </div>
+        </div>
+        <div class="option-pad-mask" v-if="showOptionPad"></div>
+        <div class="option-pad" v-if="showOptionPad" v-cloak>
+            <span class="option-pad-close" @click="showOptionPad=false"></span>
+            <textarea id="option_pad_textarea" v-model="optionStr" style="width:100%;height:calc(100% - 30px);resize:none"></textarea>
+            
+            <button @click="replaceOption" title="完全将配置替换为当前输入内容">覆盖配置</button>
+            <button @click="importOption" title="将当前输入内容更新到当前配置中">导入配置</button>
+            <span style="margin:20px;"></span>
+            <button @click="selectAll">全选</button>
+            <button @click="showOptionPad=false">关闭</button>
+        </div>
+	</div>
+
+    <script>
+          var option=JSON.parse(localStorage.getItem("CCINO_LOGS_OPTION"));
+        function copy(o){
+            return JSON.parse(JSON.stringify(o));
+        }
+        function save(){
+            option._knownSetting=true;
+            localStorage.setItem("CCINO_LOGS_OPTION",JSON.stringify(option))
+        }
+        var vueapp=new Vue({
+            el:"#container",
+            data:{
+                option:copy(option),
+                colorOpacity:20,
+                backgroundAlpha:30,
+                deleteConfirm:true,
+                showOptionPad:false,
+                optionStr:"",
+            },
+            methods:{
+                revertDefault:function(){
+                    this.option={
+                        fontSize: 13,
+                        colors: {
+                            background: "rgba(0,0,0,0.2)"
+                        },
+                        apiKey:"1dec8751508fa8e36cde7c53b550b69b",
+                        supportLogsInfo:true,
+                        logsInfoShownDuration:10,
+                        logsInfoEncounterNameWidth:30,
+                        logsInfoShowDetail:true,
+                        selectedZone:zoneList[zoneList.length-4],
+                        selectedEncounter:zoneList[zoneList.length-4].encounters[0],
+                        selectedServer: serverList[0]
+                    };
+                },
+                selectAll:function(){
+                    var dom=document.getElementById("option_pad_textarea");
+                    dom.focus();
+                    dom.select();
+                    dom.scrollTo(0,0);
+                },
+                showImportOption:function(){
+                    this.optionStr=JSON.stringify(this.option,null,2);
+                    this.showOptionPad=true;
+                    this.$nextTick(function(){
+                        vueapp.selectAll();
+                    })
+                },
+                replaceOption:function(){
+                    if(confirm("是否确认进行导入?\n导入后会完全替换为现有配置")){
+                        try{
+                            var newOption=JSON.parse(this.optionStr);
+                            this.option=newOption;
+                            alert("导入成功");
+                        }catch(e){
+                            console.error(e);
+                            alert("该数据存在异常无法导入:\n"+((typeof e == "string")?e:""));
+                        }
+                    }
+                },
+                importOption:function(){
+                    if(confirm("是否确认进行导入?\n会将内容属性更新到现有配置中")){
+                        try{
+                            var newOption=JSON.parse(this.optionStr);
+                            this.option=mergeObj(this.option,newOption);
+                            alert("导入成功");
+                        }catch(e){
+                            console.error(e);
+                            alert("该数据存在异常无法导入:\n"+((typeof e == "string")?e:""));
+                        }
+                    }
+                },
+                save:function(){
+                    option=copy(this.option);
+                    if(!option.colors){
+                        option.colors={};
+                    }
+                    option.colors.background="rgba(0,0,0,"+vueapp.backgroundAlpha/100+")"
+                    save();
+                    if(window.parent){
+                        window.parent.close(window);
+                    }
+                },
+                revert:function(){
+                    this.option=copy(option);
+                },
+                revertModify:function(prop){
+                    this.option[prop]=copy(option[prop]);
+                },
+                color2rgba:function(color){
+                    var red,green,blue;
+                    red=parseInt(color.substr(1,2),16);
+                    green=parseInt(color.substr(3,2),16);
+                    blue=parseInt(color.substr(5,2),16);
+                    return "rgba("+red+","+green+","+blue+","+vueapp.colorOpacity/100+")";
+                },
+                rgba2color:function(rgba){
+                    var reg=/\s*rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*((.|\d)+)\s*\)/.exec(rgba);
+                    if(reg){
+                        return {
+                            color:"#"+padLeft((+reg[1]).toString(16),'0',2)
+                                     +padLeft((+reg[2]).toString(16),'0',2)
+                                     +padLeft((+reg[3]).toString(16),'0',2),
+                            alpha:(+reg[4])*100
+                        }
+                    }
+                },
+            }
+        });
+        //vueapp.colorOpacity=vueapp.rgba2color(option.colors.tank).alpha;
+        if(option.colors.background){
+            var color=vueapp.rgba2color(option.colors.background);
+            vueapp.backgroundAlpha=color.alpha;
+        }else{
+            vueapp.backgroundAlpha=30;
+        }
+        
+    </script>
+</body>
+</html>

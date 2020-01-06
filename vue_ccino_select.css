@@ -1,0 +1,29 @@
+.select>.select-option{
+    background-color: rgba(0,0,0,0.7);
+    width:auto;
+    position: absolute;
+    overflow-x: hidden;
+    visibility: hidden;
+    padding:3px 10px 3px 3px;
+    border:1px solid rgba(255,255,255,0.3);
+    border-radius:0.5em;
+    overflow-y: scroll;
+    height:10em;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.select-value{
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.select-option::-webkit-scrollbar{
+    width:0;
+}
+.select-open>.select-option{
+    visibility: visible;
+}
+.select-open>.select-option>div:hover{
+    background-color:rgba(255,255,255,0.3);
+}
