@@ -41,10 +41,6 @@ var defaultOption = {
     backgroundAlpha: 30,
     useJobColor: false,
     orderByJob: false,
-    supportLogsInfo:false,
-    logsInfoShownDuration:10,
-    logsInfoEncounterNameWidth:30,
-    logsInfoShowDetail:true,
     dataBarStyle: "fill",
     dataBarHeight:2,
     jobColor: {
@@ -184,8 +180,6 @@ var vueapp = new Vue({
 
                     vueapp.option = getOption(JSON.parse(localStorage.getItem("CCINO_DPS_OPTION")));
                     SortCombatants(vueapp.combatants);
-                    setLogInfoSupport();
-                    resetLogShowTimer();
                 }
             }, 300);
         },
@@ -423,56 +417,6 @@ window.onresize = function () {
         return;
         currentEvent = { detail: e };
     });
-    
-    let timer;
-    function resetLogShowTimer(){
-        if(timer!=null){
-            clearInterval(timer);
-            timer=null;
-        }
-        timer=setInterval(function(){
-            clearInterval(timer);
-            vueapp.logData={};
-        },Math.round((vueapp.option.logsInfoShownDuration||10)*1000));
-    }
-    window.resetLogShowTimer=resetLogShowTimer;
-    function updateLogData(logData){
-        //进行logData处理
-        // rankings_format:{ encounterName:[ { percentile:97,spec:"Pld" } ] } 
-        logData.rankings_format={};
-        for(let ranking of logData.rankings){
-            if(!logData.rankings_format[ranking.encounterName]){
-                logData.rankings_format[ranking.encounterName]=[];
-            }
-            logData.rankings_format[ranking.encounterName].push({
-                logs:ranking.percentile,
-                job:jobNameCnToType[ranking.spec],
-                spec:ranking.spec
-            });
-        }
-        vueapp.logData=logData;
-        resetLogShowTimer();
-    }
-    function logInfoCallback(e){
-        for (let i = 0; i < e.detail.logs.length; i++) {
-            let r = e.detail.logs[i].match('^CCINO_LOG_TOOL_INFO:(.*)');
-            if (r) {
-                updateLogData(JSON.parse(r[1]));
-            }
-        }
-    }
-    window.setLogInfoSupport=function(){
-        if(removeOverlayListener){ //先尝试删除
-            removeOverlayListener('onLogEvent', logInfoCallback);
-        }
-        if(vueapp.option.supportLogsInfo){ //如果需要支持则添加
-            if(addOverlayListener){
-                addOverlayListener('onLogEvent', logInfoCallback);
-            }
-        }
-    }
-
-    setLogInfoSupport();
 
 }())
 

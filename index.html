@@ -82,31 +82,6 @@
 					</li>
 				</ul>
 			</div>
-			<div v-if="logData&&logData.character">
-				<div style="margin-top:50px;"></div>
-				<ul>
-					<li style="flex: 0 0 80%;text-align: left;" >{{logData.character.name}}❀{{logData.character.server}}</li>
-					<li style="flex: 0 0 20%;text-align: center;" ><span class="log-data" :class="getLogsGrade(logData.highestLog)">{{logData.highestLog||"无"}}</span></li>
-				</ul>
-				<template v-if="option.logsInfoShowDetail">
-					<div class="title-border"></div>
-					<ul v-for="ranks,encounterName in logData.rankings_format">
-						
-						<li :style="{flex: '0 0 '+(option.logsInfoEncounterNameWidth||30)+'%'}" style="text-align: left;" >{{encounterName}} </li>
-						<li class="log-data" :style="{flex: '0 0 '+(100-(option.logsInfoEncounterNameWidth||30))+'%'}">
-							<span v-for="rank in ranks" style="white-space: nowrap;
-							display: inline-block;">
-								<img class="log-job-img" 
-									:src="'./icons/'+(rank.job||'Err')+'.png'" 
-									onerror="this.style.opacity='0'"/>
-								<span :class="getLogsGrade(rank.logs)" class="log-data">{{rank.logs}}</span>
-								&nbsp;
-							</span>
-						</li>
-						
-					</ul>
-				</template>
-			</div>
 		</div>
 	</div>
 
