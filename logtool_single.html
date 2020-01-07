@@ -15,15 +15,19 @@
 </head>
 <body class="noselect">
     <div id="container" :style="{fontSize:option.fontSize+'px', 'background-color':option.colors.background}" v-cloak @dblclick="openSetting">
-        <ccino-select style="display: inline-block;" :options="serverList" v-model="option.selectedServer" v-slot:prefix="slotProps" @change="saveOption">
-            本地服务器
-        </ccino-select>
-        <ccino-select :options="zoneList" v-model="option.selectedZone"  v-slot:default="slotProps" @change="saveOption">
-            {{slotProps.value.name}}   <span v-if="slotProps.value.brackets">{{slotProps.value.brackets.min}} - {{slotProps.value.brackets.max}}</span>
-        </ccino-select>
-        <ccino-select :options="option.selectedZone.encounters" v-model="option.selectedEncounter" v-slot:default="slotProps" @change="saveOption">
-            {{slotProps.value.name}} 
-        </ccino-select>
+        <template v-if="option.settingOnFrontpage.server">
+            <ccino-select style="display: inline-block;" :options="serverList" v-model="option.selectedServer" v-slot:prefix="slotProps" @change="saveOption">
+                本地服务器
+            </ccino-select>
+        </template>
+        <template v-if="option.settingOnFrontpage.zone">
+            <ccino-select :options="zoneList" v-model="option.selectedZone"  v-slot:default="slotProps" @change="saveOption">
+                {{slotProps.value.name}}   <span v-if="slotProps.value.brackets">{{slotProps.value.brackets.min}} - {{slotProps.value.brackets.max}}</span>
+            </ccino-select>
+            <ccino-select :options="option.selectedZone.encounters" v-model="option.selectedEncounter" v-slot:default="slotProps" @change="saveOption">
+                {{slotProps.value.name}} 
+            </ccino-select>
+        </template>
         <div v-if="logData&&logData.character" style="margin-top:30px;">
             <ul>
                 <li style="flex: 0 0 80%;text-align: left;" >{{logData.character.name}}❀{{logData.character.server}}</li>
@@ -75,6 +79,10 @@
             selectedZone:zoneList[zoneList.length-4],
             selectedEncounter:zoneList[zoneList.length-4].encounters[0],
             selectedServer: serverList[0],
+            settingOnFrontpage:{
+                server:true,
+                zone:true,
+            }
         };
         var savedOption = localStorage.getItem("CCINO_LOGS_OPTION");
         if (savedOption) {
@@ -157,9 +165,9 @@
                 serverName=encodeURIComponent(serverName);
                 characterName=encodeURIComponent(characterName);
                 let url=`https://cn.fflogs.com/v1/rankings/character/${characterName}/${serverName}/CN?timeframe=historical&api_key=${option.apiKey}`;
-                if(!option.selectedZone && !option.selectedZone.id){
+                if(option.selectedZone && option.selectedZone.id){
                     url+="&zone="+option.selectedZone.id;
-                    if(!option.selectedEncounter&&!option.selectedEncounter.id){
+                    if(option.selectedEncounter&&option.selectedEncounter.id){
                         url += "&encounter=" + option.selectedEncounter.id;
                     }
                 }
@@ -242,6 +250,9 @@
                 }
             }
             window.setLogInfoSupport=function(){
+                if(removeOverlayListener){ //先尝试删除
+                    removeOverlayListener('onLogEvent', logInfoCallback);
+                }
                 if(addOverlayListener){
                     addOverlayListener('onLogEvent', logInfoCallback);
                 }
