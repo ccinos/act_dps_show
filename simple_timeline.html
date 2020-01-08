@@ -249,7 +249,7 @@ var vueapp = new Vue({
                 if(this.selectedDataIndex>=0&&this.selectedDataIndex<this.savedDatas.length){
                     var name=this.savedDatas[this.selectedDataIndex].name;
                     var data=copy(this.getAllData());
-                    this.savedDatas[this.selectedDataIndex]=data;
+                    Vue.set(this.savedDatas,this.selectedDataIndex,data);
                     data.name=name;
                     save(this.savedDatas);
                 }
