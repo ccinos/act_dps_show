@@ -126,10 +126,10 @@
             <td>
                 <div class="skill-info">
                     <div>
-                        <input title="持续时间" min="0" class="form-control" v-model="newSkill.duration" placeholder="持续">
+                        <input title="持续时间" min="0" class="form-control" v-model="newSkill.duration" placeholder="持续"  @keydown.enter="enterNewSkill">
                     </div>
                     <div>
-                        <input title="冷却时间" min="0" class="form-control" v-model="newSkill.cd" placeholder="冷却">
+                        <input title="冷却时间" min="0" class="form-control" v-model="newSkill.cd" placeholder="冷却"  @keydown.enter="enterNewSkill">
                     </div>
                 </div>
             </td>
