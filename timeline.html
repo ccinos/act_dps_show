@@ -118,7 +118,7 @@
                     </div>
                     <select class="form-control" v-model="selectedDataIndex">
                         <option v-for="data,i in savedDatas" :value="i">
-                            {{data.name}} (技能{{data.skills.length}} 事件{{data.timeline.length}})
+                            {{data.name}} (技能{{data.skills.length}} 事件{{data.timeline.events.length}})
                         </option>
                     </select>
                     <input class="form-control" style="width:100px;display:inline-block;" v-model="newDataName" placeholder="新名称"> 
