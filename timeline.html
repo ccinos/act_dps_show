@@ -45,8 +45,8 @@
                         </g>
                         <!-- 事件 -->
                         <g v-for="e in timeline.events">
-                            <line class="events" :key="e.time" x1="0" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
-                            <text class="events" x="30" :y="time2yOffset(e.time)" dy="-4"  @click="onEventClick(e)"
+                            <line class="events" :key="e.time" x1="70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
+                            <text class="events" x="70" :y="time2yOffset(e.time)" dy="-4"  @click="onEventClick(e)"
                                 :class="{'event-active':setting.selectedEvent==e}"
                                 @contextmenu.prevent="onEventRightClick(e)">
                                 {{e.time | timeFormat}} &nbsp; {{e.text}}
