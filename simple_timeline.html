@@ -141,7 +141,7 @@
                     <button class="btn btn-xs btn-danger del-btn" @click="delLine(line,index)">X</button>
                 </div>
             </td>
-            <td>
+            <td @dblclick="modifyLineTitle(line)">
                 {{line.title}}
             </td>
             <td v-for="skill in skills" class="skill-info">
@@ -357,7 +357,7 @@ var vueapp = new Vue({
             }
         },
         insertLine:function(lineStr){
-            let reg=/^\s*(\d+):(\d{1,2})([.:](\d+))?\s+(.*)/.exec(lineStr);
+            let reg=/^\s*(\d+)[:：](\d{1,2})([.:：](\d+))?\s+(.*)/.exec(lineStr);
             if(reg){
                 let min=+reg[1];
                 let sec=+reg[2];
@@ -465,6 +465,12 @@ var vueapp = new Vue({
                     }
                 }
                 thisLine=nextLine;
+            }
+        },
+        modifyLineTitle:function(line){
+            let title=prompt("请输入要设置的内容",line.title);
+            if(title){
+                line.title=title;
             }
         }
     },

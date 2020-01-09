@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<head>
+    <title>时间轴安排</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="./common.js"></script>
+    <script src="./vue.min.js"></script>
+    <link href="./lib/bootstrap.min.css" rel="stylesheet">
+    <link href="./timeline.css" rel="stylesheet">
+    
+    <!-- <script src="./axios.min.js"></script> -->
+</head>
+<body>
+<div id="container" v-cloak style="padding:10px;">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-9" style="overflow:hidden;">
+                <div id="svg_container" @scroll="onSvgScroll($event)" class="noselect" 
+                    @mousewheel.alt.prevent="onMouseWheelScale($event)"
+                    :style="{height:option.svg.height+'px'}"
+                    @dblclick="insertNew"
+                    @contextmenu.prevent="void 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
+                        @mousemove="onSvgMouseMove($event),skillOnMouseDrag(null,null,true,$event)"
+                        @mouseup="skillOnMouseDrag(null,null,false)">
+                        <!-- hover rect -->
+                        <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" 
+                                    :y="timeline.offset" height="3000" />
+                        <!-- 刻度线 -->
+                        <g v-for="line in dialsLines[0]">
+                            <line class="dials" x1="70" :y1="line.y+timeline.offset" :x2="option.svg.width" :y2="line.y+timeline.offset" />
+                            <text class="dials" x="0" :y="line.y+timeline.offset" dy="4">
+                                {{line.text}}
+                            </text>
+                        </g>
+                        <!-- 迷你刻度 -->
+                        <line class="dials-mini" v-for="miniLine in dialsLines[1]" 
+                            x1="0" x2="5" :y1="miniLine.y+timeline.offset" :y2="miniLine.y+timeline.offset" />
+                        <!-- 鼠标移动 -->
+                        <g v-if="dials.mouseY>timeline.offset">
+                            <line class="dials-mouse" x1="70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY" />
+                            <text class="dials-mouse" x="0" :y="dials.mouseY" dy="4">
+                                {{y2time(dials.mouseY-timeline.offset) | timeFormat}}
+                            </text>
+                        </g>
+                        <!-- 事件 -->
+                        <g v-for="e in timeline.events">
+                            <line class="events" :key="e.time" x1="0" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
+                            <text class="events" x="30" :y="time2yOffset(e.time)" dy="-4"  @click="onEventClick(e)"
+                                :class="{'event-active':setting.selectedEvent==e}"
+                                @contextmenu.prevent="onEventRightClick(e)">
+                                {{e.time | timeFormat}} &nbsp; {{e.text}}
+                            </text>
+                        </g>
+                        <!-- 技能 -->
+                        <g v-for="skill,i in skills">
+                            <!-- 技能CD -->
+                            <template v-if="timeline.skills[skill.name]">
+                                <g v-for="skillInfo in timeline.skills[skill.name]" >
+                                    <rect class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+i*(skillOption.all)" 
+                                        :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
+                                </g>
+                                <g v-for="skillInfo in timeline.skills[skill.name]" 
+                                    @mouseenter="skillOnHover(skillInfo,skill,true)" 
+                                    @mouseleave="skillOnHover(skillInfo,skill,false)"
+                                    @mousedown="skillOnMouseDrag(skillInfo,skill,true,$event)"
+                                    @click="onSelectSkill(skillInfo,skill,i)"
+                                    :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}"
+                                    @contextmenu="onSkillRightClick(skillInfo,skill,i)"> 
+                                    <rect class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+i*(skillOption.all)" 
+                                            :y="time2yOffset(skillInfo.time)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
+                                    <rect class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+i*(skillOption.all)" 
+                                            :y="time2yOffset(skillInfo.time)" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
+                                    <image :x="(+timeline.infoWidth)+i*(skillOption.all)" 
+                                        :href="skill.icon||getSkillIcon(skill)"
+                                        :y="time2yOffset(skillInfo.time)"
+                                        width="20"
+                                        height="20"
+                                        onerror="this.style.opacity='0'"/>
+                                </g>
+                            </template>
+                        </g>
+                        <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="timeline.offset-10" />
+                        <g v-for="skill,i in skills" @click="onSelectSkillType(skill,i)">
+                            <!-- 技能名称 -->
+                            <text :x="(+timeline.infoWidth)+option.skill.nameOffset+i*(skillOption.all)" text-anchor="middle" 
+                                :y="dials.top+15" 
+                                :class="{'skill-type-active':setting.selectedSkillType==skill}">
+                                {{skill.name}}
+                            </text>
+                            <image :x="(+timeline.infoWidth)+i*(skillOption.all)" 
+                                    :href="skill.icon||getSkillIcon(skill)"
+                                    :y="dials.top+25"
+                                    width="20"
+                                    height="20"
+                                    onerror="this.style.opacity='0'"/>
+                        </g>
+                        <!-- 技能显示 -->
+                        <g v-if="shownSkillInfo">
+                            <line class="dials-skill" x1="70" :x2="option.svg.width" 
+                                :y1="time2yOffset(shownSkillInfo.skillInfo.time)" 
+                                :y2="time2yOffset(shownSkillInfo.skillInfo.time)" />
+                            <text class="dials-skill" x="0" :y="time2yOffset(shownSkillInfo.skillInfo.time)" dy="4">
+                                {{shownSkillInfo.skillInfo.time | timeFormat}}
+                            </text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            <div class="col-xs-3" style="overflow:hidden;">
+                <div :style="{height:option.svg.height+'px'}">
+
+                    <div class="share-container" v-if="sharing">
+                        <button class="btn btn-success" @click="importData">导入</button>
+                        <button class="btn btn-default" @click="clearData">清空</button>
+                        <button class="btn btn-danger" @click="sharing=false">关闭</button>
+                        <textarea class="form-control" style="width:100%;height:90%;resize:none;margin-top: 10px;">{{sharingText}}</textarea>
+                    </div>
+                    <select class="form-control" v-model="selectedDataIndex">
+                        <option v-for="data,i in savedDatas" :value="i">
+                            {{data.name}} (技能{{data.skills.length}} 事件{{data.timeline.length}})
+                        </option>
+                    </select>
+                    <input class="form-control" style="width:100px;display:inline-block;" v-model="newDataName" placeholder="新名称"> 
+                    <button class="btn btn-success" @click="dataSave">保存</button>
+                    <button class="btn btn-primary" @click="dataLoad">读取</button>
+                    <button class="btn btn-danger" @click="dataDelete">删除</button>
+                    <button class="btn btn-info" @click="dataShare">分享</button>
+                    <hr>
+                    
+                    <div>
+                        技能显示间隔 {{option.skill.margin}}
+                        <input type="range" v-model="option.skill.margin" min="0" max="100">
+                    </div>
+                    <div>
+                        事件显示宽度 {{timeline.infoWidth}}
+                        <input type="range" v-model="timeline.infoWidth" min="100" max="3000">
+                    </div>
+                    <div>
+                        时间轴长度(秒) {{timeline.length}}
+                        <input type="range" v-model="timeline.length" min="60" max="10000">
+                    </div>
+
+                    
+                        
+                    <hr>
+                    <h3>
+                        事件
+                    </h3>
+                    <input class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
+                        @blur="inputErrMsg=''"
+                        @keydown.esc="onClearInput">
+                        
+                    <button class="btn btn-danger btn-xs" v-if="setting.selectedEvent" @click="deleteSelectedEvent">删除</button>
+                    <span v-if="setting.inputErrMsg" style="color:red;">{{inputErrMsg}}</span>
+                    
+                    
+                    <div v-if="setting.selectedSkill">
+                        <hr>
+                        <h3>
+                            技能
+                        </h3>
+                        {{setting.selectedSkill.skill.name}}
+                        <button class="btn btn-xs btn-danger" @click="deleteSelectedSkill">删除</button>
+                        <ul>
+                            <li>施放时间: {{setting.selectedSkill.skillInfo.time | timeFormat}} </li>
+                            <li v-if="setting.selectedSkill.skill.duration">持续时间: {{setting.selectedSkill.skillInfo.time+setting.selectedSkill.skill.duration*1000 | timeFormat}}</li>
+                            <li v-if="setting.selectedSkill.skill.duration">CD时间: {{setting.selectedSkill.skillInfo.time+setting.selectedSkill.skill.cd*1000 | timeFormat}}</li>
+                        </ul>
+                    </div>
+
+
+                    <hr>
+                    <h3>技能类型</h3>
+                    <button class="btn btn-primary" @click="newSkillType">新增技能</button>
+                    <button class="btn btn-danger" v-if="setting.selectedSkillType&&!setting.selectedSkillType.new" @click="deleteSkillType">删除</button>
+                    <div v-if="setting.selectedSkillType" class="well">
+                        技能简称
+                        <input class="form-control" type="text" v-model="setting.selectedSkillType.name"/>
+                        技能全称（如果有图标则会显示，可省略）
+                        <input class="form-control" type="text" v-model="setting.selectedSkillType.fullname"/>
+                        冷却时间
+                        <input class="form-control" type="number" v-model="setting.selectedSkillType.cd"/>
+                        持续时间
+                        <input class="form-control" type="number" v-model="setting.selectedSkillType.duration"/>
+                        图标
+                        <input class="form-control" type="text" v-model="setting.selectedSkillType.icon"/>
+                        <template v-if="setting.selectedSkillType.new">
+                            <button class="btn btn-success" @click="saveNewSkill">保存</button>
+                            <button class="btn btn-default" @click="cancelSaveSkill">取消</button>
+                        </template>
+                    </div>
+                    <hr>
+                    <h2>
+                        操作说明 <small>{{versions[0].ver}}</small>
+                    </h2>
+                    <ul>
+                        <li>双击左侧增加新事件/新技能</li>
+                        <li>单击事件可以修改具体信息（回车确认更改）</li>
+                        <li>在输入框中按ESC可取消输入并且取消修改</li>
+                        <li>按住alt+滚轮可以放大/缩小</li>
+                        <li>拖动技能可以调整技能时间</li>
+                        <li>技能绿色部分是持续时间，灰色为CD，灰色虚线为此范围内无法设置该技能的提示</li>
+                    </ul>
+                    <ul>
+                        <template v-for="v in versions">
+                            <li>
+                                {{v.ver}} {{v.type}} {{v.date}}
+                            </li>
+                            <small>{{v.info}}</small>     
+                        </template>
+                    </ul>
+                   
+                </div>
+
+            </div>
+        </div>
+       
+    </div>
+    
+</div>
+<script src="./timeline.js"></script>
+</body>
