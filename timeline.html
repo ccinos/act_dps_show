@@ -12,6 +12,26 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;">
+    <!-- 事件浮窗 -->
+    <div class="float-window" 
+        v-if="setting.eventSet.enable"
+        :style="{top:setting.eventSet.y+'px',left:setting.eventSet.x+'px'}">
+        <div class="input-group" :style="{width:((+timeline.infoWidth)-100)+'px'}">
+            <span class="input-group-btn">
+                <!-- <button class="btn btn-default" type="button" @click="setting.eventSet.enable=false">取消</button> -->
+                <button class="btn btn-danger" type="button" @click="deleteSelectedEvent">删除</button>
+            </span>
+            <input class="form-control" v-model="setting.eventSet.event.text"/>
+
+        </div>
+    </div>
+    <!-- 技能浮窗 -->
+    <div class="float-window" 
+        v-if="setting.skillSet.enable"
+        :style="{top:setting.skillSet.y+'px',left:setting.skillSet.x+'px'}">
+            <!-- <button class="btn btn-default" type="button" @click="setting.skillSet.enable=false">取消</button> -->
+            <button class="btn btn-danger" type="button" @click="deleteSelectedSkill">删除</button>
+    </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-9" style="overflow:hidden;">
@@ -19,59 +39,72 @@
                     @mousewheel.alt.prevent="onMouseWheelScale($event)"
                     :style="{height:option.svg.height+'px'}"
                     @dblclick="insertNew"
+                    @click="cancelAllSelect"
                     @contextmenu.prevent="void 0;">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
-                        @mousemove="onSvgMouseMove($event),skillOnMouseDrag(null,null,true,$event)"
-                        @mouseup="skillOnMouseDrag(null,null,false)">
+                        @mousemove="onSvgMouseMove($event),onMouseDrag($event)"
+                        @mouseup="onMouseDrag($event)">
                         <!-- hover rect -->
                         <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" 
-                                    :y="timeline.offset" height="3000" />
+                                    :y="dials.top" height="3000" />
                         <!-- 刻度线 -->
                         <g v-for="line in dialsLines[0]">
-                            <line class="dials" x1="70" :y1="line.y+timeline.offset" :x2="option.svg.width" :y2="line.y+timeline.offset" />
-                            <text class="dials" x="0" :y="line.y+timeline.offset" dy="4">
+                            <line class="dials" :x1="dials.left+70" :y1="line.y+timeline.offset" :x2="option.svg.width" :y2="line.y+timeline.offset" />
+                            <text class="dials" :x="dials.left+0" :y="line.y+timeline.offset" dy="4">
                                 {{line.text}}
                             </text>
                         </g>
                         <!-- 迷你刻度 -->
-                        <line class="dials-mini" v-for="miniLine in dialsLines[1]" 
-                            x1="0" x2="5" :y1="miniLine.y+timeline.offset" :y2="miniLine.y+timeline.offset" />
+                        <!-- <line class="dials-mini" v-for="miniLine in dialsLines[1]" 
+                            x1="0" x2="5" :y1="miniLine.y+timeline.offset" :y2="miniLine.y+timeline.offset" /> -->
                         <!-- 鼠标移动 -->
                         <g v-if="dials.mouseY>timeline.offset">
-                            <line class="dials-mouse" x1="70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY" />
-                            <text class="dials-mouse" x="0" :y="dials.mouseY" dy="4">
+                            <line class="dials-mouse" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY" />
+                            <text class="dials-mouse" :x="dials.left+0" :y="dials.mouseY" dy="4">
                                 {{y2time(dials.mouseY-timeline.offset) | timeFormat}}
                             </text>
                         </g>
                         <!-- 事件 -->
-                        <g v-for="e in timeline.events">
-                            <line class="events" :key="e.time" x1="70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
-                            <text class="events" x="70" :y="time2yOffset(e.time)" dy="-4"  @click="onEventClick(e)"
-                                :class="{'event-active':setting.selectedEvent==e}"
+                        <g v-for="e in timeline.events" @mousedown="onMouseDragSimple($event,e)">
+                            <line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
+                            <text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4"  @click.stop="onEventClick(e,$event)"
+                                :class="{'event-active':setting.eventSet.event==e}"
                                 @contextmenu.prevent="onEventRightClick(e)">
                                 {{e.time | timeFormat}} &nbsp; {{e.text}}
                             </text>
+                        </g>
+                        <!-- GCD显示 -->
+                        <g>
+                            <template v-for="gcd,i in timeline.gcd">
+                                <image :x="(+timeline.infoWidth)" 
+                                        :href="getGcdIcon(gcd)"
+                                        :y="time2yOffset(gcd.time)"
+                                        width="20"
+                                        height="20"
+                                        onerror="this.style.opacity='0'"
+                                        @mousedown="gcdOnMouseDrag($event,gcd,i)"/>
+                            </template>
                         </g>
                         <!-- 技能 -->
                         <g v-for="skill,i in skills">
                             <!-- 技能CD -->
                             <template v-if="timeline.skills[skill.name]">
                                 <g v-for="skillInfo in timeline.skills[skill.name]" >
-                                    <rect class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+i*(skillOption.all)" 
+                                    <rect class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
                                 </g>
                                 <g v-for="skillInfo in timeline.skills[skill.name]" 
                                     @mouseenter="skillOnHover(skillInfo,skill,true)" 
                                     @mouseleave="skillOnHover(skillInfo,skill,false)"
                                     @mousedown="skillOnMouseDrag(skillInfo,skill,true,$event)"
-                                    @click="onSelectSkill(skillInfo,skill,i)"
+                                    @click.stop="onSelectSkill(skillInfo,skill,i,$event)"
                                     :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}"
                                     @contextmenu="onSkillRightClick(skillInfo,skill,i)"> 
-                                    <rect class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+i*(skillOption.all)" 
+                                    <rect class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                             :y="time2yOffset(skillInfo.time)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
-                                    <rect class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+i*(skillOption.all)" 
+                                    <rect class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                             :y="time2yOffset(skillInfo.time)" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
-                                    <image :x="(+timeline.infoWidth)+i*(skillOption.all)" 
+                                    <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :href="skill.icon||getSkillIcon(skill)"
                                         :y="time2yOffset(skillInfo.time)"
                                         width="20"
@@ -81,33 +114,33 @@
                             </template>
                         </g>
                         <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="timeline.offset-10" />
-                        <g v-for="skill,i in skills" @click="onSelectSkillType(skill,i)">
+                        <g v-for="skill,i in skills" @click.stop="onSelectSkillType(skill,i)">
                             <!-- 技能名称 -->
-                            <text :x="(+timeline.infoWidth)+option.skill.nameOffset+i*(skillOption.all)" text-anchor="middle" 
+                            <text :x="(+timeline.infoWidth)+option.skill.nameOffset+(i+setting.reserveCols)*(skillOption.all)" text-anchor="middle" 
                                 :y="dials.top+15" 
                                 :class="{'skill-type-active':setting.selectedSkillType==skill}">
                                 {{skill.name}}
                             </text>
-                            <image :x="(+timeline.infoWidth)+i*(skillOption.all)" 
+                            <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                     :href="skill.icon||getSkillIcon(skill)"
                                     :y="dials.top+25"
                                     width="20"
                                     height="20"
                                     onerror="this.style.opacity='0'"/>
                         </g>
-                        <!-- 技能显示 -->
-                        <g v-if="shownSkillInfo">
-                            <line class="dials-skill" x1="70" :x2="option.svg.width" 
-                                :y1="time2yOffset(shownSkillInfo.skillInfo.time)" 
-                                :y2="time2yOffset(shownSkillInfo.skillInfo.time)" />
-                            <text class="dials-skill" x="0" :y="time2yOffset(shownSkillInfo.skillInfo.time)" dy="4">
-                                {{shownSkillInfo.skillInfo.time | timeFormat}}
+                        <!-- 技能显示刻度 -->
+                        <g v-for="shownSkill in shownSkillInfo">
+                            <line class="dials-skill" :x1="dials.left+70" :x2="option.svg.width" 
+                                :y1="time2yOffset(shownSkill.skillInfo.time)" 
+                                :y2="time2yOffset(shownSkill.skillInfo.time)" />
+                            <text class="dials-skill" :x="dials.left+0" :y="time2yOffset(shownSkill.skillInfo.time)" dy="4">
+                                {{shownSkill.skillInfo.time | timeFormat}}
                             </text>
                         </g>
                     </svg>
                 </div>
             </div>
-            <div class="col-xs-3" style="overflow:hidden;">
+            <div class="col-xs-3" style="overflow:auto;">
                 <div :style="{height:option.svg.height+'px'}">
 
                     <div class="share-container" v-if="sharing">
@@ -140,35 +173,18 @@
                         时间轴长度(秒) {{timeline.length}}
                         <input type="range" v-model="timeline.length" min="60" max="10000">
                     </div>
+                    <div>
+                        图表宽度 {{option.svg.width}}
+                        <input type="range" v-model="option.svg.width" min="800" max="8000">
+                    </div>
 
                     
                         
                     <hr>
-                    <h3>
-                        事件
-                    </h3>
                     <input class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
                         @blur="inputErrMsg=''"
                         @keydown.esc="onClearInput">
-                        
-                    <button class="btn btn-danger btn-xs" v-if="setting.selectedEvent" @click="deleteSelectedEvent">删除</button>
-                    <span v-if="setting.inputErrMsg" style="color:red;">{{inputErrMsg}}</span>
-                    
-                    
-                    <div v-if="setting.selectedSkill">
-                        <hr>
-                        <h3>
-                            技能
-                        </h3>
-                        {{setting.selectedSkill.skill.name}}
-                        <button class="btn btn-xs btn-danger" @click="deleteSelectedSkill">删除</button>
-                        <ul>
-                            <li>施放时间: {{setting.selectedSkill.skillInfo.time | timeFormat}} </li>
-                            <li v-if="setting.selectedSkill.skill.duration">持续时间: {{setting.selectedSkill.skillInfo.time+setting.selectedSkill.skill.duration*1000 | timeFormat}}</li>
-                            <li v-if="setting.selectedSkill.skill.duration">CD时间: {{setting.selectedSkill.skillInfo.time+setting.selectedSkill.skill.cd*1000 | timeFormat}}</li>
-                        </ul>
-                    </div>
-
+                    <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span>
 
                     <hr>
                     <h3>技能类型</h3>
