@@ -107,6 +107,24 @@
             <div class="value">
                 <input type="checkbox"  v-model="option.orderByJob"/>
             </div>
+            <br>
+            <div class="label">
+                字体样式
+            </div>
+            <div class="value">
+                全部<input type="font" v-model="option.fontFamily.all"/> &nbsp;
+                名字<input type="font" v-model="option.fontFamily.name"/> &nbsp;
+                数据<input type="font" v-model="option.fontFamily.data"/>
+            </div>
+            <br>
+            <div class="label">
+                &nbsp;
+            </div>
+            <div class="value" style="width:800px;">
+                <small>多个字体用英文逗号分隔，带空格的字体需要用双引号括起来。前面的字体会先生效，前面字体中没有的字再从后面的字体生效。
+                例如：“只支持数字的字体,只支持英文的字体,支持中文的字体” 就可以让数字、英文、中文显示不同的字体。
+                留空则为默认。</small>
+            </div>
         </div>
         <hr>
         <div class="item">

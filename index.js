@@ -36,6 +36,11 @@ for (var i in jobSort) {
 }
 var defaultOption = {
     fontSize: 13,
+    fontFamily:{
+        all:"-webkit-pictograph,serif",
+        name:"",
+        data:""
+    },
     showColumnHeader: false,
     nameColumnWidth: 30,
     backgroundAlpha: 30,
