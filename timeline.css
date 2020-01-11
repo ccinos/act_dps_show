@@ -31,6 +31,10 @@ line.dials-mini{
 line.dials-mouse{
     stroke:#ccf;
 }
+line.dials-select-line{
+    stroke: #08f;
+    stroke-dasharray: 5,10;
+}
 line.dials-skill{
     stroke:#8c8;
 }
@@ -42,6 +46,9 @@ text.dials{
 }
 text.dials-mouse{
     fill: #88f;
+}
+text.dials-select-line{
+    fill: #08f;
 }
 text.dials-skill{
     fill: #8c8;
@@ -102,9 +109,84 @@ rect.hover-rect{
 
 .float-window{
     position:fixed;
-    z-index:50;
-    background-color:rgba(255,255,255,0.5);
+    z-index:99999;
+    background-color:rgba(255,255,255,0.7);
     box-shadow: 0 0 5px #8da;
     border-radius: 5px;
     padding:5px 10px;
+}
+.mask{
+    position:fixed;
+    z-index:999;
+    background-color:rgba(0,0,0,0.5);
+    right:0;
+    top:0;
+    left:0;
+    bottom:0;
+}
+
+
+div.gcd-skill{
+    flex:1;
+    min-width: 16.66%;
+    max-width: 16.66%;
+    padding-top:8px;
+    border-radius:5px;
+    text-align: center;
+    user-select: none; 
+}
+div.gcd-skill:hover,div.skill-list:hover{
+    background-color:#cfc;
+}
+
+div.skill-list{
+    flex:1;
+    min-width:60px;
+    max-width:60px;
+    padding-top:8px;
+    border-radius:5px;
+    text-align: center;
+    user-select: none; 
+}
+div.skill-container{
+    display:flex;
+    flex-wrap:wrap;
+}
+div.skill-selected{
+    background-color:#cfc;
+    border:1px dashed red;
+}
+
+input[type=range] {
+    height:1em;
+    -webkit-appearance: none;
+    border-radius: 10px; /*这个属性设置使填充进度条时的图形为圆角*/
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+}
+
+
+input[type=range]::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 10px; /*将轨道设为圆角的*/
+    border:1px solid #ccc;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+    box-shadow: 0 0 3px #6be;
+    border:1px solid #6be;
+}
+input[type=range]:focus {
+    outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 15px;
+    width: 15px;
+    margin-top: -5px; /*使滑块超出轨道部分的偏移量相等*/
+    background: #ffffff; 
+    border-radius: 50%; /*外观设置为圆形*/
+    border: solid 0.125em rgba(205, 224, 230, 0.5); /*设置边框*/
+    box-shadow: 0 .125em .125em #3b4547; /*添加底部阴影*/
 }

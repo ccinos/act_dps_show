@@ -7,11 +7,153 @@
     <script src="./vue.min.js"></script>
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
     <link href="./timeline.css" rel="stylesheet">
-    
+
+    <script src="./vue_ccino_switch.js"></script>
+    <link rel="stylesheet" href="./vue_ccino_switch.css">
     <!-- <script src="./axios.min.js"></script> -->
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;">
+    <!-- 技能选择浮窗 -->
+    <div class="mask" v-if="setting.skillSelectSet.enable"></div>
+    <div class="float-window" style="z-index:9999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable"
+        :style="{left:temp.hoverSkill.x+'px', top:temp.hoverSkill.y+'px'}">
+        <div>
+            <div style="font-size:120%;">{{temp.hoverSkill.skill.name}}</div>
+            <span v-if="temp.hoverSkill.skill.type">{{temp.hoverSkill.skill.type}}</span>
+            <span v-if="temp.hoverSkill.skill.cd">CD: {{temp.hoverSkill.skill.cd}}秒</span>  
+            <span v-else>即时</span>
+        </div>
+        <div style="width:300px" v-html="temp.hoverSkill.skill.intro.replace(/\n/g,'<br>')"></div>
+    </div>
+    <div class="float-window" v-if="setting.skillSelectSet.enable"
+        style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
+        <div class="row">
+            <div class="col-xs-12" style="padding:10px 10px 0px 30px">
+                职业
+                <select class="form-control form-auto" v-model="setting.skillSelectSet.jobName">
+                    <option v-for="jobSkill,jobName in jobSkillSetting" :value="jobName">{{jobName}}</option>
+                </select>
+               
+                <button class="btn btn-success" @click="savePicked">保存</button>
+                <button class="btn btn-default" @click="setting.skillSelectSet.enable=false;">关闭</button>
+                <span style="margin-left:50px;">
+                    GCD时间 <input class="form-control form-auto" v-model="setting.skillSelectSet.gcdDuration" type="number" style="width:100px;">秒
+                </span>
+            </div>
+        </div>
+        <hr>
+        <div class="row" style="overflow:auto;">
+            <div class="col-xs-6">
+                <div class="panel panel-default" >
+                    <div class="panel-heading">
+                        <h4>预设技能 <small>单击选择</small></h4>
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item" v-for="skillTypes in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">
+                            {{skillTypes[0]}}
+                            <div class="skill-container">
+                                <div v-for="skill in jobSkillSetting[setting.skillSelectSet.jobName].skills[skillTypes[1]]" class="skill-list"
+                                    @click="pickSkill(skill,skillTypes[1])"
+                                    @mousemove="onSkillHover(skill,$event)"
+                                    @mouseout="temp.hoverSkill.enable=false">
+                                    <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                                    <br>
+                                    <span style="font-size:12px">{{skill.name}}</span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel panel-default" >
+                    <div class="panel-heading">
+                        <h4>已选技能 <small>单击取消</small></h4>
+                    </div>
+                    <div class="panel-body">
+                        <ul>
+                            <li>每个职业技能与职能技能都会单独一列显示</li>
+                            <li>在顶部切换职业，你可以选择不同职业的技能</li>
+                        </ul>
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item" v-for="skillTypes in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">
+                            {{skillTypes[0]}}
+                            <div class="skill-container">
+                                <div v-for="skill,i in setting.skillSelectSet.selectedSkills[skillTypes[1]]" class="skill-list"
+                                    @click="unpickSkill(i,skillTypes[1])"
+                                    @mousemove="onSkillHover(skill,$event)"
+                                    @mouseout="temp.hoverSkill.enable=false">
+                                    <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                                    <br>
+                                    <span style="font-size:12px">{{skill.name}}</span>
+                                </div>
+                                
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="panel panel-default" >
+                    <div class="panel-heading">
+                        <h4>自定技能 <small>单击选择 右键修改</small></h4>
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item" v-for="skillTypes in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">
+                            {{skillTypes[0]}}
+                            <div class="skill-container">
+                                <template v-if="userDefinedJobSkillRef[setting.skillSelectSet.jobName]">
+                                    <!-- 用户自定义技能图标 -->
+                                    <div v-for="skill in userDefinedJobSkillRef[setting.skillSelectSet.jobName].skills[skillTypes[1]]" 
+                                        class="skill-list"
+                                        :class="{'skill-selected':setting.skillSelectSet.selectedUserDefinedSkill==skill}"
+                                        @contextmenu.prevent="selectUserDefinedSkill(skill,skillTypes[1])"
+                                        @click="pickSkill(skill,skillTypes[1])">
+                                        <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                                        <br>
+                                        <span style="font-size:12px">{{skill.name}}</span>
+                                    </div>
+                                </template>
+                                <template v-else> &nbsp;<br>&nbsp;<br>&nbsp;</template>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <button class="btn btn-primary" v-if="!setting.skillSelectSet.userDefinedSkill.enable"
+                                @click="addNewUserDefinedSkill">添加</button>
+                            <template v-if="setting.skillSelectSet.selectedUserDefinedSkill||setting.skillSelectSet.userDefinedSkill.new">
+                                <button class="btn btn-success" @click="saveNewUserDefinedSkill">保存</button>
+                                <button class="btn btn-default" @click="cancelSaveUserDefinedSkill">取消</button>
+                            </template>
+                            <br>
+                            <template v-if="setting.skillSelectSet.userDefinedSkill.enable">
+                                技能类型
+                                <select  class="form-control" v-model="setting.skillSelectSet.userDefinedSkill.skillType">
+                                    <option v-for="skillTypes in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]"
+                                        :value="skillTypes[1]">
+                                        {{skillTypes[0]}}
+                                    </option>
+                                </select>
+                                技能名
+                                <input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.name"/>
+                                <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">
+                                    技能全称（如果有图标则会显示，可省略）
+                                    <input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.fullname"/>
+                                </template>
+                                    冷却时间
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.cd"/>
+                                <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">
+                                    持续时间
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration"/>
+                                </template>
+                            </template>
+                            <!-- 图标
+                            <input class="form-control" type="text" v-model="setting.selectedSkillType.icon"/> -->
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- 事件浮窗 -->
     <div class="float-window" 
         v-if="setting.eventSet.enable"
@@ -39,8 +181,8 @@
                     @mousewheel.alt.prevent="onMouseWheelScale($event)"
                     :style="{height:option.svg.height+'px'}"
                     @dblclick="insertNew"
-                    @click="cancelAllSelect"
-                    @contextmenu.prevent="void 0;">
+                    @click="cancelAllSelect();selectLine();"
+                    @contextmenu.prevent="cancelAllSelect()">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
                         @mousemove="onSvgMouseMove($event),onMouseDrag($event)"
                         @mouseup="onMouseDrag($event)">
@@ -64,12 +206,19 @@
                                 {{y2time(dials.mouseY-timeline.offset) | timeFormat}}
                             </text>
                         </g>
+                        <!-- 选择时间点 -->
+                        <g v-if="dials.selectedLineY">
+                            <line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedLineY" :y2="dials.selectedLineY" />
+                            <text class="dials-select-line" :x="dials.left+0" :y="dials.selectedLineY" dy="4">
+                                {{y2time(dials.selectedLineY-timeline.offset) | timeFormat}}
+                            </text>
+                        </g>
+                        
                         <!-- 事件 -->
                         <g v-for="e in timeline.events" @mousedown="onMouseDragSimple($event,e)">
                             <line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
                             <text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4"  @click.stop="onEventClick(e,$event)"
-                                :class="{'event-active':setting.eventSet.event==e}"
-                                @contextmenu.prevent="onEventRightClick(e)">
+                                :class="{'event-active':setting.eventSet.event==e}">
                                 {{e.time | timeFormat}} &nbsp; {{e.text}}
                             </text>
                         </g>
@@ -77,12 +226,14 @@
                         <g>
                             <template v-for="gcd,i in timeline.gcd">
                                 <image :x="(+timeline.infoWidth)" 
-                                        :href="getGcdIcon(gcd)"
+                                        :href="getGcdIcon(gcd.skill)"
                                         :y="time2yOffset(gcd.time)"
                                         width="20"
                                         height="20"
-                                        onerror="this.style.opacity='0'"
-                                        @mousedown="gcdOnMouseDrag($event,gcd,i)"/>
+                                        onerror="this.href='./icons/skill/unknown.png'"
+                                        @click.stop=""
+                                        @mousedown="gcdOnMouseDrag($event,gcd,i)"
+                                        @contextmenu.prevent="deleteGcd(i)"/>
                             </template>
                         </g>
                         <!-- 技能 -->
@@ -90,7 +241,7 @@
                             <!-- 技能CD -->
                             <template v-if="timeline.skills[skill.name]">
                                 <g v-for="skillInfo in timeline.skills[skill.name]" >
-                                    <rect class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
+                                    <rect v-if="skill.cd" class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
                                 </g>
                                 <g v-for="skillInfo in timeline.skills[skill.name]" 
@@ -100,16 +251,16 @@
                                     @click.stop="onSelectSkill(skillInfo,skill,i,$event)"
                                     :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}"
                                     @contextmenu="onSkillRightClick(skillInfo,skill,i)"> 
-                                    <rect class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
+                                    <rect v-if="skill.cd" class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                             :y="time2yOffset(skillInfo.time)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
-                                    <rect class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+(i+setting.reserveCols)*(skillOption.all)" 
+                                    <rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+(i+setting.reserveCols)*(skillOption.all)" 
                                             :y="time2yOffset(skillInfo.time)" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
                                     <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :href="skill.icon||getSkillIcon(skill)"
                                         :y="time2yOffset(skillInfo.time)"
                                         width="20"
                                         height="20"
-                                        onerror="this.style.opacity='0'"/>
+                                        onerror="this.href='./icons/skill/unknown.png'"/>
                                 </g>
                             </template>
                         </g>
@@ -118,6 +269,7 @@
                             <!-- 技能名称 -->
                             <text :x="(+timeline.infoWidth)+option.skill.nameOffset+(i+setting.reserveCols)*(skillOption.all)" text-anchor="middle" 
                                 :y="dials.top+15" 
+                                style="font-size:12px;"
                                 :class="{'skill-type-active':setting.selectedSkillType==skill}">
                                 {{skill.name}}
                             </text>
@@ -126,7 +278,7 @@
                                     :y="dials.top+25"
                                     width="20"
                                     height="20"
-                                    onerror="this.style.opacity='0'"/>
+                                    onerror="this.href='./icons/skill/unknown.png'"/>
                         </g>
                         <!-- 技能显示刻度 -->
                         <g v-for="shownSkill in shownSkillInfo">
@@ -151,7 +303,7 @@
                     </div>
                     <select class="form-control" v-model="selectedDataIndex">
                         <option v-for="data,i in savedDatas" :value="i">
-                            {{data.name}} (技能{{data.skills.length}} 事件{{data.timeline.events.length}})
+                            {{data.name}} (事件{{data.timeline.events.length}})
                         </option>
                     </select>
                     <input class="form-control" style="width:100px;display:inline-block;" v-model="newDataName" placeholder="新名称"> 
@@ -159,8 +311,31 @@
                     <button class="btn btn-primary" @click="dataLoad">读取</button>
                     <button class="btn btn-danger" @click="dataDelete">删除</button>
                     <button class="btn btn-info" @click="dataShare">分享</button>
+                        
                     <hr>
+                    <input class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
+                        @blur="inputErrMsg=''"
+                        @keydown.esc="onClearInput">
+                    <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span>
+                    <hr>
+                    <button class="btn btn-primary" @click="setting.skillSelectSet.enable=true">技能设置</button>
+                    <button class="btn btn-primary" @click="timeline.gcd=[]">清空GCD技能</button>
+                    <!-- GCD技能列表 -->
                     
+                    <div style="display:flex;flex-wrap:wrap;">
+                        <div v-for="gcdSkill,i in gcdSkills" class="gcd-skill"
+                            @click="addGcdSkill(gcdSkill.name,gcdSetting.addIsInsert)"
+                            @mousemove="onSkillHover(gcdSkill,$event)"
+                            @mouseout="temp.hoverSkill.enable=false">
+                            <img :src="getGcdIcon(gcdSkill.name)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                            <br>
+                            <span style="font-size:12px">{{gcdSkill.name}}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
+                    <br>
+                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式
                     <div>
                         技能显示间隔 {{option.skill.margin}}
                         <input type="range" v-model="option.skill.margin" min="0" max="100">
@@ -177,35 +352,6 @@
                         图表宽度 {{option.svg.width}}
                         <input type="range" v-model="option.svg.width" min="800" max="8000">
                     </div>
-
-                    
-                        
-                    <hr>
-                    <input class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
-                        @blur="inputErrMsg=''"
-                        @keydown.esc="onClearInput">
-                    <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span>
-
-                    <hr>
-                    <h3>技能类型</h3>
-                    <button class="btn btn-primary" @click="newSkillType">新增技能</button>
-                    <button class="btn btn-danger" v-if="setting.selectedSkillType&&!setting.selectedSkillType.new" @click="deleteSkillType">删除</button>
-                    <div v-if="setting.selectedSkillType" class="well">
-                        技能简称
-                        <input class="form-control" type="text" v-model="setting.selectedSkillType.name"/>
-                        技能全称（如果有图标则会显示，可省略）
-                        <input class="form-control" type="text" v-model="setting.selectedSkillType.fullname"/>
-                        冷却时间
-                        <input class="form-control" type="number" v-model="setting.selectedSkillType.cd"/>
-                        持续时间
-                        <input class="form-control" type="number" v-model="setting.selectedSkillType.duration"/>
-                        图标
-                        <input class="form-control" type="text" v-model="setting.selectedSkillType.icon"/>
-                        <template v-if="setting.selectedSkillType.new">
-                            <button class="btn btn-success" @click="saveNewSkill">保存</button>
-                            <button class="btn btn-default" @click="cancelSaveSkill">取消</button>
-                        </template>
-                    </div>
                     <hr>
                     <h2>
                         操作说明 <small>{{versions[0].ver}}</small>
@@ -213,11 +359,11 @@
                     <ul>
                         <li>使用反馈 ：5327373@qq.com</li>
                         <li>双击左侧增加新事件/新技能</li>
-                        <li>单击事件可以修改具体信息（回车确认更改）</li>
-                        <li>在输入框中按ESC可取消输入并且取消修改</li>
+                        <li>单击事件可以修改具体信息</li>
                         <li>按住alt+滚轮可以放大/缩小</li>
-                        <li>拖动技能可以调整技能时间</li>
+                        <li>拖动物件可以调整时间</li>
                         <li>技能绿色部分是持续时间，灰色为CD，灰色虚线为此范围内无法设置该技能的提示</li>
+                        <li>左键点击图表，点击右侧的GCD技能，即可在选择的位置插入技能。右键图表上的GCD技能，可以删除。</li>
                     </ul>
                     <ul>
                         <template v-for="v in versions">
@@ -236,5 +382,6 @@
     </div>
     
 </div>
+<script src="./timeline_data.js"></script>
 <script src="./timeline.js"></script>
 </body>

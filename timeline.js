@@ -1,4 +1,5 @@
 'use strict';
+
 Array.prototype.insertSort=function(obj,handler){
     if(!(handler instanceof Function)){
         handler=function(a,b){ return a<b }
@@ -7,10 +8,11 @@ Array.prototype.insertSort=function(obj,handler){
         var t=this[i];
         if(handler(obj,t)){
             this.splice(i,0,obj);
-            return;
+            return i;
         }
     }
     this.push(obj);
+    return this.length-1;
 }
 function copy(data){
     return JSON.parse(JSON.stringify(data));
@@ -51,7 +53,7 @@ var defaultOption={
 var skillNameIcon={
     "翅膀":"武装戍卫",
     "幕帘":"圣光幕帘",
-    "雪仇":"血仇",
+    "血仇":"雪仇",
 
 }
 var svgContainer;
@@ -59,6 +61,12 @@ var vueapp = new Vue({
     el: "#container",
     data: {
         versions:[
+            {
+                ver:"0.20",
+                type:"update",
+                date:'2020.01.12',
+                info:"增加了GCD安排功能，可以方便大家对应BOSS上天安排循环之类的（看看到底BOSS上天能打出几个GCD），增加了预设技能，做了一些美化。本次更新较大可能会有bug。"
+            },
             {
                 ver:"0.11",
                 type:"update",
@@ -73,11 +81,12 @@ var vueapp = new Vue({
             }
         ],
         setting:{
-            reserveCols:0,
+            reserveCols:1, //预留技能列数量
             inputText:"",
             inputErrMsg:"",
             selectedSkill:null,
             selectedSkillType:null,
+            lastSkillIsGcd:false,
             skillSet:{
                 enable:false,
                 x:100,y:100
@@ -85,28 +94,50 @@ var vueapp = new Vue({
             eventSet:{
                 enable:false,
                 x:100, y:100, event:{},
+            },
+            skillSelectSet:{
+                enable:false,
+                jobName:"骑士",
+                userDefinedSkill:{
+                    enable:false,
+                    name:null, cd:null, skillType:"gcd", duration:null,new:false
+                },
+                selectedUserDefinedSkill:null,
+                selectedSkills:{
+                    job:[],jobType:[],gcd:[]
+                },
+                gcdDuration:2.5,
             }
         },
+        temp:{
+            hoverSkill:{
+                enable:false,
+                x:null, y:null
+            },  //{}
+
+        },
+        jobSkillSetting:jobSkill,
         option:defaultOption,
-        skills:[
-            {
-                name:"铁壁",
-                cd:90,
-                duration:20,
-            },
-            {
-                name:"血仇",
-                cd:60,
-                duration:5,
-            },
-            {
-                name:"预警",
-                cd:120,
-                duration:10,
-            },
+        allGcdSkillMap:allSkillMap, //GCD技能字典
+        userDefinedDatas:["userDefinedSkills","userDefinedjobTypeSkill","userDefinedJobSkill",
+                           "skills","gcdSkills","setting","gcdSetting","timeline"],
+        userDefinedSkills:[], //用户定义的技能列表
+        userDefinedjobTypeSkill:{
+            坦克:[],
+            奶妈:[],
+            近战:[],
+            远敏:[],
+            魔法:[]
+        },
+        userDefinedJobSkill:{}, // 骑士: {  job:[], gcd:[] }
+        sharingDatas:["timeline","gcdSetting","gcdSkills","skills"],
+        gcdSkills:[ //已经选择的GCD技能列表
+        ],
+        skills:[ //已经选择的技能列表
         ],
         gcdSetting:{
             cd:2.42, //秒
+            addIsInsert:true, 
             dragAllMove:true, //是否可以一个GCD技能推动其他技能一起
             abilities:{//能力技能
                 "战逃反应":{
@@ -184,6 +215,7 @@ var vueapp = new Vue({
             // miniLines:[],
             lastLineIndex:-1,
             mouseY:0,
+            selectedLineY:null,
             skillShown:null,
             top:0,
             height:2000,
@@ -212,6 +244,146 @@ var vueapp = new Vue({
         sharingText:null,
     },
     methods: {
+        onSkillHover:function(skill,e){
+            this.temp.hoverSkill.enable=true;
+            var newX=e.x+10;
+            if(newX+320>=window.innerWidth){
+                newX= window.innerWidth-320;
+            }
+            this.temp.hoverSkill.x=newX;
+            this.temp.hoverSkill.y=e.y+10;
+            this.temp.hoverSkill.skill=skill;
+        },
+        savePicked:function(){
+            var selectedSkills=this.setting.skillSelectSet.selectedSkills;
+            this.skills=copy(selectedSkills.job.concat(selectedSkills.jobType));
+            this.gcdSkills=copy(selectedSkills.gcd);
+            //添加gcdSetting.skills {}
+            this.gcdSetting.skills={};
+            for(var skill of this.gcdSkills){
+                this.gcdSetting.skills[skill.name]=skill;
+            }
+            //gcd时间
+            var gcdDuration=+this.setting.skillSelectSet.gcdDuration;
+            if(!isNaN(this.gcdSetting.cd)){
+                this.gcdSetting.cd=gcdDuration
+            }
+
+            this.setting.skillSelectSet.enable=false;
+            this.saveUserDefinedData();
+        },
+        unpickSkill:function(i,skillType){
+            this.setting.skillSelectSet.selectedSkills[skillType].splice(i,1);
+        },
+        pickSkill:function(skill,skillType){
+            if(skillType=="gcd"){
+                if(this.setting.skillSelectSet.selectedSkills[skillType].findIndex(function(a){return a.name==skill.name})!=-1){
+                    return;
+                }
+            }else{
+                if(this.setting.skillSelectSet.selectedSkills['job'].findIndex(function(a){return a.name==skill.name})!=-1)
+                    return;
+                if(this.setting.skillSelectSet.selectedSkills['jobType'].findIndex(function(a){return a.name==skill.name})!=-1)
+                    return;
+            }
+            this.setting.skillSelectSet.selectedSkills[skillType].push(skill);
+        },
+        selectUserDefinedSkill:function(skill,skillType){
+            this.setting.skillSelectSet.userDefinedSkill={
+                enable:true, name:skill.name, cd:skill.cd, fullname:skill.fullname,
+                skillType:skillType,
+                duration:skill.duration,new:false
+            }
+            this.setting.skillSelectSet.selectedUserDefinedSkill=skill;
+
+        },
+        saveUserDefinedData:function(){
+            var userDefinedData={ }
+            for(var dataName of vueapp.userDefinedDatas){
+                userDefinedData[dataName]=vueapp[dataName];
+            }
+            localStorage.setItem("CCINO_TIMELINE_USERDEFINED_DATA",JSON.stringify(userDefinedData));
+        },
+        saveNewUserDefinedSkill:function(){
+            var name=this.setting.skillSelectSet.userDefinedSkill.name;
+            if(!name){
+                alert("请输入技能名");
+                return;
+            }
+            if(this.setting.skillSelectSet.userDefinedSkill.new){
+                if(this.userDefinedSkills.findIndex(function(a){return a.name==name})!=-1){
+                    alert("技能名不能重复");
+                    return;
+                }
+                this.userDefinedSkills.push({
+                    name:name,
+                    cd:this.setting.skillSelectSet.userDefinedSkill.cd,
+                    duration:this.setting.skillSelectSet.userDefinedSkill.duration,
+                    fullname:this.setting.skillSelectSet.userDefinedSkill.fullname
+                });
+                
+            }else if(this.setting.skillSelectSet.selectedUserDefinedSkill){
+                //修改技能
+                var skill=this.setting.skillSelectSet.selectedUserDefinedSkill;
+                var newSkill=this.setting.skillSelectSet.userDefinedSkill;
+                if(this.userDefinedSkills.findIndex(function(a){
+                    return a.name==name&&a!=skill
+                })!=-1){
+                    alert("技能名不能重复");
+                    return;
+                }
+                skill.cd=newSkill.cd;
+                skill.duration=newSkill.duration;
+                skill.fullname=newSkill.fullname;
+                var skillType=newSkill.skillType;
+                //--列表中全部删除
+                let deleteFunc=function(list){
+                    let i=list.findIndex(function(e){ return e==skill.name});
+                    if(i>=0) list.splice(i,1);
+                }
+                //职能技能
+                for(let jobTypeName in this.userDefinedjobTypeSkill){
+                    let jobList=this.userDefinedjobTypeSkill[jobTypeName];
+                    deleteFunc(jobList);
+                }
+                //职业技能
+                for(let jobTypeName in this.userDefinedJobSkill){
+                    let jobSkill=this.userDefinedJobSkill[jobTypeName]
+                    deleteFunc(jobSkill.job);
+                    deleteFunc(jobSkill.gcd);
+                }
+                skill.name=newSkill.name;
+            }
+            //添加到列表中
+            var skillType=this.setting.skillSelectSet.userDefinedSkill.skillType;
+            var jobName=this.setting.skillSelectSet.jobName;
+            if(skillType=="jobType"){
+                var jobType=jobSkill[jobName].type;
+                this.userDefinedjobTypeSkill[jobType].push(name);
+            }else{
+                if(!this.userDefinedJobSkill[jobName])
+                    Vue.set(this.userDefinedJobSkill,jobName,{
+                        job:[],gcd:[]
+                    });
+                this.userDefinedJobSkill[jobName][skillType].push(name);
+            }
+            this.setting.skillSelectSet.userDefinedSkill.name="";
+            this.cancelSaveUserDefinedSkill();
+            this.saveUserDefinedData();
+
+        },
+        cancelSaveUserDefinedSkill:function(){
+            this.setting.skillSelectSet.userDefinedSkill.enable=false;
+            this.setting.skillSelectSet.userDefinedSkill.new=false;
+            this.setting.skillSelectSet.selectedUserDefinedSkill=null;
+        },
+        addNewUserDefinedSkill:function(){
+            this.setting.skillSelectSet.userDefinedSkill={
+                enable:true, name:null, cd:null, fullname:null,
+                skillType:this.setting.skillSelectSet.userDefinedSkill.skillType,
+                duration:null,new:true
+            }
+        },
         checkAbilityTime:function(time,name){ //判断能力技CD
             var ability=this.gcdSetting.abilities[name]||{};
             var offsetTime=(ability.cd||0)*1000;
@@ -232,22 +404,27 @@ var vueapp = new Vue({
             }
             return true;
         },
-        deleteGcdSkill:function(i){//删除GCD
-
+        deleteGcd:function(i){//删除GCD
+            this.timeline.gcd.splice(i,1);
         },
-        changeGcdTime:function(gcd,time,i){//改变GCD时间
-            if(time==gcd.time) return;
-            var up=time<gcd.time;
+        changeGcdTime:function(gcd,time,i,forceDown,dragAllMove){//改变GCD时间
+            if(forceDown){
+                var up=false;
+                time=gcd.time;
+            }else{
+                if(time==gcd.time) return;
+                var up=time<gcd.time;
+            }
             var down=!up;
             if(up&&i>0 || down&&i<this.timeline.gcd.length-1){
                 var newI=up?i-1:i+1;
                 var g=this.timeline.gcd[newI];
-                var cd=this.getGcdCd(g.skill);
+                var cd=this.gcdSetting.cd*1000;
                 var checkTime=g.time+(up?cd:-cd);
                 if(down^time<checkTime){
                     //无法移动
-                    if(this.gcdSetting.dragAllMove){ //推动全部
-                        var t=this.changeGcdTime(g,time+(up?-cd:cd),newI);
+                    if(this.gcdSetting.dragAllMove||dragAllMove){ //推动全部
+                        var t=this.changeGcdTime(g,time+(up?-cd:cd),newI,false,dragAllMove);
                         if(t<=0||t>=this.timeline.length*1000){
                             return -1;
                         }
@@ -255,7 +432,28 @@ var vueapp = new Vue({
                         return gcd.time;
                     }
                 }
-            }else{
+                //允许移动，检查相同GCD技能
+                var gcdCd=this.getGcdCd(gcd.skill);
+                if(gcdCd){ //具有单独gcd
+                    var siblingGcd;
+                    if(up){
+                        siblingGcd=this.getLastGcdSkill(gcd.skill,i,gcdCd);
+                    }else{
+                        siblingGcd=this.getNextGcdSkill(gcd.skill,i,gcdCd);
+                    }
+                    if(siblingGcd){ //时间范围内有相同GCD技能
+                        //无法移动
+                        if(this.gcdSetting.dragAllMove||dragAllMove){ //推动全部
+                            var t=this.changeGcdTime(siblingGcd[0],time+(up?-gcdCd:gcdCd),siblingGcd[1],false,dragAllMove);
+                            if(t<=0||t>=this.timeline.length*1000){
+                                return -1;
+                            }
+                        }else{
+                            return gcd.time;
+                        }
+                    }
+                }
+            }else{ //两侧可以直接移动
                 if(time<0||time>this.timeline.length*1000){
                     return -1;
                 }
@@ -263,8 +461,51 @@ var vueapp = new Vue({
             gcd.time=time;;
             return time;
         },
-        getGcdCd:function(gcdName){
-            return Math.floor(((this.gcdSetting.skills[gcdName]||{}).cd||this.gcdSetting.cd||2.5) * 100)  * 10;
+        getGcdCd:function(gcdName){ //获得gcd技能的cd
+            if(this.gcdSetting.skills[gcdName]){
+                if(this.gcdSetting.skills[gcdName].cd){
+                    return Math.floor(this.gcdSetting.skills[gcdName].cd*100)*10;
+                }
+            }
+        },
+        getLastGcdSkill:function(name,i,limit){
+            //获得小于该索引的最近一条gcd技能
+            var currentGcd=this.timeline.gcd[i];
+            if(!limit) limit=currentGcd.time;
+            for(--i;i>=0;--i){
+                var gcd=this.timeline.gcd[i];
+                if(currentGcd.time-gcd.time>limit)
+                    break;
+                if(gcd.skill==name){
+                    return [gcd,i];
+                }
+            }
+        },
+        getNextGcdSkill:function(name,i,limit){
+            var currentGcd=this.timeline.gcd[i];
+            if(!limit) limit=this.timeline.gcd[this.timeline.gcd.length-1].time;
+            for(++i;i<this.timeline.gcd.length;++i){
+                var gcd=this.timeline.gcd[i];
+                if(gcd.time-currentGcd.time>limit)
+                    break;
+                if(gcd.skill==name){
+                    return [gcd,i];
+                }
+            }
+        },
+        /**
+         * 在当前选择的时间点增加一条GCD技能
+         * @param {String} name GCD技能名 
+         * @param {Boolean} isInsert 是否插入（如果插入，后续所有技能时间++)
+         * @returns {Number} 实际插入的时间
+         */
+        addGcdSkill:function(name,isInsert){
+            var y=this.dials.selectedLineY;
+            if(!y) y=this.timeline.offset;
+            var time=this.y2time(y-this.timeline.offset);
+            time=this.addGcdSkillAtTime(time,name,isInsert);
+            this.dials.selectedLineY=this.time2yOffset(time);
+            return time;
         },
         /**
          * 在此时间增加一条GCD技能，会在此时间往后查找一个合适的空隙进行插入
@@ -274,24 +515,32 @@ var vueapp = new Vue({
          * @param {Boolean} isInsert 是否插入（如果插入，后续所有技能时间++)
          * @returns {Number} 实际插入的时间
          */
-        addGcdSkill:function(time,name,isInsert){
+        addGcdSkillAtTime:function(time,name,isInsert){
             for(var i=0,len=this.timeline.gcd.length;i<len;++i){
                 var gcd=this.timeline.gcd[i];
-                var currentSkillCd=this.getGcdCd(gcd.skill);
-                var maxGcdTime=gcd.time+currentSkillCd; //本次技能CD转好时间
+                var gcdDuration=this.gcdSetting.cd*1000; //gcd时间
+                var maxGcdTime=gcd.time+gcdDuration; //本次技能CD转好时间
                 if(maxGcdTime<time){
                     continue;
                 }
-                var insertingCd=this.getGcdCd(name);
-                var minGcdTime=gcd.time-insertingCd;
+                var insertingCd=this.getGcdCd(name); //当前插入技能的CD
+                var minGcdTime=gcd.time-gcdDuration;
                 if(time<minGcdTime){
+                    // 检查技能CD
+                    if(insertingCd){ //具有单独的CD
+                        var nextSameGcd=this.getNextGcdSkill(name,i,insertingCd);
+                        if(nextSameGcd){ //CD时间内找到相同技能
+                            time=nextSameGcd[0].time+insertingCd; //延后再试
+                            continue;
+                        }
+                    }
                     break;
                 }
                 if(isInsert){
                     //将后续技能全部后调
                     var diff=time-minGcdTime;
                     var lastTime=time;
-                    var lastCd=insertingCd;
+                    var lastCd=gcdDuration;
                     for(;i<len;++i){
                         gcd=this.timeline.gcd[i];
                         var dd=(gcd.time-(lastTime+lastCd));
@@ -309,70 +558,33 @@ var vueapp = new Vue({
                     time=maxGcdTime;
                 }
             }
-            this.timeline.gcd.insertSort({
+            var insertedGcd={
                 time:time,
                 skill:name
-            },function(a,b){return a.time<b.time})
+            };
+            var insertedIndex=this.timeline.gcd.insertSort(insertedGcd,function(a,b){return a.time<b.time})
+            if(isInsert){
+                this.changeGcdTime(insertedGcd,0,insertedIndex,true,true);
+            }
             return time;
         },
         getSkillIcon:function(skill){
             var iconname=skillNameIcon[skill.name]||skill.fullname||skill.name;
             return "./icons/skill/"+iconname+".png";
         },
-        getGcdIcon:function(gcd){
-            var iconname=gcd.skill;
-            return "./icons/skill/"+iconname+".png";
+        getGcdIcon:function(skillName){
+            return "./icons/skill/"+skillName+".png";
         },
-        deleteSkillType:function(){
-            if(this.setting.selectedSkillType&&!this.setting.selectedSkillType.new){
-                var name=this.setting.selectedSkillType.name;
-                if(confirm("是否确认删除["+name+"]?")){
-                    var i=this.skills.findIndex(function(s){ return s==vueapp.setting.selectedSkillType});
-                    this.timeline.skills[name]=null;
-                    if(i>=0){
-                        this.skills.splice(i,1);
-                    }
-                    this.setting.selectedSkillType=null;
-                }
-            }
-        },
-        saveNewSkill:function(){
-            if(this.setting.selectedSkillType.new){
-                var name=this.setting.selectedSkillType.name;
-                if(name){
-                    if(this.timeline.skills[name]){
-                        alert("技能名不能重复");
-                        return;
-                    }
-                    var skill={
-                        name:name,
-                        cd:this.setting.selectedSkillType.cd||0,
-                        duration:this.setting.selectedSkillType.duration||0,
-                        icon:this.setting.selectedSkillType.icon,
-                        fullname:this.setting.selectedSkillType.fullname,
-                    }
-                    this.timeline.skills[name]=[];
-                    this.skills.push(skill);
-                    this.setting.selectedSkillType=null;
-                }else{
-                    alert("请输入技能名称");
-                }
-            }
-        },
-        cancelSaveSkill:function(){
-
-        },
-        newSkillType:function(){
-            this.setting.selectedSkillType={
-                new:true,
-                name:"",
-            }
+        
+        selectLine:function(){
+            this.dials.selectedLineY=this.dials.mouseY;
         },
         cancelAllSelect:function(){
             this.setting.selectedSkillType=null;
             this.setting.selectedSkill=null;
             this.setting.eventSet={enable:false};
             this.setting.skillSet={enable:false};
+            this.dials.selectedLineY=null;
         },
         onSelectSkillType:function(skill,i){
             this.cancelAllSelect();
@@ -408,11 +620,6 @@ var vueapp = new Vue({
         onClearInput:function(){
             this.setting.inputText="";
             this.setting.inputErrMsg="";
-        },
-        onEventRightClick:function(e){
-            if(this.setting.eventSet.event==e){
-                this.cancelAllSelect();
-            }
         },
         deleteSelectedEvent:function(){
             if(this.setting.eventSet.event){
@@ -474,7 +681,7 @@ var vueapp = new Vue({
                                 text:text,
                             },function(a,b){ return a.time<b.time })
                         }
-                    }else if(this.hover.rect.type=="skill"){
+                    }else if(this.hover.rect.type=="skill" && this.hover.rect.skillIndex>=0){
                         var skill=this.skills[this.hover.rect.skillIndex];
                         if(skill){
                             if(this.checkSkillTime(skill,time)){
@@ -695,9 +902,9 @@ var vueapp = new Vue({
         dataLoad:function(slince){
             if(this.selectedDataIndex>=0&&this.selectedDataIndex<this.savedDatas.length){
                 var savedData=copy(this.savedDatas[this.selectedDataIndex]);
-                this.timeline=mergeObj(this.timeline,savedData.timeline);
-                this.skills=savedData.skills;
-                this.option=mergeObj(this.option,savedData.option);
+                for(var prop of this.sharingDatas){
+                    this[prop]=mergeObj(this[prop],savedData[prop]);
+                }
             }else{
                 if(!slince)
                     alert("请选择一个存档");
@@ -736,19 +943,59 @@ var vueapp = new Vue({
             }
         },
         getAllData:function(){
-            return {
-                timeline:this.timeline,
-                skills:this.skills,
-                option:this.option,
+            var data={};
+            for(var prop of this.sharingDatas){
+                data[prop]=this[prop];
             }
+            return data;
         },
         init:function(){
-            vueapp.dataLoad(true);
             svgContainer=document.getElementById("svg_container");
         }
        
     },
     computed:{
+        allUserDefinedSkillMap:function(){
+            var allSkillMap={}; //技能map
+            for(var i=0;i<this.userDefinedSkills.length;++i){
+                var skill=this.userDefinedSkills[i];
+                allSkillMap[skill.name]=skill;
+            }
+            return allSkillMap;
+        },
+        userDefinedJobSkillRef:function(){
+            let jobSkillRef={};
+            for(let jobName in this.jobSkillSetting){ //加工职业技能
+                var jobType=jobSkill[jobName].type;
+                var jobSkillLists=this.userDefinedJobSkill[jobName]||{gcd:[],job:[]};
+                var job={
+                    type:jobType,
+                    skills:{
+                        jobType:[],
+                        job:[],
+                        gcd:[],
+                    }
+                }
+                jobSkillRef[jobName]=job;
+                //增加职能技能
+                var jobTypeSkillList=this.userDefinedjobTypeSkill[job.type];
+                for(var skillName of jobTypeSkillList){
+                    var skill=this.allUserDefinedSkillMap[skillName];
+                    job.skills.jobType.push(skill);
+                }
+                //增加职业技能
+                for(var skillName of jobSkillLists.job){
+                    var skill=this.allUserDefinedSkillMap[skillName];
+                    job.skills.job.push(skill);
+                }
+                //增加职业的GCD技能
+                for(var skillName of jobSkillLists.gcd){
+                    var skill=this.allUserDefinedSkillMap[skillName]||{name:skillName};
+                    job.skills.gcd.push(skill);
+                }
+            }
+            return jobSkillRef;
+        },
         skillOption:function(){
             return {
                 width: +this.option.skill.width,
@@ -819,7 +1066,32 @@ var vueapp = new Vue({
 });
 
 
+
+function loadUserDefinedData(){
+    var data=localStorage.getItem("CCINO_TIMELINE_USERDEFINED_DATA");
+    if(data){
+        try{
+            data=JSON.parse(data);
+            if(data){
+                for(var dataName of vueapp.userDefinedDatas){
+                    if(data[dataName]){
+                        Vue.set(vueapp,dataName,data[dataName]);
+                    }
+                }
+            }
+        }catch(e){
+            console.error(e);
+        }
+    }
+}
+loadUserDefinedData();
+
+
 vueapp.init();
+
+window.addEventListener("beforeunload",function(){
+    vueapp.saveUserDefinedData();
+})
 
 
 // document.addEventListener('keydown', function(evt){
@@ -848,24 +1120,10 @@ vueapp.init();
 //     return false;
 // }, false);
 
-
-// vueapp.addGcdSkill(1465,"先锋剑")
-// vueapp.addGcdSkill(1465,"暴乱剑")
-// vueapp.addGcdSkill(1465,"沥血剑")
-// vueapp.addGcdSkill(1465,"先锋剑")
-// vueapp.addGcdSkill(1465,"暴乱剑")
-// vueapp.addGcdSkill(1465,"王权剑")
-// vueapp.addGcdSkill(1465,"赎罪剑")
-// vueapp.addGcdSkill(1465,"赎罪剑")
-// vueapp.addGcdSkill(1465,"赎罪剑")
-// vueapp.addGcdSkill(1465,"先锋剑")
-// vueapp.addGcdSkill(1465,"暴乱剑")
-// vueapp.addGcdSkill(1465,"沥血剑")
-// vueapp.addGcdSkill(1465,"圣灵")
-// vueapp.addGcdSkill(1465,"圣灵")
-// vueapp.addGcdSkill(1465,"圣灵")
-// vueapp.addGcdSkill(1465,"圣灵")
-// vueapp.addGcdSkill(1465,"悔罪")
-// vueapp.addGcdSkill(1465,"先锋剑")
-// vueapp.addGcdSkill(1465,"暴乱剑")
-// vueapp.addGcdSkill(1465,"沥血剑")
+/*
+    TODO:
+    1、增加技能配置页面，配置可选技能
+    2、增加预置技能属性、图标
+    3、增加GCD技能设置页面，包括各个职业
+    4、增加能力技通道(持续时间在buff栏显示) 能力技能只能放在gcd的1/3处
+ */
