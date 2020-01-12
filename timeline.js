@@ -62,6 +62,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.24",
+                type:"update",
+                date:'2020.01.12 17:29',
+                info:"ACT LOGS文件解析重新匹配，现在已经可以正确解析事件"
+            },
+            {
                 ver:"0.23",
                 type:"update",
                 date:'2020.01.12 12:18',
@@ -340,7 +346,9 @@ var vueapp = new Vue({
             var file=document.getElementById("actfile").files[0];
             if(file){
                 var reader = new FileReader();
-                var regex = /00\|(.{33})\|\w{4}\|\|(.+)(发动了|咏唱了)“(.+)”。/;
+                //var regex = /00\|(.{33})\|\w{4}\|\|(.+)(发动了|咏唱了)“(.+)”。/;
+                var regex = /21\|(.{33})\|\w{8}\|([^|]+)\|\w+\|([^|]+)\|/;
+                //21|2019-12-13T23:23:58.5270000+08:00|100CD079|上条美琴|1D6B|铁壁
                 reader.onload = function () {
                     let i=0,j=this.result.indexOf("\n");
                     let datas={},dataList=[];
@@ -357,7 +365,7 @@ var vueapp = new Vue({
                     //--------------
                     while(j!=-1){
                         var line=this.result.substring(i,j);
-                        if(line.substr(0,3)=="00|"){
+                        if(line.substr(0,3)=="21|"){
                             var match=regex.exec(line);
                             if(match){
                                 var time=+new Date(match[1]);
@@ -366,7 +374,7 @@ var vueapp = new Vue({
                                 }
                                 endTime=time;
                                 var player=match[2];
-                                var skill=match[4];
+                                var skill=match[3];
                                 if(!datas[player]){
                                     datas[player]={
                                         gcd:[],job:[],
