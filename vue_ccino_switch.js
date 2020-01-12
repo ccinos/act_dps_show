@@ -1,18 +1,17 @@
 Vue.component('ccino-switch', {
     model:{
-        prop:"value",
+        prop:"checked",
         event:"change"
     },
     props: {
-        value:Boolean,
+        checked:Boolean,
     },
     data:function(){
         return {
-            value:false,
         }
     },
     template:`
-    <div class="switch-wrap" :class="{active:value}"  @click="value=!value;$emit('change', value)">
+    <div class="switch-wrap" :class="{active:checked}"  @click="checked=!checked;$emit('change', checked)">
         <span></span>
     </div>
   `

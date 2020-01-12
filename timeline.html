@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="./common.js"></script>
     <script src="./vue.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
     <link href="./timeline.css" rel="stylesheet">
 
@@ -19,7 +20,7 @@
     <div class="float-window" style="z-index:9999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable"
         :style="{left:temp.hoverSkill.x+'px', top:temp.hoverSkill.y+'px'}">
         <div>
-            <div style="font-size:120%;">{{temp.hoverSkill.skill.name}}</div>
+            <div style="font-size:120%;">{{temp.hoverSkill.skill.fullname||temp.hoverSkill.skill.name}}</div>
             <span v-if="temp.hoverSkill.skill.type">{{temp.hoverSkill.skill.type}}</span>
             <span v-if="temp.hoverSkill.skill.cd">CD: {{temp.hoverSkill.skill.cd}}秒</span>  
             <span v-else>即时</span>
@@ -44,6 +45,36 @@
         </div>
         <hr>
         <div class="row" style="overflow:auto;">
+            <div class="panel panel-default" >
+                <div class="panel-heading">
+                    <h4>已选技能 <small>单击取消 右键修改别名</small></h4>
+                </div>
+                <div class="panel-body">
+                    <ul>
+                        <li>每个职业技能与职能技能都会单独一列显示</li>
+                        <li>在顶部切换职业，你可以选择不同职业的技能</li>
+                        <li>拖动技能以调整排序</li>
+                    </ul>
+                </div>
+                <ul class="list-group"></ul>
+                    <li class="list-group-item" v-for="skillTypes in [['能力技','job'],['GCD技能','gcd']]">
+                        {{skillTypes[0]}}
+                        <div class="skill-container">
+                            <div v-for="skill,i in setting.skillSelectSet.selectedSkills[skillTypes[1]]" class="skill-list"
+                                draggable="true" @dragover.prevent="" @drop.prevent="pickedSkillDrop($event,i,skillTypes[1])" @drag="pickedSkillDrag($event,i,skillTypes[1])"
+                                @click="unpickSkill(i,skillTypes[1])"
+                                @contextmenu.prevent="onMouseRightClickInPickedSkill(skill,i)"
+                                @mousemove="onSkillHover(skill,$event)"
+                                @mouseout="temp.hoverSkill.enable=false">
+                                <img draggable="false" :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                                <br>
+                                <span style="font-size:12px">{{skill.name}}</span>
+                            </div>
+                            
+                        </div>
+                    </li>
+                </ul>
+            </div>
             <div class="col-xs-6">
                 <div class="panel panel-default" >
                     <div class="panel-heading">
@@ -65,33 +96,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="panel panel-default" >
-                    <div class="panel-heading">
-                        <h4>已选技能 <small>单击取消</small></h4>
-                    </div>
-                    <div class="panel-body">
-                        <ul>
-                            <li>每个职业技能与职能技能都会单独一列显示</li>
-                            <li>在顶部切换职业，你可以选择不同职业的技能</li>
-                        </ul>
-                    </div>
-                    <ul class="list-group">
-                        <li class="list-group-item" v-for="skillTypes in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">
-                            {{skillTypes[0]}}
-                            <div class="skill-container">
-                                <div v-for="skill,i in setting.skillSelectSet.selectedSkills[skillTypes[1]]" class="skill-list"
-                                    @click="unpickSkill(i,skillTypes[1])"
-                                    @mousemove="onSkillHover(skill,$event)"
-                                    @mouseout="temp.hoverSkill.enable=false">
-                                    <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
-                                    <br>
-                                    <span style="font-size:12px">{{skill.name}}</span>
-                                </div>
-                                
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+               
             </div>
             <div class="col-xs-6">
                 <div class="panel panel-default" >
@@ -382,6 +387,6 @@
     </div>
     
 </div>
-<script src="./timeline_data.js"></script>
-<script src="./timeline.js"></script>
+<script src="./timeline_data.js?v=0.21"></script>
+<script src="./timeline.js?v=0.21"></script>
 </body>

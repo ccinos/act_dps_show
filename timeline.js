@@ -62,9 +62,15 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.21",
+                type:"update",
+                date:'2020.01.12 08:15',
+                info:"已选的技能界面可拖动调整排序，可选择两个相同技能（需要修改别名）"
+            },
+            {
                 ver:"0.20",
                 type:"update",
-                date:'2020.01.12',
+                date:'2020.01.12 03:15',
                 info:"增加了GCD安排功能，可以方便大家对应BOSS上天安排循环之类的（看看到底BOSS上天能打出几个GCD），增加了预设技能，做了一些美化。本次更新较大可能会有bug。"
             },
             {
@@ -226,6 +232,9 @@ var vueapp = new Vue({
             movingData:null,
             handler:{
                 getTimeHandler:null,setTimeHandler:null,checkTimeHandler:null
+            },
+            dragingPickedSkill:{
+                index:0, type:null,
             }
         },
         hover:{
@@ -244,6 +253,24 @@ var vueapp = new Vue({
         sharingText:null,
     },
     methods: {
+        pickedSkillDrag:function(e,i,type){
+            this.drag.dragingPickedSkill.index=i;
+            this.drag.dragingPickedSkill.type=type;
+        },
+        pickedSkillDrop:function(e,i,type){
+            var oldI= this.drag.dragingPickedSkill.index;
+            var oldType=  this.drag.dragingPickedSkill.type;
+            if(type!=oldType){
+                return;
+            }
+            if(i!=oldI){
+                var dragingSkill=this.setting.skillSelectSet.selectedSkills[type].splice(oldI,1);
+                if(i>oldI){ //后方插入
+                   --i;
+                }
+                this.setting.skillSelectSet.selectedSkills[type].splice(i,0,dragingSkill[0]);
+            }
+        },
         onSkillHover:function(skill,e){
             this.temp.hoverSkill.enable=true;
             var newX=e.x+10;
@@ -254,9 +281,22 @@ var vueapp = new Vue({
             this.temp.hoverSkill.y=e.y+10;
             this.temp.hoverSkill.skill=skill;
         },
+        onMouseRightClickInPickedSkill:function(skill){
+            var name=skill.name;
+            name=prompt("请输入一个别名:",name);
+            if(!name) return;
+            while(this.setting.skillSelectSet.selectedSkills['job'].findIndex(function(a){return a.name==name})!=-1){
+                name=prompt("名称重复，请输入一个别名:",name);
+                if(!name) return;
+            }
+            if(!skill.fullname){
+                skill.fullname=skill.name;
+            }
+            skill.name=name;
+        },
         savePicked:function(){
             var selectedSkills=this.setting.skillSelectSet.selectedSkills;
-            this.skills=copy(selectedSkills.job.concat(selectedSkills.jobType));
+            this.skills=copy(selectedSkills.job);
             this.gcdSkills=copy(selectedSkills.gcd);
             //添加gcdSetting.skills {}
             this.gcdSetting.skills={};
@@ -268,6 +308,16 @@ var vueapp = new Vue({
             if(!isNaN(this.gcdSetting.cd)){
                 this.gcdSetting.cd=gcdDuration
             }
+            
+            //--清理timeline中无用的技能
+            for(var name in this.timeline.skills){
+                var i=this.skills.findIndex(function(e){
+                    return e.name==name;
+                });
+                if(i==-1){
+                    delete(this.timeline.skills[name])
+                }
+            }
 
             this.setting.skillSelectSet.enable=false;
             this.saveUserDefinedData();
@@ -276,15 +326,21 @@ var vueapp = new Vue({
             this.setting.skillSelectSet.selectedSkills[skillType].splice(i,1);
         },
         pickSkill:function(skill,skillType){
+            skill=copy(skill);
             if(skillType=="gcd"){
                 if(this.setting.skillSelectSet.selectedSkills[skillType].findIndex(function(a){return a.name==skill.name})!=-1){
                     return;
                 }
             }else{
-                if(this.setting.skillSelectSet.selectedSkills['job'].findIndex(function(a){return a.name==skill.name})!=-1)
-                    return;
-                if(this.setting.skillSelectSet.selectedSkills['jobType'].findIndex(function(a){return a.name==skill.name})!=-1)
-                    return;
+                skillType="job";
+                var name=skill.name;
+                if(!name) return;
+                while(this.setting.skillSelectSet.selectedSkills['job'].findIndex(function(a){return a.name==name})!=-1){
+                    name=prompt("技能重复，请输入一个别名:",name);
+                    if(!name) return;
+                }
+                skill.fullname=skill.name;
+                skill.name=name;
             }
             this.setting.skillSelectSet.selectedSkills[skillType].push(skill);
         },
