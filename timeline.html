@@ -15,6 +15,13 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;">
+    <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
+        <button class="btn btn-primary" @click="batchImportEvent">导入</button>
+        <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
+        <textarea class="form-control" style="height:calc( 100% - 50px );resize:none;margin-top: 10px;" v-model="temp.importEventSet.text"
+         placeholder="每行一条事件，按照单条事件的导入格式
+0:00 事件内容(分钟:秒.毫秒)"></textarea>
+    </div>
     <!-- ACT上传浮窗 -->
     <div class="float-window" v-if="temp.importActLogSet.enable" style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
         <div class="row">
@@ -402,6 +409,7 @@
                     </div>
                     <hr>
                     <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">从LOGS文件导入技能使用数据</button>
+                    <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
                     <br>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
                     <br>
@@ -453,5 +461,5 @@
     
 </div>
 <script src="./timeline_data.js?v=0.22"></script>
-<script src="./timeline.js?v=0.22"></script>
+<script src="./timeline.js?v=0.23"></script>
 </body>

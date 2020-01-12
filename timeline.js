@@ -62,6 +62,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.23",
+                type:"update",
+                date:'2020.01.12 12:18',
+                info:"增加批量导入事件功能，把多行事件一起导入。"
+            },
+            {
                 ver:"0.22",
                 type:"update",
                 date:'2020.01.12 11:57',
@@ -135,6 +141,10 @@ var vueapp = new Vue({
             importActLogSet:{
                 enable:false
             },
+            importEventSet:{
+                enable:false,
+                text:"",
+            }
         },
         jobSkillSetting:jobSkill,
         option:defaultOption,
@@ -267,6 +277,18 @@ var vueapp = new Vue({
         sharingText:null,
     },
     methods: {
+        batchImportEvent:function(){
+            var text=this.temp.importEventSet.text;
+            var lines=text.split("\n");
+            var count=0;
+            for(var i=0;i<lines.length;++i){
+                if(this.insertEvent(lines[i])){
+                    ++count;
+                }
+            }
+            alert("导入成功"+count+"条");
+            this.temp.importEventSet.enable=false;
+        },
         importActLogFile:function(){
             if(confirm("是否确认导入？ 本次操作将完全替代现有技能时间轴。(不会影响事件轴)")){
                 this.timeline.gcd=[];
