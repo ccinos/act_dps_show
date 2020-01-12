@@ -15,6 +15,13 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;">
+    <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable"></div>
+    <div class="float-window" style="top:10px;left:10px;" v-if="dials.selectedLineY">
+        由选定位置对齐到开始
+        <button class="btn btn-xs btn-primary" @click="alignToStart('event')">事件</button>
+        <button class="btn btn-xs btn-primary" @click="alignToStart('gcd')">GCD技</button>
+        <button class="btn btn-xs btn-primary" @click="alignToStart('job')">能力技</button>
+    </div>
     <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
         <button class="btn btn-primary" @click="batchImportEvent">导入</button>
         <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
@@ -23,12 +30,13 @@
 0:00 事件内容(分钟:秒.毫秒)"></textarea>
     </div>
     <!-- ACT上传浮窗 -->
-    <div class="float-window" v-if="temp.importActLogSet.enable" style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
+    <div class="float-window" v-if="temp.importActLogSet.enable" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
         <div class="row">
             <div class="col-xs-12" >
                 <div style="width:700px; margin: 0 auto;">
                     <button class="btn btn-default" style="float:right;" @click="temp.importActLogSet.enable=false">关闭</button>
-                    ACT LOGS文件：<input id="actfile" type="file" accept=".log" onchange="vueapp.temp.selectedActLogFile=this.files[0]"/>
+                    ACT LOGS文件：(只会导入你所选择的技能的施放数据)
+                    <input id="actfile" type="file" accept=".log" onchange="vueapp.temp.selectedActLogFile=this.files[0]"/>
                     <button v-if="temp.selectedActLogFile" class="btn btn-default" @click="parseActLogFile" style="margin-top:10px;">解析</button>
                 </div>
             </div>
@@ -84,7 +92,7 @@
     </div>
         
     <!-- 技能选择浮窗 -->
-    <div class="mask" v-if="setting.skillSelectSet.enable"></div>
+    
     <div class="float-window" style="z-index:9999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable"
         :style="{left:temp.hoverSkill.x+'px', top:temp.hoverSkill.y+'px'}">
         <div>
@@ -392,8 +400,9 @@
                     <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span>
                     <hr>
                     <button class="btn btn-primary btn-sm" @click="setting.skillSelectSet.enable=true">技能设置</button>
-                    <button class="btn btn-primary btn-sm" @click="timeline.gcd=[]">清空GCD技能</button>
-                    <button class="btn btn-primary btn-sm" @click="timeline.skills={}">清空能力技能</button>
+                    <button class="btn btn-danger btn-sm" @click="timeline.gcd=[]">清空GCD技</button>
+                    <button class="btn btn-danger btn-sm" @click="timeline.skills={}">清空能力技</button>
+                    <button class="btn btn-danger btn-sm" @click="timeline.events=[]">清空事件</button>
                     <!-- GCD技能列表 -->
                     
                     <div style="display:flex;flex-wrap:wrap;">
@@ -407,7 +416,7 @@
                         </div>
                     </div>
                     <hr>
-                    <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">从LOGS文件导入技能使用数据</button>
+                    <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">从ACT日志文件导入技能施放数据</button>
                     <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
                     <br>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
@@ -459,6 +468,7 @@
     </div>
     
 </div>
-<script src="./timeline_data.js?v=0.24"></script>
-<script src="./timeline.js?v=0.24"></script>
+
+<script src="./timeline_data.js?v=0.25"></script>
+<script src="./timeline.js?v=0.25"></script>
 </body>

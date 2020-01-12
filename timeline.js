@@ -65,7 +65,7 @@ var vueapp = new Vue({
                 ver:"0.24",
                 type:"update",
                 date:'2020.01.12 17:29',
-                info:"ACT LOGS文件解析重新匹配，现在已经可以正确解析事件"
+                info:"ACT LOGS文件解析重新匹配，现在已经可以正确解析事件。增加物件对齐到开始功能。"
             },
             {
                 ver:"0.23",
@@ -283,6 +283,38 @@ var vueapp = new Vue({
         sharingText:null,
     },
     methods: {
+        alignToStart:function(type){
+            if(!this.dials.selectedLineY){
+                return;
+            }
+            var time=this.y2time(this.dials.selectedLineY-this.timeline.offset);
+            var list;
+            if(type=="gcd"){
+                list=[this.timeline.gcd];
+            }else if(type=="job"){
+                list=[];
+                for(var prop in this.timeline.skills){
+                    var skillList=this.timeline.skills[prop];
+                    list.push(skillList);
+                }
+            }else if(type=="event"){
+                list=[this.timeline.events]
+            }
+            if(!list) return;
+
+            for(var arr of list){
+                for(var i=0;i<arr.length;++i){
+                    var timedData=arr[i];
+                    var newTime=timedData.time-time;
+                    console.log(newTime,timedData.time,time);
+                    if(newTime<0){
+                        arr.splice(i--,1);
+                    }else{
+                        timedData.time=newTime;
+                    }
+                }
+            }
+        },
         batchImportEvent:function(){
             var text=this.temp.importEventSet.text;
             var lines=text.split("\n");
