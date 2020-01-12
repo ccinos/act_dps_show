@@ -141,6 +141,10 @@ var vueapp = new Vue({
             },  //{}
             selectedActLogFile:null,
             parseDatas:null,
+            importDataTypes:{
+                gcd:true, job:true, event:true
+            },
+            parseDataEventSource:null,
             parseDatasSkillSet:{
                 gcd:{},job:{}
             },
@@ -176,53 +180,10 @@ var vueapp = new Vue({
             addIsInsert:true, 
             dragAllMove:true, //是否可以一个GCD技能推动其他技能一起
             abilities:{//能力技能
-                "战逃反应":{
-                    cd:60,
-                    buff: {
-                        add:[{ //增加的buff
-                            name:"战逃反应",
-                        }]
-                    }
-                }
             },
             skills:{ //gcd技能
-                "圣灵":{
-                    cd: 2.5,
-                },
-                "王权剑":{
-                    icon:"",
-                    name:"王权剑", //默认为属性名
-                    cd: 2.42, //默认为上面设置cd (秒)
-                    buff: {
-                        add:[{ //增加的buff
-                            name:"王权",
-                            count:3, //层数
-                            countAddType:"replace", //层数 add增加层数 replace替换层数
-                            duration: 10, //时间
-                            durationAddType: "add", //时间 add增加 replace替换
-                        }], 
-                        spend:[{ //消耗的buff
-                            name:"王权", 
-                            count:1,
-                            countSpendType:"remove", //层数 remove删除 spend减少
-                            duration: 10, //时间
-                            durationSpendType: "spend", //时间 remove删除 spend减少
-                        }] 
-                    },
-                    combo:{
-                        prev:["暴乱剑"], //上一个连续技，当上一个技能是该技能中的一个时，本次可以触发连续技
-                    },
-                    required:{
-                        buff:[], //需要的buff
-                        combo:[], //需要的连续技
-                    }
-                }
             },
             buffs:{ //gcd产生的buff信息
-                "沥血":{
-                    maxDuration: 30,
-                    shown: true, //是否显示
-                }
             }
         },
         timeline:{
@@ -315,6 +276,13 @@ var vueapp = new Vue({
                 }
             }
         },
+        batchExportEvent:function(){
+            var lines=[];
+            for(var event of this.timeline.events){
+                lines.push(new Date(event.time).format("mm:ss.fff")+" "+event.text);
+            }
+            this.temp.importEventSet.text=lines.join("\n");
+        },
         batchImportEvent:function(){
             var text=this.temp.importEventSet.text;
             var lines=text.split("\n");
@@ -328,7 +296,7 @@ var vueapp = new Vue({
             this.temp.importEventSet.enable=false;
         },
         importActLogFile:function(){
-            if(confirm("是否确认导入？ 本次操作将完全替代现有技能时间轴。(不会影响事件轴)")){
+            if(confirm("是否确认导入？ 本次操作将完全替代现有时间轴内容。")){
                 this.timeline.gcd=[];
                 this.timeline.skills={};
                 var skillNameSet={};
@@ -340,10 +308,19 @@ var vueapp = new Vue({
                 var endTime=+vueapp.temp.parseDatas.endTimeCurrent;
                 for(var player in this.temp.parseDatas.datas){
                     var data=this.temp.parseDatas.datas[player];
-                    for(var prop of ["gcd","job"]){
-                        for(var skill of data[prop]){
+                    var props=[];
+                    if(this.temp.importDataTypes.job){
+                        props.push("job");
+                    }
+                    if(this.temp.importDataTypes.gcd){
+                        props.push("gcd");
+                    }
+                    
+                    for(var prop of props){
+                        for(var s of data[prop]){
                             if(skill.time>endTime) break;
                             if(skill.time<startTime) continue;
+                            var skill=copy(s);
                             skill.time-=startTime;
                             var name=skillNameSet[skill.name];
                             var skillPlayer=this.temp.parseDatasSkillSet[prop][skill.name];
@@ -368,6 +345,31 @@ var vueapp = new Vue({
                         }
                     }
                 }
+                //事件轴
+                if(this.temp.importDataTypes.event&&this.temp.parseDataEventSource&&this.temp.parseDataEventSource.length>0){
+                    for(var player of this.temp.parseDataEventSource){
+                        console.log(player)
+                        var checkCastLastTime={};
+                        var skillList=this.temp.parseDatas.dataList[player];
+                        for(var s of skillList){
+                            if(s.time>endTime) break;
+                            if(s.time<startTime) continue;
+                            if(s.name=="攻击") continue;
+                            if(s.time<checkCastLastTime[s.name]+1000){
+                                continue;
+                            }
+                            checkCastLastTime[s.name]=s.time;
+                            var skill=copy(s);
+                            skill.time-=startTime;
+                            this.timeline.events.push({
+                                time: skill.time,
+                                text: player+" 施放 ["+skill.name+"]"
+                            })
+                        }
+                        
+                    }
+                }
+
                 if(endTime-startTime>this.timeline.length*1000){
                     this.timeline.length=(endTime-startTime)/1000+100;
                 }
@@ -383,7 +385,7 @@ var vueapp = new Vue({
                 //21|2019-12-13T23:23:58.5270000+08:00|100CD079|上条美琴|1D6B|铁壁
                 reader.onload = function () {
                     let i=0,j=this.result.indexOf("\n");
-                    let datas={},dataList=[];
+                    let datas={},dataList={},allPlayers={};
                     let count=0,startTime=0,endTime;
                     // 允许记录的技能
                     let skillsEnable={};
@@ -417,6 +419,10 @@ var vueapp = new Vue({
                                     time:time,
                                     name:skill
                                 };
+                                if(!allPlayers[player]){
+                                    allPlayers[player]=0;
+                                }
+                                ++allPlayers[player];
                                 var inserted=false;
                                 if(skillsEnable[skill.name]){
                                     inserted=true;
@@ -434,9 +440,10 @@ var vueapp = new Vue({
                                     }
                                     ++datas[player].gcdCount[skill.name];
                                 }
-                                if(inserted){
-                                    dataList.push(skill);
+                                if(!dataList[player]){
+                                    dataList[player]=[];
                                 }
+                                dataList[player].push(skill);
                                 ++count;
                             }
                         }
@@ -455,6 +462,7 @@ var vueapp = new Vue({
                         endTimeCurrent:endTime,
                         datas:datas,
                         players:players,
+                        allPlayers:allPlayers
                     }
                     var skillSet={
                         gcd:{},job:{}
@@ -1418,8 +1426,15 @@ window.addEventListener("beforeunload",function(){
 
 /*
     TODO:
-    1、增加技能配置页面，配置可选技能
-    2、增加预置技能属性、图标
-    3、增加GCD技能设置页面，包括各个职业
+    1、增加技能配置页面，配置可选技能 x
+    2、增加预置技能属性、图标 x
+    3、增加GCD技能设置页面，包括各个职业 x
     4、增加能力技通道(持续时间在buff栏显示) 能力技能只能放在gcd的1/3处
+
+    5、logs读取功能：
+        1.查询logs战斗简介 https://cn.fflogs.com/v1/report/fights/KkzGd8Zg3cnYfFMA?api_key=184a0cc2cd961346f91397dae0f38630
+            获取基本信息，例如目标列表，开始结束时间，
+        2.查询logs事件内容 https://cn.fflogs.com/v1/report/events/summary/KkzGd8Zg3cnYfFMA?end=810000&api_key=184a0cc2cd961346f91397dae0f38630
+            {events:[],nextPageTimestamp:123456}  事件列表，下一页开始时间
+        3.根据信息解析为时间轴
  */

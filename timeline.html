@@ -25,6 +25,7 @@
     <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
         <button class="btn btn-primary" @click="batchImportEvent">导入</button>
         <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
+        <button class="btn btn-default" @click="batchExportEvent">提取当前事件轴</button>
         <textarea class="form-control" style="height:calc( 100% - 50px );resize:none;margin-top: 10px;" v-model="temp.importEventSet.text"
          placeholder="每行一条事件，按照单条事件的导入格式
 0:00 事件内容(分钟:秒.毫秒)"></textarea>
@@ -57,30 +58,51 @@
                             </div>
                         </div>
                         <ul class="list-group">
-                            <li class="list-group-item">
-                                <div v-for="skill in skills">
-                                    <span class="value-name">{{skill.fullname||skill.name}}</span>
-                                    <select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]">
-                                        <option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0"
-                                            :value="name">
-                                            {{name}}
-                                            ({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})
+                            <li class="list-group-item" >
+                                <span class="value-name">事件来源<ccino-switch style="transform: scale(0.7);" v-model="temp.importDataTypes.event"></ccino-switch></span> 
+                                <template v-if="temp.importDataTypes.event">
+                                    <select class="form-control form-auto" style="width:20em;min-height:10em;" multiple v-model="temp.parseDataEventSource">
+                                        <option v-for="count,name in temp.parseDatas.allPlayers" :value="name">
+                                            {{name}} ({{count}})
                                         </option>
                                     </select>
-                                </div>
-                            
+                                    <hr style="margin-left:120px">
+                                    <div style="margin-left:120px">
+                                        <span v-for="eventSource in temp.parseDataEventSource" style="margin-right:10px;">
+                                            {{eventSource}}
+                                        </span>
+                                    </div>
+                                </template>
                             </li>
                             <li class="list-group-item">
-                                <div v-for="skill in gcdSkills">
-                                    <span class="value-name">{{skill.name}}</span>
-                                    <select class="form-control form-auto"  style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]">
-                                        <option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0"
-                                            :value="name">
-                                            {{name}}
-                                            ({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})
-                                        </option>
-                                    </select>
-                                </div>
+                                <span class="value-name">能力技<ccino-switch style="transform: scale(0.7);" v-model="temp.importDataTypes.job"></ccino-switch></span> 
+                                <template v-if="temp.importDataTypes.job">
+                                    <div v-for="skill in skills">
+                                        <span class="value-name">{{skill.fullname||skill.name}}</span>
+                                        <select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]">
+                                            <option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0"
+                                                :value="name">
+                                                {{name}}
+                                                ({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})
+                                            </option>
+                                        </select>
+                                    </div>
+                                </template>
+                            </li>
+                            <li class="list-group-item">
+                                <span class="value-name">GCD技<ccino-switch style="transform: scale(0.7);" v-model="temp.importDataTypes.gcd"></ccino-switch></span> 
+                                <template v-if="temp.importDataTypes.gcd">
+                                    <div v-for="skill in gcdSkills">
+                                        <span class="value-name">{{skill.name}}</span>
+                                        <select class="form-control form-auto"  style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]">
+                                            <option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0"
+                                                :value="name">
+                                                {{name}}
+                                                ({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})
+                                            </option>
+                                        </select>
+                                    </div>
+                                </template>
                             </li>
                         </ul>
                     </div>
@@ -470,5 +492,5 @@
 </div>
 
 <script src="./timeline_data.js?v=0.25"></script>
-<script src="./timeline.js?v=0.25"></script>
+<script src="./timeline.js?v=0.25.1"></script>
 </body>
