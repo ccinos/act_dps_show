@@ -62,6 +62,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.22",
+                type:"update",
+                date:'2020.01.12 11:57',
+                info:"增加从ACT LOGS文件中导入技能施放数据功能（测试中），发现日志中的施放时间都是整数秒，所以与实际时间肯定有较大差异，请自行调整。"
+            },
+            {
                 ver:"0.21",
                 type:"update",
                 date:'2020.01.12 08:15',
@@ -101,6 +107,7 @@ var vueapp = new Vue({
                 enable:false,
                 x:100, y:100, event:{},
             },
+            
             skillSelectSet:{
                 enable:false,
                 jobName:"骑士",
@@ -120,7 +127,14 @@ var vueapp = new Vue({
                 enable:false,
                 x:null, y:null
             },  //{}
-
+            selectedActLogFile:null,
+            parseDatas:null,
+            parseDatasSkillSet:{
+                gcd:{},job:{}
+            },
+            importActLogSet:{
+                enable:false
+            },
         },
         jobSkillSetting:jobSkill,
         option:defaultOption,
@@ -142,7 +156,7 @@ var vueapp = new Vue({
         skills:[ //已经选择的技能列表
         ],
         gcdSetting:{
-            cd:2.42, //秒
+            cd:2.5, //秒
             addIsInsert:true, 
             dragAllMove:true, //是否可以一个GCD技能推动其他技能一起
             abilities:{//能力技能
@@ -253,6 +267,169 @@ var vueapp = new Vue({
         sharingText:null,
     },
     methods: {
+        importActLogFile:function(){
+            if(confirm("是否确认导入？ 本次操作将完全替代现有技能时间轴。(不会影响事件轴)")){
+                this.timeline.gcd=[];
+                this.timeline.skills={};
+                var skillNameSet={};
+                
+                for(var skill of this.skills){
+                    skillNameSet[skill.fullname||skill.name]=skill.name;
+                }
+                var startTime=+vueapp.temp.parseDatas.startTimeCurrent;
+                var endTime=+vueapp.temp.parseDatas.endTimeCurrent;
+                for(var player in this.temp.parseDatas.datas){
+                    var data=this.temp.parseDatas.datas[player];
+                    for(var prop of ["gcd","job"]){
+                        for(var skill of data[prop]){
+                            if(skill.time>endTime) break;
+                            if(skill.time<startTime) continue;
+                            skill.time-=startTime;
+                            var name=skillNameSet[skill.name];
+                            var skillPlayer=this.temp.parseDatasSkillSet[prop][skill.name];
+                            
+                            if(skillPlayer==player){
+                                if(prop=="gcd"){
+                                    this.timeline.gcd.insertSort({
+                                        time:skill.time,
+                                        skill:skill.name
+                                    });
+                                }else{
+                                    if(name&&name!=skill.name){
+                                        skill.fullname=skill.name;
+                                        skill.name=name;
+                                    }
+                                    if(!this.timeline.skills[name]){
+                                        this.timeline.skills[name]=[];
+                                    }
+                                    this.timeline.skills[name].insertSort(skill);
+                                }
+                            }
+                        }
+                    }
+                }
+                if(endTime-startTime>this.timeline.length*1000){
+                    this.timeline.length=(endTime-startTime)/1000+100;
+                }
+                this.temp.importActLogSet.enable=false;
+            }
+        },
+        parseActLogFile:function(){
+            var file=document.getElementById("actfile").files[0];
+            if(file){
+                var reader = new FileReader();
+                var regex = /00\|(.{33})\|\w{4}\|\|(.+)(发动了|咏唱了)“(.+)”。/;
+                reader.onload = function () {
+                    let i=0,j=this.result.indexOf("\n");
+                    let datas={},dataList=[];
+                    let count=0,startTime=0,endTime;
+                    // 允许记录的技能
+                    let skillsEnable={};
+                    for(let skill of vueapp.skills){
+                        skillsEnable[skill.fullname||skill.name]=true;
+                    }
+                    let gcdSkillEnable={};
+                    for(let skill of vueapp.gcdSkills){
+                        gcdSkillEnable[skill.fullname||skill.name]=true;
+                    }
+                    //--------------
+                    while(j!=-1){
+                        var line=this.result.substring(i,j);
+                        if(line.substr(0,3)=="00|"){
+                            var match=regex.exec(line);
+                            if(match){
+                                var time=+new Date(match[1]);
+                                if(count==0){
+                                    startTime=time;
+                                }
+                                endTime=time;
+                                var player=match[2];
+                                var skill=match[4];
+                                if(!datas[player]){
+                                    datas[player]={
+                                        gcd:[],job:[],
+                                        gcdCount:{},jobCount:{}
+                                    };
+                                }
+                                skill={
+                                    time:time,
+                                    name:skill
+                                };
+                                var inserted=false;
+                                if(skillsEnable[skill.name]){
+                                    inserted=true;
+                                    datas[player].job.push(skill);
+                                    if(!datas[player].jobCount[skill.name]){
+                                        datas[player].jobCount[skill.name]=0;
+                                    }
+                                    ++datas[player].jobCount[skill.name];
+                                }
+                                if(gcdSkillEnable[skill.name]){
+                                    inserted=true;
+                                    datas[player].gcd.push(skill);
+                                    if(!datas[player].gcdCount[skill.name]){
+                                        datas[player].gcdCount[skill.name]=0;
+                                    }
+                                    ++datas[player].gcdCount[skill.name];
+                                }
+                                if(inserted){
+                                    dataList.push(skill);
+                                }
+                                ++count;
+                            }
+                        }
+                        i=j+1;
+                        j=this.result.indexOf("\n",i);
+                    }
+                    var players=[];
+                    for(var p in datas){
+                        players.push(p);
+                    }
+                    vueapp.temp.parseDatas={
+                        dataList:dataList,
+                        startTime:startTime,
+                        endTime:endTime,
+                        startTimeCurrent:startTime,
+                        endTimeCurrent:endTime,
+                        datas:datas,
+                        players:players,
+                    }
+                    var skillSet={
+                        gcd:{},job:{}
+                    }
+                    if(players.length>0){
+                        var findMaxSkillPlayer=function(skill,type){
+                            var name=skill.fullname||skill.name;
+                            //vueapp.temp.parseDatas.datas.梨子李子栗子.gcdCount
+                            var maxCount=0,maxPlayer=players[0];
+                            try{
+                                for(var player of players){
+                                    var count=vueapp.temp.parseDatas.datas[player][type+"Count"][name];
+                                    if(count>maxCount){
+                                        maxCount=count;
+                                        maxPlayer=player;
+                                    }
+                                }
+                            }catch(e){
+                                console.error(e);
+                            }
+                            return maxPlayer;
+                        }
+                        for(var skill of vueapp.skills){
+                            skillSet.job[skill.fullname||skill.name]=findMaxSkillPlayer(skill,"job");
+                        }
+                        for(var skill of vueapp.gcdSkills){
+                            skillSet.gcd[skill.fullname||skill.name]=findMaxSkillPlayer(skill,"gcd");
+                        }
+                        Vue.set(vueapp.temp,"parseDatasSkillSet",skillSet);
+                    }
+                    
+                }
+                reader.readAsText(file);
+            }else{
+                alert("请选择文件")
+            }
+        },
         pickedSkillDrag:function(e,i,type){
             this.drag.dragingPickedSkill.index=i;
             this.drag.dragingPickedSkill.type=type;
@@ -1114,9 +1291,10 @@ var vueapp = new Vue({
         }
     },
     filters:{
-        timeFormat:(time)=>{
+        timeFormat:(time,fmt)=>{
+            fmt=fmt||"mm:ss.fff";
             let d=new Date(time);
-            return d.format("mm:ss.fff");
+            return d.format(fmt);
         }
     }
 });
