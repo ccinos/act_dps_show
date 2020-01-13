@@ -11,7 +11,7 @@ Vue.component('ccino-switch', {
         }
     },
     template:`
-    <div class="switch-wrap" :class="{active:checked}"  @click="checked=!checked;$emit('change', checked)">
+    <div class="switch-wrap" :class="{active:checked}"  @click="$emit('change', !checked)">
         <span></span>
     </div>
   `

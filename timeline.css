@@ -22,6 +22,12 @@ svg line ,svg rect {
     shape-rendering: crispEdges;
     stroke-width:1;
 }
+#svg_container{
+    transition: scrollTop 2s;
+}
+#svg_container.scrolling{
+    cursor:grabbing;
+}
 line.dials{
     stroke:#edd;
 }

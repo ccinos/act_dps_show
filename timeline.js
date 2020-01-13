@@ -62,6 +62,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.25.3",
+                type:"update",
+                date:'2020.01.13 16:58',
+                info:"增加LOGS网站数据导入功能（测试中）。增加右键拖拽画布功能。"
+            },
+            {
                 ver:"0.24",
                 type:"update",
                 date:'2020.01.12 17:29',
@@ -134,28 +140,6 @@ var vueapp = new Vue({
                 gcdDuration:2.5,
             }
         },
-        temp:{
-            hoverSkill:{
-                enable:false,
-                x:null, y:null
-            },  //{}
-            selectedActLogFile:null,
-            parseDatas:null,
-            importDataTypes:{
-                gcd:true, job:true, event:true
-            },
-            parseDataEventSource:null,
-            parseDatasSkillSet:{
-                gcd:{},job:{}
-            },
-            importActLogSet:{
-                enable:false
-            },
-            importEventSet:{
-                enable:false,
-                text:"",
-            }
-        },
         jobSkillSetting:jobSkill,
         option:defaultOption,
         allGcdSkillMap:allSkillMap, //GCD技能字典
@@ -220,13 +204,16 @@ var vueapp = new Vue({
         drag:{
             enable:false,
             lastY:-1,
+            lastX:-1,
             movingData:null,
             handler:{
-                getTimeHandler:null,setTimeHandler:null,checkTimeHandler:null
+                getTimeHandler:null,setTimeHandler:null,checkTimeHandler:null,mouseUpHandler:null
             },
             dragingPickedSkill:{
                 index:0, type:null,
-            }
+            },
+            scrollingTo:null,
+            scrolling:false,
         },
         hover:{
             rect:{
@@ -242,8 +229,339 @@ var vueapp = new Vue({
         savedDatas:load(),
         sharing:null,
         sharingText:null,
+        temp:{
+            hoverSkill:{
+                enable:false,
+                x:null, y:null
+            },  //{}
+            selectedActLogFile:null,
+            parseDatas:null,
+            importDataTypes:{
+                gcd:true, job:true, event:true
+            },
+            parseDataEventSource:null,
+            parseDatasSkillSet:{
+                gcd:{},job:{}
+            },
+            importActLogSet:{
+                enable:false
+            },
+            importLogsSet:{
+                enable:false,
+                code:"",
+                selectedCode:"",
+                error:{
+                    status:null,error:"",
+                },
+                apiKey:"184a0cc2cd961346f91397dae0f38630",
+                import:{
+                    job:true,
+                    gcd:true,
+                    event:true
+                },
+                importSource:{
+                    job:{},
+                    gcd:{},
+                    event:[]
+                },
+                report:{
+                    fights:null,
+                    selectedFight:null,
+                    players:null,
+                    targets:null,
+                    boss:null,
+                    downloading:false,
+                    downloaded:false,
+                    downloadedCasts:null,
+                    downloadedEvents:null,
+                    parsedPlayerData:null,
+                },
+                progress:{
+                    casts:0,
+                    events:0,
+                }
+            },
+            importEventSet:{
+                enable:false,
+                text:"",
+            }
+        },
     },
     methods: {
+        importSelectedFight:function(){
+            vueapp.timeline.skills={};
+            vueapp.timeline.gcd=[];
+            vueapp.timeline.events=[];
+            var report=this.temp.importLogsSet.report;
+            var importSource=this.temp.importLogsSet.importSource;
+            for(var tempData of ["job","gcd"]){
+                for(var skillName in importSource[tempData]){
+                    var playerId=importSource[tempData][skillName];
+                    if(!playerId) continue;
+                    var list=report.parsedPlayerData[playerId][tempData][skillName];
+                    if(list){
+                        for(var item of list){
+                            if(tempData=="job"){
+                                if(!vueapp.timeline["skills"][skillName]){
+                                    vueapp.timeline["skills"][skillName]=[];
+                                }
+                                vueapp.timeline["skills"][skillName].insertSort(item);
+                            }else{
+                                vueapp.timeline[tempData].insertSort(item);
+                            }
+                            
+                        }
+                    }
+                }
+            }
+            //--事件
+            for(var eventSource of importSource.event){
+                for(var event of report.parsedPlayerData[eventSource].events){
+                    vueapp.timeline.events.insertSort(event);
+                }
+            }
+            alert("导入成功");
+            this.cancelCurrentDownload();
+            this.temp.importLogsSet.enable=false;
+        },
+        parseDownloadedLogFight:function(){ //解析数据
+            var report=this.temp.importLogsSet.report;
+            var fight=this.temp.importLogsSet.report.selectedFight;
+            var importEnable=vueapp.temp.importLogsSet.import;
+            var importSource=vueapp.temp.importLogsSet.importSource;
+            var startTime=fight.start_time;
+            // 解析为当前数据
+            // 记录每个玩家事件、每个玩家各个技能数据
+            report.parsedPlayerData={};
+            for(var player of report.targets){
+                if(!player) continue;
+                report.parsedPlayerData[player.id]={
+                    events:[],job:{},gcd:{}
+                };
+            }
+            var skillTimeCache={}; // {  playerId:{skillName:time} }
+            for(var dataSeries of [[report.downloadedCasts,0],[report.downloadedEvents,1]]){
+                var type=dataSeries[1];
+                var datas=dataSeries[0];
+                if(!datas) continue;
+                for(var dList of datas){
+                    for(var d of dList.events){
+                        if(d.type=="cast"){
+                            var skillName=d.ability.name;
+                            if(skillName=="攻击"||!skillName){
+                                continue;
+                            }
+                            //判断重复技能时间
+                            if(!skillTimeCache[d.sourceID]){
+                                skillTimeCache[d.sourceID]={};
+                            }
+                            if(d.timestamp<skillTimeCache[d.sourceID][skillName]+1000){
+                                continue;
+                            }
+                            skillTimeCache[d.sourceID][skillName]=d.timestamp;
+                            //判断重复技能时间 ---end
+
+                            var time=d.timestamp-startTime;
+                            if(type==1){
+                                if(importEnable.event){
+                                    if(!report.boss[d.sourceID]) continue;
+                                    report.parsedPlayerData[d.sourceID].events.push({
+                                        time:time,
+                                        text: report.targets[d.sourceID].name + " 施放 ["+skillName+"]",
+                                    })
+                                    // vueapp.timeline.events.push();
+                                }
+                            }
+                            if(type==0){
+                                //根据技能名，查找技能设定的读取人员
+                                if(importEnable.job||importEnable.gcd){
+                                    for(var skill of vueapp.skills){
+                                        if((skill.fullname||skill.name)==skillName){
+                                            if(!report.parsedPlayerData[d.sourceID].job[skill.name]){
+                                                report.parsedPlayerData[d.sourceID].job[skill.name]=[];
+                                            }
+                                            //加入job
+                                            report.parsedPlayerData[d.sourceID].job[skill.name].insertSort({
+                                                time:time
+                                            })
+                                        }
+                                    }
+                                    for(var skill of vueapp.gcdSkills){
+                                        if((skill.fullname||skill.name)==skillName){
+                                            if(!report.parsedPlayerData[d.sourceID].gcd[skill.name]){
+                                                report.parsedPlayerData[d.sourceID].gcd[skill.name]=[];
+                                            }
+                                            //加入job
+                                            report.parsedPlayerData[d.sourceID].gcd[skill.name].insertSort({
+                                                time:time, skill:skill.name
+                                            })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //---预选 report.players
+            for(var skill of vueapp.skills){
+                var maxCount=0;
+                var maxPlayerId=null;
+                for(var i in vueapp.temp.importLogsSet.report.parsedPlayerData){
+                    var playerData=vueapp.temp.importLogsSet.report.parsedPlayerData[i];
+                    var list=playerData.job[skill.name];
+                    if(!list) continue;
+                    var count=list.length;
+                    if(count>maxCount){
+                        maxCount=count;
+                        maxPlayerId=i;
+                    }
+                }
+                vueapp.temp.importLogsSet.importSource.job[skill.name]=maxPlayerId;
+            }
+            for(var skill of vueapp.gcdSkills){
+                var maxCount=0;
+                var maxPlayerId=null;
+                for(var i in vueapp.temp.importLogsSet.report.parsedPlayerData){
+                    var playerData=vueapp.temp.importLogsSet.report.parsedPlayerData[i];
+                    var list=playerData.gcd[skill.name];
+                    if(!list) continue;
+                    var count=list.length;
+                    if(count>maxCount){
+                        maxCount=count;
+                        maxPlayerId=i;
+                    }
+                }
+                vueapp.temp.importLogsSet.importSource.gcd[skill.name]=maxPlayerId;
+            }
+            for(var b of report.boss){
+                if(!b) continue;
+                vueapp.temp.importLogsSet.importSource.event.push(b.id);
+            }
+            report.downloaded=true; //下载完成
+        },
+        downloadSelectedFight:function(){ //下载选择的战斗数据
+            var report=this.temp.importLogsSet.report;
+            var fight=this.temp.importLogsSet.report.selectedFight;
+            if(fight){
+                report.downloading=true;
+                var code=this.temp.importLogsSet.selectedCode;
+                var startTime=fight.start_time;
+                var endTime=fight.end_time;
+                var apiKey=this.temp.importLogsSet.apiKey;
+                vueapp.temp.importLogsSet.progress.casts=0;
+                vueapp.temp.importLogsSet.progress.events=0;
+                
+                //casts 事件
+                var getPagedData=function(start,hostility,callback,dataList){
+                    // if(hostility==0){
+                    //     return new Promise(r=>r(testSkillData));
+                    // }else{
+                    //     return new Promise(r=>r(testEventData));
+                    // }
+                    if(!report.downloading) throw "停止下载";
+                    if(!start) start=0;
+                    if(!hostility) hostility=0;
+                    if(dataList==null) dataList=[];
+                    if(callback instanceof Function) callback(start,startTime,endTime);
+                    var url="https://cn.fflogs.com/v1/report/events/casts/"+code+"?hostility="+hostility+"&start="+start+"&end="+endTime+"&api_key="+apiKey;
+                    return axios.get(url).then(function(res){
+                        var data=res.data;
+                        dataList.push(data);
+                        if(data.nextPageTimestamp){
+                            return getPagedData(data.nextPageTimestamp,hostility,callback,dataList);
+                        }else{
+                            if(callback instanceof Function) callback(endTime,startTime,endTime);
+                            return dataList;
+                        }
+                    })
+                }
+                var promiseJobs=[];
+                if(vueapp.temp.importLogsSet.import.job||vueapp.temp.importLogsSet.import.gcd){
+                    var p=getPagedData(startTime,0,function(cur,start,end){
+                        vueapp.temp.importLogsSet.progress.casts= Math.round((cur-start)/(end-start)*100);
+                    }).then(function(d){
+                        console.log(d); //技能数据
+                        report.downloadedCasts=d;
+                    });
+                    promiseJobs.push(p);
+                }
+
+                if(vueapp.temp.importLogsSet.import.event){
+                    var p=getPagedData(startTime,1,function(cur,start,end){
+                        vueapp.temp.importLogsSet.progress.events= Math.round((cur-start)/(end-start)*100);
+                    }).then(function(d){
+                        console.log(d);
+                        report.downloadedEvents=d;
+                    });
+                    promiseJobs.push(p);
+                }
+
+                Promise.all(promiseJobs).then(function(){
+                    //解析数据
+                    vueapp.parseDownloadedLogFight();
+                }).catch(function(e){
+                    console.error(e); //事件数据
+                    report.downloading=false;
+                    report.downloaded=false;
+                    vueapp.temp.importLogsSet.error.error=e;
+                })
+                
+            }
+        },
+        cancelCurrentDownload:function(){
+            var report=this.temp.importLogsSet.report;
+            report.downloading=false;
+            report.downloaded=false;
+            this.temp.importLogsSet.progress.casts=0;
+            this.temp.importLogsSet.progress.events=0;
+        },
+        downLoadLogsData:function(){
+            var report=this.temp.importLogsSet.report;
+            report.selectedFight=null;
+            vueapp.temp.importLogsSet.error={};
+            vueapp.temp.importLogsSet.loading=true;
+            this.cancelCurrentDownload();
+            var code=this.temp.importLogsSet.code;
+            var match=/fflogs\.com\/reports\/(\w+)#/.exec(code);
+            if(match){
+                code=match[1];
+            }
+            if(!code){
+                this.temp.importLogsSet.error={
+                    error:"请输入LOGS战斗记录的CODE"
+                }
+                return;
+            }
+            this.temp.importLogsSet.selectedCode=code;
+            var url="https://cn.fflogs.com/v1/report/fights/"+code+"?api_key="+this.temp.importLogsSet.apiKey;
+            axios.get(url).then(function(res){
+            // new Promise(r => r({data:testFightData})).then(function(res){
+                vueapp.temp.importLogsSet.loading=false;
+                report.fights=res.data;
+                report.fights.fights.reverse();
+                report.players=[];
+                report.boss=[];
+                report.targets=[];
+                for(var f of report.fights.friendlies){
+                    if(f.type!="LimitBreak"){
+                        report.players[f.id]=f;
+                        report.targets[f.id]=f;
+                    }
+                }
+                for(var f of report.fights.enemies){
+                    if(f.type=="Boss"){
+                        report.boss[f.id]=f;
+                        report.targets[f.id]=f;
+                    }
+                }
+                vueapp.temp.importLogsSet.error={};
+            }).catch(function(err){
+                vueapp.temp.importLogsSet.error=err.response.data;
+                vueapp.temp.importLogsSet.loading=false;
+                console.error(err.response.data);
+            })
+        },
         alignToStart:function(type){
             if(!this.dials.selectedLineY){
                 return;
@@ -279,7 +597,7 @@ var vueapp = new Vue({
         batchExportEvent:function(){
             var lines=[];
             for(var event of this.timeline.events){
-                lines.push(new Date(event.time).format("mm:ss.fff")+" "+event.text);
+                lines.push(new Date(event.time-28800000).format(getFormat(event.time))+" "+event.text);
             }
             this.temp.importEventSet.text=lines.join("\n");
         },
@@ -1011,12 +1329,13 @@ var vueapp = new Vue({
             //取出当前mouse所在time
             var mouseT=this.y2time(this.dials.mouseY);
             var mouseY=this.dials.mouseY;
+            var diffY=mouseY-svgContainer.scrollTop;
             //设置tick
             this.dials.tick=tick;
             this.dials.tickRange=Math.ceil(this.dials.minLineDistance/tick);
             //获得time所在位置
             var newMouseY=this.time2y(mouseT);
-            var newScrollTop=svgContainer.scrollTop+(newMouseY-mouseY);
+            var newScrollTop=newMouseY-diffY;
             if(newScrollTop>=0){
                 svgContainer.scroll(svgContainer.scrollLeft,newScrollTop);
                 this.dials.mouseY=newMouseY;
@@ -1100,28 +1419,75 @@ var vueapp = new Vue({
          * @param {Function} setTimeHandler 设置time属性方法(只有mousedown中使用)
          * @param {Function} checkTimeHandler 检查time属性是否允许的方法(只有mousedown中使用)
          */
-        onMouseDrag:function(e,data,getTimeHandler,setTimeHandler,checkTimeHandler){ 
+        onMouseDrag:function(e,data,getTimeHandler,setTimeHandler,checkTimeHandler,mouseUpHandler){ 
             if(e.type=="mousedown"){
                 this.drag.enable=true;
                 this.drag.lastY=e.offsetY;
+                this.drag.lastX=e.offsetX;
                 this.drag.movingData=data;
                 this.drag.handler.getTimeHandler=getTimeHandler;
                 this.drag.handler.setTimeHandler=setTimeHandler;
                 this.drag.handler.checkTimeHandler=checkTimeHandler;
+                this.drag.handler.mouseUpHandler=mouseUpHandler;
             }else if(e.type=="mousemove"&&this.drag.enable){
                 var dy=e.offsetY-this.drag.lastY;
-                var newTime=this.drag.handler.getTimeHandler(this.drag.movingData)+this.y2time(dy);
+                if(this.drag.handler.getTimeHandler){
+                    var newTime=this.drag.handler.getTimeHandler(this.drag.movingData)+this.y2time(dy);
+                }
                 //---检测newTime是否有冲突
-                if(this.drag.handler.checkTimeHandler(this.drag.movingData,newTime)){
-                    this.drag.handler.setTimeHandler(this.drag.movingData,newTime);
+                if((!this.drag.handler.checkTimeHandler)||this.drag.handler.checkTimeHandler(this.drag.movingData,newTime)){
+                    this.drag.handler.setTimeHandler(this.drag.movingData,newTime,e);
                     this.drag.lastY=e.offsetY;
+                    this.drag.lastX=e.offsetX;
                 }
             }else if(e.type=="mouseup"){
                 this.drag.enable=false;
                 this.drag.lastY=-1;
+                if(this.drag.handler.mouseUpHandler instanceof Function){
+                    this.drag.handler.mouseUpHandler(this.drag.movingData);
+                }
                 this.drag.movingData=null;
                 this.drag.handler={};
             }
+        },
+        scrollOnMouseDrag:function(e){ //右键拖动画布
+            this.drag.scrollingTo=null;
+            this.drag.scrolling=true;
+            this.onMouseDrag(e,{
+                oy:e.offsetY,
+                ox:e.offsetX,
+                dx:0,dy:0,
+                scrollTop:svgContainer.scrollTop,
+                scrollLeft:svgContainer.scrollLeft,
+            },function(d){return d.time},function(d,time,e){
+                d.dy=d.oy-e.offsetY;
+                d.dx=d.ox-e.offsetX;
+                d.scrollTop+=d.dy;
+                d.scrollLeft+=d.dx;
+                svgContainer.scrollTop=d.scrollTop;
+                svgContainer.scrollLeft=d.scrollLeft;
+            },null,function(d){
+                vueapp.drag.scrolling=false;
+                //移动速度
+                vueapp.drag.scrollingTo={
+                    y:d.dy
+                }
+                var timer=setInterval(function(){
+                    if(vueapp.drag.scrollingTo){
+                        vueapp.drag.scrollingTo.y*=0.95;
+                        d.scrollTop+=vueapp.drag.scrollingTo.y;
+                        svgContainer.scrollTop=d.scrollTop;
+                        if(vueapp.drag.scrollingTo.y<=1&&vueapp.drag.scrollingTo.y>=-1){
+                            vueapp.drag.scrollingTo=null;
+                            clearInterval(timer);
+                            timer=undefined;
+                        }
+                    }else{
+                        clearInterval(timer);
+                        timer=undefined;
+                    }
+                },33);
+            })
         },
         gcdOnMouseDrag:function(e,gcd,i){
             this.onMouseDrag(e,gcd,function(d){return d.time},
@@ -1331,10 +1697,11 @@ var vueapp = new Vue({
                 //     }
                 // }
                 for(var i=0;y<=maxY;y+=tick){
+                    var time=y/this.dials.tick*1000;
                     lines.push({
                         i:i,
                         y:y,
-                        text:new Date(Math.round(y/this.dials.tick*1000)).format("mm:ss.fff")
+                        text:new Date(Math.round(time)-28800000).format(getFormat(time))
                     })
                     // pushMiniLine(y);
                 }
@@ -1362,14 +1729,22 @@ var vueapp = new Vue({
     },
     filters:{
         timeFormat:(time,fmt)=>{
-            fmt=fmt||"mm:ss.fff";
-            let d=new Date(time);
+            if(!fmt){
+                fmt=getFormat(time);
+            }
+            let d=new Date(time-28800000);
             return d.format(fmt);
         }
     }
 });
 
-
+function getFormat(time){
+    if(time>3600000){
+        return "h:mm:ss.fff";
+    }else{
+        return "mm:ss.fff";
+    }
+}
 
 function loadUserDefinedData(){
     var data=localStorage.getItem("CCINO_TIMELINE_USERDEFINED_DATA");
@@ -1398,31 +1773,45 @@ window.addEventListener("beforeunload",function(){
 })
 
 
-// document.addEventListener('keydown', function(evt){
-//     var code=evt.code;
-//     var subcode=code.substr(0,5);
-//     if(subcode=="Digit"){
-//         code=code.substr(5);
-//     }else if(subcode=="Numpa"){
-//         var right=code.substr(6);
-//         if(right.length==1)
-//             code="Num "+right
-//         else
-//             code="Num "+evt.key;
-//     }else if(subcode=="Arrow"){
-//         code=code.substr(5);
-//     }else{
-//         code=evt.key;
-//         if(code.length==1)
-//             code=code.toUpperCase();
-//     }
-//     if(evt.key!="Control"&&evt.key!="Shift"&&evt.key!="Alt"){
-//         var str=(evt.ctrlKey?"Ctrl+":"")+(evt.shiftKey?"Shift+":"")+(evt.altKey?"Alt+":"")+code;
-//         console.log(str);
-//     }
-//     evt.preventDefault();
-//     return false;
-// }, false);
+document.addEventListener('keydown', function(evt){
+    var code=evt.code;
+    var subcode=code.substr(0,5);
+    if(subcode=="Digit"){
+        code=code.substr(5);
+    }else if(subcode=="Numpa"){
+        var right=code.substr(6);
+        if(right.length==1)
+            code="Num "+right
+        else
+            code="Num "+evt.key;
+    }else if(subcode=="Arrow"){
+        code=code.substr(5);
+    }else{
+        code=evt.key;
+        if(code.length==1)
+            code=code.toUpperCase();
+    }
+    if(evt.key!="Control"&&evt.key!="Shift"&&evt.key!="Alt"){
+        var str=(evt.ctrlKey?"Ctrl+":"")+(evt.shiftKey?"Shift+":"")+(evt.altKey?"Alt+":"")+code;
+        console.log(str);
+    }
+    if(str=="Delete"){
+        //删除选择内容
+        if(vueapp.setting.eventSet.event){
+            var i=vueapp.timeline.events.indexOf(vueapp.setting.eventSet.event);
+            vueapp.timeline.events.splice(i,1);
+        }
+        if(vueapp.setting.selectedSkill){
+            var skillName=vueapp.setting.selectedSkill.skill.name;
+            if(vueapp.timeline.skills[skillName]){
+                var i=vueapp.timeline.skills[skillName].indexOf(vueapp.setting.selectedSkill.skillInfo);
+                vueapp.timeline.skills[skillName].splice(i,1);
+            }
+        }
+    }
+    //evt.preventDefault();
+    return false;
+}, false);
 
 /*
     TODO:
@@ -1431,10 +1820,4 @@ window.addEventListener("beforeunload",function(){
     3、增加GCD技能设置页面，包括各个职业 x
     4、增加能力技通道(持续时间在buff栏显示) 能力技能只能放在gcd的1/3处
 
-    5、logs读取功能：
-        1.查询logs战斗简介 https://cn.fflogs.com/v1/report/fights/KkzGd8Zg3cnYfFMA?api_key=184a0cc2cd961346f91397dae0f38630
-            获取基本信息，例如目标列表，开始结束时间，
-        2.查询logs事件内容 https://cn.fflogs.com/v1/report/events/summary/KkzGd8Zg3cnYfFMA?end=810000&api_key=184a0cc2cd961346f91397dae0f38630
-            {events:[],nextPageTimestamp:123456}  事件列表，下一页开始时间
-        3.根据信息解析为时间轴
  */

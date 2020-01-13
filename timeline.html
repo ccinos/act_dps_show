@@ -7,25 +7,149 @@
     <script src="./vue.min.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
-    <link href="./timeline.css?v=0.22" rel="stylesheet">
+    <link href="./timeline.css?v=0.25" rel="stylesheet">
 
     <script src="./vue_ccino_switch.js"></script>
     <link rel="stylesheet" href="./vue_ccino_switch.css">
-    <!-- <script src="./axios.min.js"></script> -->
+    <script src="./axios.min.js"></script>
 </head>
 <body>
-<div id="container" v-cloak style="padding:10px;">
-    <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable"></div>
-    <div class="float-window" style="top:10px;left:10px;" v-if="dials.selectedLineY">
+<div id="container" v-cloak style="padding:10px;" @mouseup="onMouseDrag($event)">
+    <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
+    <!-- LOGS上传浮窗 -->
+    <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;" v-if="temp.importLogsSet.enable">
+        <div class="row">
+            <div class="col-xs-12" >
+                <div style="width:700px; margin: 0 auto;">
+                    <button style="float:right;" class="btn btn-default" @click="temp.importLogsSet.enable=false">关闭</button>
+                    LOGS CODE <input class="form-control form-auto" name="log_code" v-model="temp.importLogsSet.code"> 
+                    <button class="btn btn-default" @click="downLoadLogsData" :disabled="temp.importLogsSet.loading">查询</button>
+                    <br>
+                    <span>示例地址 https://cn.fflogs.com/reports/<span style="color:red;">9VcYMnPXHx3FCzgw</span>#fight=1&type=damage-done 的
+                    <span style="color:red;">红色部分</span></span>
+                    <br>
+                    <span v-if="temp.importLogsSet.error&&temp.importLogsSet.error.error" style="color:red;">{{temp.importLogsSet.error.error}}</span>
+                </div>
+                <div style="width:700px; margin: 0 auto;" v-if="temp.importLogsSet.report.fights">
+                    <h3>{{temp.importLogsSet.report.fights.title}} 
+                        <button @click="downloadSelectedFight" class="btn btn-primary btn-sm" :disabled="temp.importLogsSet.report.selectedFight==null||temp.importLogsSet.report.downloading">
+                            下载
+                        </button>
+                        <button @click="importSelectedFight" class="btn btn-primary btn-sm" :disabled="!temp.importLogsSet.report.downloaded">
+                            导入
+                        </button>
+                        <small>
+                            {{temp.importLogsSet.report.fights.start+28800000 | timeFormat('yyyy-MM-dd hh:mm:ss')}}
+                            时长:{{temp.importLogsSet.report.fights.end-temp.importLogsSet.report.fights.start | timeFormat('mm.ss')}}
+                        </small>
+                    </h3>
+                    <div style="display:flex;">
+                        <span class="value-name">解析事件<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.event"></ccino-switch></span> 
+                        <span class="value-name">能力技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.job"></ccino-switch></span> 
+                        <span class="value-name">GCD技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.gcd"></ccino-switch></span> 
+                    </div>
+                    <ul class="list-group" style="max-height: 300px; overflow: auto;">
+                        <a v-for="fight in temp.importLogsSet.report.fights.fights"
+                            class="list-group-item" :class="{'list-group-item-success':fight.kill,'list-group-item-danger':!fight.kill,
+                                                    active:fight==temp.importLogsSet.report.selectedFight}"
+                            v-if="!(temp.importLogsSet.report.downloading&&temp.importLogsSet.report.downloaded)||temp.importLogsSet.report.selectedFight==fight"
+                            href="javascript:;" @click="temp.importLogsSet.report.selectedFight=fight">
+                            {{fight.zoneName}} 
+                            - {{fight.end_time-fight.start_time | timeFormat('mm.ss')}}
+                            <span style="float:right">{{temp.importLogsSet.report.fights.start+fight.start_time+28800000 | timeFormat('hh:mm:ss')}}</span>
+                        </a>
+                    </ul>
+                    <div v-if="temp.importLogsSet.report.downloading">
+                        技能数据
+                        <div v-if="temp.importLogsSet.import.job||temp.importLogsSet.import.gcd">
+                            <div class="progress" style="margin-top:10px;" >
+                                <div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width: 2em;"
+                                    :style="{width:temp.importLogsSet.progress.casts+'%'}">
+                                {{temp.importLogsSet.progress.casts}}%
+                                </div>
+                            </div>
+                        </div>
+                        事件数据
+                        <div v-if="temp.importLogsSet.import.event">
+                            <div class="progress" style="margin-top:10px;" >
+                                <div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width: 2em;"
+                                    :style="{width:temp.importLogsSet.progress.events+'%'}">
+                                {{temp.importLogsSet.progress.events}}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="temp.importLogsSet.report.downloaded">
+                        <ul>
+                            <li class="list-group-item">
+                                <span class="value-name">事件来源</span> 
+                                <template v-if="temp.importLogsSet.import.event">
+                                    <select class="form-control form-auto" style="width:20em;" multiple v-model="temp.importLogsSet.importSource.event">
+                                        <option v-for="player in temp.importLogsSet.report.boss" v-if="player"
+                                        :value="player.id">
+                                        {{player.name}}
+                                    </option>
+                                    </select>
+                                    按住ctrl多选
+                                    <hr style="margin-left:120px">
+                                    <div style="margin-left:120px">
+                                        <span v-for="id in temp.importLogsSet.importSource.event" style="margin-right:10px;">
+                                            {{temp.importLogsSet.report.boss[id].name}}
+                                        </span>
+                                    </div>
+                                </template>
+                            </li>
+                            <li class="list-group-item">
+                                <span class="value-name">能力技</span> 
+                                <template v-if="temp.importLogsSet.import.job">
+                                    <div v-for="skill in skills">
+                                        <span class="value-name">{{skill.name}}</span>
+                                        <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.job[skill.name]">
+                                            <option v-for="player in temp.importLogsSet.report.players" 
+                                                v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]"
+                                                :value="player.id">
+                                                {{player.name}}❀{{player.server}} - {{player.type}} 
+                                                ({{temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name].length}})
+                                            </option>
+                                        </select>
+                                    </div>
+                                </template>
+                            </li>
+                            <li class="list-group-item">
+                                <span class="value-name">GCD技</span> 
+                                <template v-if="temp.importLogsSet.import.gcd">
+                                    <div v-for="skill in gcdSkills">
+                                        <span class="value-name">{{skill.name}}</span>
+                                        <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.gcd[skill.name]">
+                                            <option v-for="player in temp.importLogsSet.report.players" 
+                                            v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]"
+                                            :value="player.id">
+                                            {{player.name}}❀{{player.server}} - {{player.type}}
+                                            ({{temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name].length}})
+                                        </option>
+                                        </select>
+                                    </div>
+                                </template>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="dials.selectedLineY">
+        <!-- 上部按钮 -->
         由选定位置对齐到开始
         <button class="btn btn-xs btn-primary" @click="alignToStart('event')">事件</button>
         <button class="btn btn-xs btn-primary" @click="alignToStart('gcd')">GCD技</button>
         <button class="btn btn-xs btn-primary" @click="alignToStart('job')">能力技</button>
     </div>
     <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
+        <!-- 事件批量导入 -->
         <button class="btn btn-primary" @click="batchImportEvent">导入</button>
         <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
-        <button class="btn btn-default" @click="batchExportEvent">提取当前事件轴</button>
+        <button class="btn btn-info" @click="batchExportEvent">提取当前事件轴</button>
         <textarea class="form-control" style="height:calc( 100% - 50px );resize:none;margin-top: 10px;" v-model="temp.importEventSet.text"
          placeholder="每行一条事件，按照单条事件的导入格式
 0:00 事件内容(分钟:秒.毫秒)"></textarea>
@@ -135,7 +259,7 @@
                 </select>
                
                 <button class="btn btn-success" @click="savePicked">保存</button>
-                <button class="btn btn-default" @click="setting.skillSelectSet.enable=false;">关闭</button>
+                <button class="btn btn-default" @click="setting.skillSelectSet.enable=false;temp.hoverSkill.enable=false;">关闭</button>
                 <span style="margin-left:50px;">
                     GCD时间 <input class="form-control form-auto" v-model="setting.skillSelectSet.gcdDuration" type="number" style="width:100px;">秒
                 </span>
@@ -280,15 +404,18 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-9" style="overflow:hidden;">
-                <div id="svg_container" @scroll="onSvgScroll($event)" class="noselect" 
+                <div id="svg_container" class="noselect" 
+                    :class="{scrolling:drag.scrolling}"
+                    @scroll="onSvgScroll($event)" 
                     @mousewheel.alt.prevent="onMouseWheelScale($event)"
+                    @mousewheel="drag.scrollingTo=null"
                     :style="{height:option.svg.height+'px'}"
                     @dblclick="insertNew"
                     @click="cancelAllSelect();selectLine();"
-                    @contextmenu.prevent="cancelAllSelect()">
+                    @contextmenu.prevent="cancelAllSelect()"
+                    @mousedown.right="scrollOnMouseDrag($event)">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
-                        @mousemove="onSvgMouseMove($event),onMouseDrag($event)"
-                        @mouseup="onMouseDrag($event)">
+                        @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
                         <!-- hover rect -->
                         <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" 
                                     :y="dials.top" height="3000" />
@@ -318,7 +445,7 @@
                         </g>
                         
                         <!-- 事件 -->
-                        <g v-for="e in timeline.events" @mousedown="onMouseDragSimple($event,e)">
+                        <g v-for="e in timeline.events" @mousedown.left.stop="onMouseDragSimple($event,e)">
                             <line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
                             <text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4"  @click.stop="onEventClick(e,$event)"
                                 :class="{'event-active':setting.eventSet.event==e}">
@@ -335,7 +462,7 @@
                                         height="20"
                                         onerror="this.href='./icons/skill/unknown.png'"
                                         @click.stop=""
-                                        @mousedown="gcdOnMouseDrag($event,gcd,i)"
+                                        @mousedown.left.stop="gcdOnMouseDrag($event,gcd,i)"
                                         @contextmenu.prevent="deleteGcd(i)"/>
                             </template>
                         </g>
@@ -350,7 +477,7 @@
                                 <g v-for="skillInfo in timeline.skills[skill.name]" 
                                     @mouseenter="skillOnHover(skillInfo,skill,true)" 
                                     @mouseleave="skillOnHover(skillInfo,skill,false)"
-                                    @mousedown="skillOnMouseDrag(skillInfo,skill,true,$event)"
+                                    @mousedown.left.stop="skillOnMouseDrag(skillInfo,skill,true,$event)"
                                     @click.stop="onSelectSkill(skillInfo,skill,i,$event)"
                                     :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}"
                                     @contextmenu="onSkillRightClick(skillInfo,skill,i)"> 
@@ -416,7 +543,12 @@
                     <button class="btn btn-info" @click="dataShare">分享</button>
                         
                     <hr>
-                    <input class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
+                    <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
+                    <button class="btn btn-danger btn-sm" @click="timeline.events=[]">清空事件</button>
+                    
+                    <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">导入ACT</button>
+                    <button class="btn btn-primary btn-sm" @click="temp.importLogsSet.enable=true">导入LOGS</button>
+                    <input style="margin-top:5px;" class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00 开始 (回车插入)" v-model="setting.inputText" 
                         @blur="inputErrMsg=''"
                         @keydown.esc="onClearInput">
                     <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span>
@@ -424,7 +556,6 @@
                     <button class="btn btn-primary btn-sm" @click="setting.skillSelectSet.enable=true">技能设置</button>
                     <button class="btn btn-danger btn-sm" @click="timeline.gcd=[]">清空GCD技</button>
                     <button class="btn btn-danger btn-sm" @click="timeline.skills={}">清空能力技</button>
-                    <button class="btn btn-danger btn-sm" @click="timeline.events=[]">清空事件</button>
                     <!-- GCD技能列表 -->
                     
                     <div style="display:flex;flex-wrap:wrap;">
@@ -438,9 +569,6 @@
                         </div>
                     </div>
                     <hr>
-                    <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">从ACT日志文件导入技能施放数据</button>
-                    <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
-                    <br>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
                     <br>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式
@@ -492,5 +620,5 @@
 </div>
 
 <script src="./timeline_data.js?v=0.25"></script>
-<script src="./timeline.js?v=0.25.1"></script>
+<script src="./timeline.js?v=0.25.3"></script>
 </body>
