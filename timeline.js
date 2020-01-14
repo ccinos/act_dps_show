@@ -1,5 +1,28 @@
 'use strict';
 
+(function(){ //增加axios缓存机制
+    if(axios){
+        let axiosCache={};
+        axios.getUseCache=function(url,cacheKey){
+            if(!cacheKey) cacheKey=url;
+            var data=axiosCache[cacheKey];
+            if(data){
+                return Promise.resolve(data);
+            }else{
+                return new Promise(function(resolve,reject){
+                    axios.get(url).then(function(res){
+                        axiosCache[cacheKey]=res;
+                        resolve(res);
+                    }).catch(function(e){
+                        reject(e);
+                    })
+                })
+            }
+        }
+    }
+}())
+
+
 Array.prototype.insertSort=function(obj,handler){
     if(!(handler instanceof Function)){
         handler=function(a,b){ return a<b }
@@ -61,6 +84,12 @@ var vueapp = new Vue({
     el: "#container",
     data: {
         versions:[
+            {
+                ver:"0.25.4",
+                type:"update",
+                date:'2020.01.14 10:07',
+                info:"logs数据导入增加临时缓存，现在可以导入BOSS开始读条事件（可选）。"
+            },
             {
                 ver:"0.25.3",
                 type:"update",
@@ -257,7 +286,8 @@ var vueapp = new Vue({
                 import:{
                     job:true,
                     gcd:true,
-                    event:true
+                    event:true,
+                    begincast:false,
                 },
                 importSource:{
                     job:{},
@@ -289,35 +319,45 @@ var vueapp = new Vue({
     },
     methods: {
         importSelectedFight:function(){
-            vueapp.timeline.skills={};
-            vueapp.timeline.gcd=[];
-            vueapp.timeline.events=[];
+            if(vueapp.temp.importLogsSet.import.event){
+                vueapp.timeline.events=[];
+            }
+            if(vueapp.temp.importLogsSet.import.job){
+                vueapp.timeline.skills={};
+            }
+            if(vueapp.temp.importLogsSet.import.gcd){
+                vueapp.timeline.gcd=[];
+            }
             var report=this.temp.importLogsSet.report;
             var importSource=this.temp.importLogsSet.importSource;
-            for(var tempData of ["job","gcd"]){
-                for(var skillName in importSource[tempData]){
-                    var playerId=importSource[tempData][skillName];
-                    if(!playerId) continue;
-                    var list=report.parsedPlayerData[playerId][tempData][skillName];
-                    if(list){
-                        for(var item of list){
-                            if(tempData=="job"){
-                                if(!vueapp.timeline["skills"][skillName]){
-                                    vueapp.timeline["skills"][skillName]=[];
+            if(vueapp.temp.importLogsSet.import.job||vueapp.temp.importLogsSet.import.gcd){
+                for(var tempData of ["job","gcd"]){
+                    for(var skillName in importSource[tempData]){
+                        var playerId=importSource[tempData][skillName];
+                        if(!playerId) continue;
+                        var list=report.parsedPlayerData[playerId][tempData][skillName];
+                        if(list){
+                            for(var item of list){
+                                if(tempData=="job"){
+                                    if(!vueapp.timeline["skills"][skillName]){
+                                        vueapp.timeline["skills"][skillName]=[];
+                                    }
+                                    vueapp.timeline["skills"][skillName].insertSort(item);
+                                }else{
+                                    vueapp.timeline[tempData].insertSort(item);
                                 }
-                                vueapp.timeline["skills"][skillName].insertSort(item);
-                            }else{
-                                vueapp.timeline[tempData].insertSort(item);
+                                
                             }
-                            
                         }
                     }
                 }
             }
             //--事件
-            for(var eventSource of importSource.event){
-                for(var event of report.parsedPlayerData[eventSource].events){
-                    vueapp.timeline.events.insertSort(event);
+            if(vueapp.temp.importLogsSet.import.event){
+                for(var eventSource of importSource.event){
+                    for(var event of report.parsedPlayerData[eventSource].events){
+                        vueapp.timeline.events.insertSort(event);
+                    }
                 }
             }
             alert("导入成功");
@@ -330,6 +370,7 @@ var vueapp = new Vue({
             var importEnable=vueapp.temp.importLogsSet.import;
             var importSource=vueapp.temp.importLogsSet.importSource;
             var startTime=fight.start_time;
+            var hasBeginCase=importEnable.begincast;
             // 解析为当前数据
             // 记录每个玩家事件、每个玩家各个技能数据
             report.parsedPlayerData={};
@@ -340,13 +381,17 @@ var vueapp = new Vue({
                 };
             }
             var skillTimeCache={}; // {  playerId:{skillName:time} }
+            var castType={
+                "cast":"施放",
+                "begincast":"开始读条"
+            }
             for(var dataSeries of [[report.downloadedCasts,0],[report.downloadedEvents,1]]){
                 var type=dataSeries[1];
                 var datas=dataSeries[0];
                 if(!datas) continue;
                 for(var dList of datas){
                     for(var d of dList.events){
-                        if(d.type=="cast"){
+                        if(d.type=="cast"||(hasBeginCase&&d.type=="begincast")){
                             var skillName=d.ability.name;
                             if(skillName=="攻击"||!skillName){
                                 continue;
@@ -367,7 +412,7 @@ var vueapp = new Vue({
                                     if(!report.boss[d.sourceID]) continue;
                                     report.parsedPlayerData[d.sourceID].events.push({
                                         time:time,
-                                        text: report.targets[d.sourceID].name + " 施放 ["+skillName+"]",
+                                        text: report.targets[d.sourceID].name + " "+castType[d.type]+" ["+skillName+"]",
                                     })
                                     // vueapp.timeline.events.push();
                                 }
@@ -434,6 +479,7 @@ var vueapp = new Vue({
                 }
                 vueapp.temp.importLogsSet.importSource.gcd[skill.name]=maxPlayerId;
             }
+            vueapp.temp.importLogsSet.importSource.event=[];
             for(var b of report.boss){
                 if(!b) continue;
                 vueapp.temp.importLogsSet.importSource.event.push(b.id);
@@ -451,7 +497,7 @@ var vueapp = new Vue({
                 var apiKey=this.temp.importLogsSet.apiKey;
                 vueapp.temp.importLogsSet.progress.casts=0;
                 vueapp.temp.importLogsSet.progress.events=0;
-                
+                vueapp.temp.importLogsSet.importSource={job:{},gcd:{},event:[]};
                 //casts 事件
                 var getPagedData=function(start,hostility,callback,dataList){
                     // if(hostility==0){
@@ -465,7 +511,7 @@ var vueapp = new Vue({
                     if(dataList==null) dataList=[];
                     if(callback instanceof Function) callback(start,startTime,endTime);
                     var url="https://cn.fflogs.com/v1/report/events/casts/"+code+"?hostility="+hostility+"&start="+start+"&end="+endTime+"&api_key="+apiKey;
-                    return axios.get(url).then(function(res){
+                    return axios.getUseCache(url).then(function(res){
                         var data=res.data;
                         dataList.push(data);
                         if(data.nextPageTimestamp){

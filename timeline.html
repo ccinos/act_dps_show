@@ -45,6 +45,10 @@
                     </h3>
                     <div style="display:flex;">
                         <span class="value-name">解析事件<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.event"></ccino-switch></span> 
+                        <span class="value-name" style="width:14em;" v-if="temp.importLogsSet.import.event">
+                            解析开始读条事件
+                            <ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.begincast"></ccino-switch>
+                        </span> 
                         <span class="value-name">能力技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.job"></ccino-switch></span> 
                         <span class="value-name">GCD技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.gcd"></ccino-switch></span> 
                     </div>
@@ -620,5 +624,5 @@
 </div>
 
 <script src="./timeline_data.js?v=0.25"></script>
-<script src="./timeline.js?v=0.25.3"></script>
+<script src="./timeline.js?v=0.25.4"></script>
 </body>
