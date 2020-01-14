@@ -27,15 +27,15 @@ Array.prototype.insertSort=function(obj,handler){
     if(!(handler instanceof Function)){
         handler=function(a,b){ return a<b }
     }
-    for(var i=0;i<this.length;++i){
+    for(var i=this.length-1;i>=0;--i){
         var t=this[i];
-        if(handler(obj,t)){
-            this.splice(i,0,obj);
+        if(handler(t,obj)){
+            this.splice(i+1,0,obj);
             return i;
         }
     }
-    this.push(obj);
-    return this.length-1;
+    this.splice(0,0,obj);
+    return 0;
 }
 function copy(data){
     return JSON.parse(JSON.stringify(data));
@@ -1516,14 +1516,14 @@ var vueapp = new Vue({
                 vueapp.drag.scrolling=false;
                 //移动速度
                 vueapp.drag.scrollingTo={
-                    y:d.dy
+                    y:d.dy*1.2
                 }
                 var timer=setInterval(function(){
                     if(vueapp.drag.scrollingTo){
-                        vueapp.drag.scrollingTo.y*=0.95;
+                        vueapp.drag.scrollingTo.y*=0.97;
                         d.scrollTop+=vueapp.drag.scrollingTo.y;
                         svgContainer.scrollTop=d.scrollTop;
-                        if(vueapp.drag.scrollingTo.y<=1&&vueapp.drag.scrollingTo.y>=-1){
+                        if(vueapp.drag.scrollingTo.y<=1&&vueapp.drag.scrollingTo.y>=-1||d.scrollTop<=0){
                             vueapp.drag.scrollingTo=null;
                             clearInterval(timer);
                             timer=undefined;
@@ -1532,7 +1532,7 @@ var vueapp = new Vue({
                         clearInterval(timer);
                         timer=undefined;
                     }
-                },33);
+                },30);
             })
         },
         gcdOnMouseDrag:function(e,gcd,i){
