@@ -305,6 +305,7 @@ var vueapp = new Vue({
                     players:null,
                     targets:null,
                     boss:null,
+                    npc:null,
                     downloading:false,
                     downloaded:false,
                     downloadedCasts:null,
@@ -390,6 +391,10 @@ var vueapp = new Vue({
                 "cast":"施放",
                 "begincast":"开始读条"
             }
+            var allSkills={
+                player:{},
+                boss:[]
+            };
             for(var dataSeries of [[report.downloadedCasts,0],[report.downloadedEvents,1]]){
                 var type=dataSeries[1];
                 var datas=dataSeries[0];
@@ -401,6 +406,19 @@ var vueapp = new Vue({
                             if(skillName=="攻击"||!skillName){
                                 continue;
                             }
+                            if(report.boss[d.sourceID]){
+                                if(allSkills.boss.indexOf(skillName)==-1){
+                                    allSkills.boss.push(skillName);
+                                }
+                            }else{
+                                if(!allSkills.player[d.sourceID]){
+                                    allSkills.player[d.sourceID]=[];
+                                }
+                                if(allSkills.player[d.sourceID].indexOf(skillName)==-1){
+                                    allSkills.player[d.sourceID].push(skillName);
+                                }
+                            }
+                            
                             //判断重复技能时间
                             if(!skillTimeCache[d.sourceID]){
                                 skillTimeCache[d.sourceID]={};
@@ -453,6 +471,7 @@ var vueapp = new Vue({
                     }
                 }
             }
+            console.log(allSkills);
             //---预选 report.players
             for(var skill of vueapp.skills){
                 var maxCount=0;
@@ -504,7 +523,7 @@ var vueapp = new Vue({
                 vueapp.temp.importLogsSet.progress.events=0;
                 vueapp.temp.importLogsSet.importSource={job:{},gcd:{},event:[]};
                 //casts 事件
-                var getPagedData=function(start,hostility,callback,dataList){
+                var getPagedData=function(start,hostility,callback,translate,dataList){
                     // if(hostility==0){
                     //     return new Promise(r=>r(testSkillData));
                     // }else{
@@ -516,11 +535,14 @@ var vueapp = new Vue({
                     if(dataList==null) dataList=[];
                     if(callback instanceof Function) callback(start,startTime,endTime);
                     var url="https://cn.fflogs.com/v1/report/events/casts/"+code+"?hostility="+hostility+"&start="+start+"&end="+endTime+"&api_key="+apiKey;
+                    if(translate){
+                        url+="&translate=true";
+                    }
                     return axios.getUseCache(url).then(function(res){
                         var data=res.data;
                         dataList.push(data);
                         if(data.nextPageTimestamp){
-                            return getPagedData(data.nextPageTimestamp,hostility,callback,dataList);
+                            return getPagedData(data.nextPageTimestamp,hostility,callback,translate,dataList);
                         }else{
                             if(callback instanceof Function) callback(endTime,startTime,endTime);
                             return dataList;
@@ -594,6 +616,7 @@ var vueapp = new Vue({
                 report.players=[];
                 report.boss=[];
                 report.targets=[];
+                report.npc=[];
                 for(var f of report.fights.friendlies){
                     if(f.type!="LimitBreak"){
                         report.players[f.id]=f;
@@ -603,6 +626,9 @@ var vueapp = new Vue({
                 for(var f of report.fights.enemies){
                     if(f.type=="Boss"){
                         report.boss[f.id]=f;
+                        report.targets[f.id]=f;
+                    }else if(f.type=="NPC"){
+                        report.npc[f.id]=f;
                         report.targets[f.id]=f;
                     }
                 }
@@ -1882,9 +1908,9 @@ document.addEventListener('keydown', function(evt){
 
 /*
     TODO:
-    1、增加技能配置页面，配置可选技能 x
-    2、增加预置技能属性、图标 x
-    3、增加GCD技能设置页面，包括各个职业 x
+    1、GCD技能指定选择一个玩家。（因为混入不同玩家的GCD技能是没有意义的）
+然后每个GCD技能来选择具体的来源技能，如果名字匹配就直接选择，
+    2、每个技能来源，都设置一层对应技能名称翻译 
     4、增加能力技通道(持续时间在buff栏显示) 能力技能只能放在gcd的1/3处
 
  */

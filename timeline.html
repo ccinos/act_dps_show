@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="./common.js"></script>
-    <!-- <script src="./vue.min.js"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="./vue.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
     <link href="./timeline.css?v=0.25" rel="stylesheet">
 
@@ -91,14 +91,18 @@
                                     <select class="form-control form-auto" style="width:20em;" multiple v-model="temp.importLogsSet.importSource.event">
                                         <option v-for="player in temp.importLogsSet.report.boss" v-if="player"
                                         :value="player.id">
-                                        {{player.name}}
-                                    </option>
+                                            {{player.name}} - BOSS
+                                        </option>
+                                        <option v-for="player in temp.importLogsSet.report.npc" v-if="player"
+                                        :value="player.id">
+                                            {{player.name}} - NPC
+                                        </option>
                                     </select>
                                     按住ctrl多选
                                     <hr style="margin-left:120px">
                                     <div style="margin-left:120px">
                                         <span v-for="id in temp.importLogsSet.importSource.event" style="margin-right:10px;">
-                                            {{temp.importLogsSet.report.boss[id].name}}
+                                            {{temp.importLogsSet.report.targets[id].name}}
                                         </span>
                                     </div>
                                 </template>
