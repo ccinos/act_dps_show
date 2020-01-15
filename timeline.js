@@ -83,7 +83,12 @@ var svgContainer;
 var vueapp = new Vue({
     el: "#container",
     data: {
-        versions:[
+        versions:[{
+                ver:"0.25.6",
+                type:"update",
+                date:'2020.01.15 10:17',
+                info:"对学者和召唤的重复技能做了区分，修复了召唤技能数据不对的BUG。"
+            },
             {
                 ver:"0.25.4",
                 type:"update",
@@ -834,7 +839,6 @@ var vueapp = new Vue({
                     if(players.length>0){
                         var findMaxSkillPlayer=function(skill,type){
                             var name=skill.fullname||skill.name;
-                            //vueapp.temp.parseDatas.datas.梨子李子栗子.gcdCount
                             var maxCount=0,maxPlayer=players[0];
                             try{
                                 for(var player of players){
@@ -938,13 +942,16 @@ var vueapp = new Vue({
         },
         pickSkill:function(skill,skillType){
             skill=copy(skill);
+            if(skill.name){
+                skill.name=skill.name.replace(/@.+/,"");
+            }
+            var name=skill.name;
             if(skillType=="gcd"){
-                if(this.setting.skillSelectSet.selectedSkills[skillType].findIndex(function(a){return a.name==skill.name})!=-1){
+                if(this.setting.skillSelectSet.selectedSkills[skillType].findIndex(function(a){return a.name==name})!=-1){
                     return;
                 }
             }else{
                 skillType="job";
-                var name=skill.name;
                 if(!name) return;
                 while(this.setting.skillSelectSet.selectedSkills['job'].findIndex(function(a){return a.name==name})!=-1){
                     name=prompt("技能重复，请输入一个别名:",name);
@@ -1236,10 +1243,15 @@ var vueapp = new Vue({
             return time;
         },
         getSkillIcon:function(skill){
+            if(!skill) return;
             var iconname=skillNameIcon[skill.name]||skill.fullname||skill.name;
+            iconname=iconname.replace(/@.+/,"");
             return "./icons/skill/"+iconname+".png";
         },
         getGcdIcon:function(skillName){
+            if(skillName){
+                skillName=skillName.replace(/@.+/,"");
+            }
             return "./icons/skill/"+skillName+".png";
         },
         
@@ -1780,6 +1792,11 @@ var vueapp = new Vue({
             }
             let d=new Date(time-28800000);
             return d.format(fmt);
+        },
+        skillNameFilter:function(skillName){
+            if(skillName){
+                return skillName.replace(/@.+/,"");
+            }
         }
     }
 });
@@ -1800,7 +1817,11 @@ function loadUserDefinedData(){
             if(data){
                 for(var dataName of vueapp.userDefinedDatas){
                     if(data[dataName]){
-                        Vue.set(vueapp,dataName,data[dataName]);
+                        try{
+                            Vue.set(vueapp,dataName,data[dataName]);
+                        }catch(e){
+                            console.error(e);
+                        }
                     }
                 }
             }

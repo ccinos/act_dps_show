@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="./common.js"></script>
-    <script src="./vue.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
+    <!-- <script src="./vue.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
     <link href="./timeline.css?v=0.25" rel="stylesheet">
 
@@ -246,7 +246,7 @@
     <div class="float-window" style="z-index:9999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable"
         :style="{left:temp.hoverSkill.x+'px', top:temp.hoverSkill.y+'px'}">
         <div>
-            <div style="font-size:120%;">{{temp.hoverSkill.skill.fullname||temp.hoverSkill.skill.name}}</div>
+            <div style="font-size:120%;">{{temp.hoverSkill.skill.fullname||temp.hoverSkill.skill.name | skillNameFilter}}</div>
             <span v-if="temp.hoverSkill.skill.type">{{temp.hoverSkill.skill.type}}</span>
             <span v-if="temp.hoverSkill.skill.cd">CD: {{temp.hoverSkill.skill.cd}}秒</span>  
             <span v-else>即时</span>
@@ -316,7 +316,7 @@
                                     @mouseout="temp.hoverSkill.enable=false">
                                     <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
                                     <br>
-                                    <span style="font-size:12px">{{skill.name}}</span>
+                                    <span style="font-size:12px">{{skill.name | skillNameFilter }}</span>
                                 </div>
                             </div>
                         </li>
@@ -623,6 +623,6 @@
     
 </div>
 
-<script src="./timeline_data.js?v=0.25"></script>
-<script src="./timeline.js?v=0.25.4"></script>
+<script src="./timeline_data.js?v=0.25.6"></script>
+<script src="./timeline.js?v=0.25.6"></script>
 </body>
