@@ -1431,17 +1431,24 @@ var vueapp = new Vue({
         checkSkillCount:function(skill,data,i){
             if(data.count>=0){
                 var list=this.timeline.skills[skill.name];
+                var newList={}; //用于记录新数据
                 while(i<list.length){
                     var s=list[i];
                     var newData=this.computeSkillTimeCount(skill,s.time,i,data);
+                    newList[i]=newData;
                     if(newData.count>=skill.count){
-                        return true;
+                        break;
                     }
                     if(newData.count<0){
                         return false;
                     }
                     data=newData;
                     ++i;
+                }
+                //允许设置
+                for(var i in newList){
+                    var newData=newList[i];
+                    list[i]=newData;
                 }
                 return true;
             }
@@ -1705,9 +1712,9 @@ var vueapp = new Vue({
             this.dials.mouseY=e.offsetY;
             //-- 横轴
             var x=e.offsetX;
-            if(x>=70&&x<490){
+            if(x>=70&&x<this.timeline.infoWidth-10){
                 this.hover.rect.x=70;
-                this.hover.rect.width=420;
+                this.hover.rect.width=this.timeline.infoWidth-80;
                 this.hover.rect.type="event";
                 this.hover.rect.enable=true;
             }else{
