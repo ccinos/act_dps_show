@@ -479,26 +479,39 @@
                             <!-- 技能CD -->
                             <template v-if="timeline.skills[skill.name]">
                                 <g v-for="skillInfo in timeline.skills[skill.name]" >
-                                    <rect v-if="skill.cd" class="skill-cd-prev" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
+                                    <rect v-if="skill.cd" class="skill-cd-prev" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
                                 </g>
-                                <g v-for="skillInfo in timeline.skills[skill.name]" 
+                                <g v-for="skillInfo,skillIndex in timeline.skills[skill.name]" 
                                     @mouseenter="skillOnHover(skillInfo,skill,true)" 
                                     @mouseleave="skillOnHover(skillInfo,skill,false)"
-                                    @mousedown.left.stop="skillOnMouseDrag(skillInfo,skill,true,$event)"
+                                    @mousedown.left.stop="skillOnMouseDrag(skillInfo,skill,true,$event,skillIndex)"
                                     @click.stop="onSelectSkill(skillInfo,skill,i,$event)"
                                     :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}"
                                     @contextmenu="onSkillRightClick(skillInfo,skill,i)"> 
-                                    <rect v-if="skill.cd" class="skill-cd" :x="(+timeline.infoWidth)+(option.skill.cdOffset)+(i+setting.reserveCols)*(skillOption.all)" 
-                                            :y="time2yOffset(skillInfo.time)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/>
-                                    <rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(option.skill.durationOffset)+(i+setting.reserveCols)*(skillOption.all)" 
+                                    
+                                    <!-- cd时间 -->
+                                    <rect v-if="skill.cd" class="skill-cd" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
+                                            :y="time2yOffset(skillInfo.time)" 
+                                            :height="second2y(  (skillInfo.count>0)? 0
+                                                                                   : ( skillInfo.count==0?(skillInfo.remainToAdd/1000):skill.cd)
+                                                            )" 
+                                            :width="(option.skill.cd)"/>
+                                    <!-- 持续时间 -->
+                                    <rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                             :y="time2yOffset(skillInfo.time)" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
+                                    <!-- 技能图标 -->
                                     <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :href="skill.icon||getSkillIcon(skill)"
                                         :y="time2yOffset(skillInfo.time)"
                                         width="20"
                                         height="20"
                                         onerror="this.href='./icons/skill/unknown.png'"/>
+
+                                    <text v-if="skillInfo.count!=null"
+                                        :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-8" 
+                                        :y="time2yOffset(skillInfo.time)+8" 
+                                    >{{skillInfo.count+1}}</text>
                                 </g>
                             </template>
                         </g>
@@ -537,7 +550,7 @@
                         <button class="btn btn-success" @click="importData">导入</button>
                         <button class="btn btn-default" @click="clearData">清空</button>
                         <button class="btn btn-danger" @click="sharing=false">关闭</button>
-                        <textarea class="form-control" style="width:100%;height:90%;resize:none;margin-top: 10px;">{{sharingText}}</textarea>
+                        <textarea class="form-control" v-model="sharingText" style="width:100%;height:90%;resize:none;margin-top: 10px;"></textarea>
                     </div>
                     <select class="form-control" v-model="selectedDataIndex">
                         <option v-for="data,i in savedDatas" :value="i">
@@ -568,10 +581,10 @@
                     
                     <div style="display:flex;flex-wrap:wrap;">
                         <div v-for="gcdSkill,i in gcdSkills" class="gcd-skill"
-                            @click="addGcdSkill(gcdSkill.name,gcdSetting.addIsInsert)"
+                            @click="addGcdSkill(gcdSkill.fullname||gcdSkill.name,gcdSetting.addIsInsert)"
                             @mousemove="onSkillHover(gcdSkill,$event)"
                             @mouseout="temp.hoverSkill.enable=false">
-                            <img :src="getGcdIcon(gcdSkill.name)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                            <img :src="getGcdIcon(gcdSkill.fullname||gcdSkill.name)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
                             <br>
                             <span style="font-size:12px">{{gcdSkill.name}}</span>
                         </div>
@@ -631,6 +644,6 @@
     
 </div>
 
-<script src="./timeline_data.js?v=0.25.6"></script>
-<script src="./timeline.js?v=0.25.6"></script>
+<script src="./timeline_data.js?v=0.26"></script>
+<script src="./timeline.js?v=0.26"></script>
 </body>

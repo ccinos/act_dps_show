@@ -31,7 +31,7 @@ Array.prototype.insertSort=function(obj,handler){
         var t=this[i];
         if(handler(t,obj)){
             this.splice(i+1,0,obj);
-            return i;
+            return i+1;
         }
     }
     this.splice(0,0,obj);
@@ -83,7 +83,14 @@ var svgContainer;
 var vueapp = new Vue({
     el: "#container",
     data: {
-        versions:[{
+        versions:[
+            {
+                ver:"0.26",
+                type:"update",
+                date:"2020.01.17 15:39",
+                info:"增加了对积蓄次数技能的支持（测试中），这个真实伤脑细胞，最后算是兼顾效率和展示，但可能会有BUG。如果该类技能已经加到已选技能列表里，需要重新添加一次才会生效！",
+            },
+            {
                 ver:"0.25.6",
                 type:"update",
                 date:'2020.01.15 10:17',
@@ -1312,7 +1319,6 @@ var vueapp = new Vue({
         },
         onSelectSkill:function(skillInfo,skill,i,evt){
             this.cancelAllSelect();
-            // this.setting.selectedSkillType=skill;
             this.setting.selectedSkill={
                 skillInfo:skillInfo,
                 skill:skill,
@@ -1373,6 +1379,74 @@ var vueapp = new Vue({
                 }
             }
         },
+        /**
+         * 用于计算技能在某时间，某index插入数据，
+         * 插入后的技能，具有多少累计使用次数
+         * 如果返回值count<0 则说明累计次数不允许使用
+         * 该方法不计算后续技能是否允许
+         * @param {Skill} skill 技能实例
+         * @param {*} time 时间点
+         * @param {*} i 时间轴该时间的插入索引
+         * @param {*} lastSkillData 上一次技能数据（如果给与此值，将忽略插入索引）
+         */
+        computeSkillTimeCount:function(skill,time,i,lastSkillData){
+            var s={time:time};
+            if(!skill) return s;
+            if(skill.count>1){
+                var cd=skill.cd*1000;
+                if(lastSkillData||i>0){ //如果有上次技能
+                    var list=this.timeline.skills[skill.name];
+                    var lastSkillData=lastSkillData||list[i-1];
+                    if(lastSkillData){
+                        var diffTime=time-lastSkillData.time; //间隔时间
+                        diffTime-=lastSkillData.remainToAdd;
+                        if(diffTime>0){
+                            var addCount=Math.floor(diffTime/(cd))+1+lastSkillData.count;
+                            diffTime=diffTime%cd;
+                            if(addCount>=skill.count){
+                                s.count=skill.count-1;
+                                s.remainToAdd=cd;
+                            }else{ 
+                                s.count=addCount-1;
+                                s.remainToAdd=cd-diffTime;
+                            }
+                        }else{ //直接消耗
+                            s.remainToAdd=-diffTime;
+                            s.count=lastSkillData.count-1;
+                        }
+                    }
+                }else{ //无上次技能，则直接设置为cd时间
+                    s.count=(skill.count-1);
+                    s.remainToAdd=cd; 
+                }
+            }
+            return s;
+        },
+        /**
+         * 检测该技能时间轴后续技能是否符合count要求
+         * @param {Skill} skill 技能实例
+         * @param {*} data 时间轴数据
+         * @param {*} i 索引
+         */
+        checkSkillCount:function(skill,data,i){
+            if(data.count>=0){
+                var list=this.timeline.skills[skill.name];
+                while(i<list.length){
+                    var s=list[i];
+                    var newData=this.computeSkillTimeCount(skill,s.time,i,data);
+                    if(newData.count>=skill.count){
+                        return true;
+                    }
+                    if(newData.count<0){
+                        return false;
+                    }
+                    data=newData;
+                    ++i;
+                }
+                return true;
+            }
+            return false;
+        },
         insertNew:function(){//插入新元素
             //判断当前位置
             if(this.hover.rect.enable){
@@ -1389,13 +1463,23 @@ var vueapp = new Vue({
                     }else if(this.hover.rect.type=="skill" && this.hover.rect.skillIndex>=0){
                         var skill=this.skills[this.hover.rect.skillIndex];
                         if(skill){
-                            if(this.checkSkillTime(skill,time)){
-                                if(!this.timeline.skills[skill.name]){
-                                    this.timeline.skills[skill.name]=[];
-                                }
-                                this.timeline.skills[skill.name].insertSort({
-                                    time:time
-                                },function(a,b){ return a.time<b.time });
+                            if(!this.timeline.skills[skill.name]){
+                                this.timeline.skills[skill.name]=[];
+                            }
+                            var list=this.timeline.skills[skill.name];
+                            var index=list.findIndex(function(e){
+                                return e.time>time;
+                            });
+                            var insertData={
+                                time:time
+                            };
+                            if(!skill.cd){//无CD直接插入
+                                list.insertSort(insertData,function(a,b){ return a.time<b.time });
+                                return;
+                            }
+                            if(index==-1) index=list.length;
+                            if(this.checkSkillTime(skill,time,index,false,insertData)){
+                                list.insertSort(insertData,function(a,b){ return a.time<b.time });
                             }
                         }else{
                             console.error("找不到技能");
@@ -1438,30 +1522,46 @@ var vueapp = new Vue({
         second2y:function(time){ //通过时间计算y
             return time*this.dials.tick;
         },
-        checkSkillTime:function(skill,time,expectSkillInfo){
+        checkSkillTime:function(skill,time,index,indexThis,originData){   //index: 插入的间隙   0  1  2 | 3  4  => 3
             var skills=this.timeline.skills[skill.name];
-            var offsetTime=skill.cd*1000;
-            var maxTime=time+offsetTime; //该时间产生的技能CD的时间
-            if(skills){
-                for(var i=0;i<skills.length;++i){
-                    var skillInfo=skills[i];
-                    if(skillInfo===expectSkillInfo)
-                        continue;
-                    var startTime=skillInfo.time;
-                    var endTime=startTime+offsetTime;
-                    if(time>=startTime&&time<=endTime
-                        || startTime>=time&&startTime<=maxTime){
+            //技能不允许越过其上下的技能
+            var lastSkill=skills[index-1]||{time:0};
+            var nextSkill=skills[indexThis?index+1:index]||{time:99999999};
+            if(time<=lastSkill.time||time>nextSkill.time) {
+                return false;
+            }
+            if(skill.count>1){
+                var insertData=this.computeSkillTimeCount(skill,time,index); //根据上次技能得出本次技能应有的count 和时间
+                if(this.checkSkillCount(skill,insertData,indexThis?index+1:index)){ //判断该count是否满足后续技能的需求
+                    if(originData) {
+                        mergeObj(originData,insertData);
+                    }
+                    return true;
+                }
+            }else{
+                if(!skill.cd) return true;
+                
+                var offsetTime=skill.cd*1000;
+                //根据index计算
+                // 判断上一个技能是否完成CD
+                //var count = skill.count>1?skill.count:1;
+                if(index>=1){
+                    var lastSkill=skills[index-1];
+                    if(time<lastSkill.time+offsetTime){
                         return false;
                     }
-                    if(maxTime<startTime){
-                        //如果cd后的时间小于此时所判断技能的开始时间
-                        //则之后的不需要再进行判断
-                        //* 这个建立在时间轴是按顺序排列的情况下
-                        break;
+                }
+                //判断下一个技能是否在本次CD范围
+                if(indexThis) ++index; //如果index是本次，则直接index+1判断下一次
+                if(index<skills.length){
+                    var timeEnd=time+offsetTime; //该时间产生的技能CD的时间
+                    var nextSkill=skills[index];
+                    if(nextSkill.time<timeEnd){
+                        return false;
                     }
                 }
+                return true;
             }
-            return true;
         },
         //-------------移动到技能安排上
         skillOnHover:function(skillInfo,skill,flag){
@@ -1579,15 +1679,16 @@ var vueapp = new Vue({
                 vueapp.changeGcdTime(d,time,i)
             },function(d){return true});
         },
-        skillOnMouseDrag:function(skillInfo,skill,flag,e){//拖拽
+        skillOnMouseDrag:function(skillInfo,skill,flag,e,index){//拖拽
             this.onMouseDrag(e,{
-                skillInfo:skillInfo,skill:skill
+                skillInfo:skillInfo,skill:skill, index:index
             },function(data){
                 return data.skillInfo.time;
             },function(data,time){
                 data.skillInfo.time=time;
             },function(data,time){
-                return vueapp.checkSkillTime(data.skill,time,data.skillInfo)
+                return vueapp.checkSkillTime(data.skill,time,data.index,true,data.skillInfo)
+            },function(data){
             })
         },
         //-------------鼠标滚动
