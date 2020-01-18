@@ -7,7 +7,7 @@
     <script src="./vue.min.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
-    <link href="./timeline.css?v=0.25" rel="stylesheet">
+    <link href="./timeline.css?v=0.30" rel="stylesheet">
 
     <script src="./vue_ccino_switch.js"></script>
     <link rel="stylesheet" href="./vue_ccino_switch.css">
@@ -145,8 +145,11 @@
             </div>
         </div>
     </div>
-
-    <div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="dials.selectedLineY">
+<!-- 
+    <div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="dials.selectedRange">
+        <button class="btn btn-xs btn-primary" @click="computeSelectedRangeDmg">计算威力</button>
+    </div> -->
+    <div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="!dials.selectedRange&&dials.selectedLineY">
         <!-- 上部按钮 -->
         由选定位置对齐到开始
         <button class="btn btn-xs btn-primary" @click="alignToStart('event')">事件</button>
@@ -419,14 +422,16 @@
                     @mousewheel="drag.scrollingTo=null"
                     :style="{height:option.svg.height+'px'}"
                     @dblclick="insertNew"
-                    @click="cancelAllSelect();selectLine();"
+                    @click="selectLine();"
                     @contextmenu.prevent="cancelAllSelect()"
-                    @mousedown.right="scrollOnMouseDrag($event)">
+                    @mousedown.right="scrollOnMouseDrag($event)"
+                    @mousedown.left.stop="cancelAllSelect();selectTimeRange($event)">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
                         @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
                         <!-- hover rect -->
                         <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" 
                                     :y="dials.top" height="3000" />
+                        
                         <!-- 刻度线 -->
                         <g v-for="line in dialsLines[0]">
                             <line class="dials" :x1="dials.left+70" :y1="line.y+timeline.offset" :x2="option.svg.width" :y2="line.y+timeline.offset" />
@@ -472,7 +477,51 @@
                                         @click.stop=""
                                         @mousedown.left.stop="gcdOnMouseDrag($event,gcd,i)"
                                         @contextmenu.prevent="deleteGcd(i)"/>
+                                <text v-if="dials.selectedRange&&gcd.dmg" style="font-size:13px;"
+                                        class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}"
+                                     :x="(+timeline.infoWidth)" dx="-50" dy="10"
+                                     :y="time2yOffset(gcd.time)">
+                                    {{gcd.dmg+gcd.addDmg+gcd.dot+gcd.addDot}}
+                                    <tSpan v-if="gcd.dotCount">({{gcd.dotCount}})</tSpan>
+                                </text>
+                                <text v-if="dials.selectedRange&&gcd.addDmg"
+                                        class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}"
+                                     :x="(+timeline.infoWidth)" dx="-50" dy="20"
+                                     :y="time2yOffset(gcd.time)">
+                                    (+{{gcd.addDmg+gcd.addDot}})
+                                </text>
                             </template>
+                        </g>
+                        <!-- 选择框 -->
+                        <g v-if="dials.selectedRange" >
+                            <rect class="select-range" 
+                            :x="0" :width="option.svg.width"
+                            :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)"
+                            :height="Math.abs(dials.selectedRange.y-dials.selectedRange.oy)"/>
+                            <line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" 
+                                :y1="dials.selectedRange.oy" :y2="dials.selectedRange.oy" />
+                            <text class="dials-select-line" :x="dials.left+0" :y="dials.selectedRange.oy" dy="4">
+                                {{y2time(dials.selectedRange.oy-timeline.offset) | timeFormat}}
+                            </text>
+                            <!-- 伤害合计 -->
+                            <text class="dmg-normal dmg-all" :x="(+timeline.infoWidth)-50" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" dy="-8">
+                                {{dials.selectedRange.dmgAll}}
+                            </text>
+                            <!-- 增益显示 -->
+                            <template v-for="buffData in timeline.buffList">
+                                <text v-if="buffData.increaseNormal" class="dmg dmg-normal" :x="(+timeline.infoWidth)" dx="22" dy="2" :y="time2yOffset(buffData.time)">
+                                    {{buffData.increaseNormal}}%
+                                </text>
+                                <text v-if="buffData.increaseMagic" class="dmg dmg-magic" :x="(+timeline.infoWidth)" dx="22" dy="10" :y="time2yOffset(buffData.time)">
+                                    {{buffData.increaseMagic}}%
+                                </text>
+                                <text v-if="buffData.increaseMagic==0&&buffData.increaseNormal==0" class="dmg dmg-normal"
+                                    class="dials-select-line" :x="(+timeline.infoWidth)" dx="22" dy="4" :y="time2yOffset(buffData.time)">
+                                    0%
+                                </text>
+                            </template>
+                            
+                            
                         </g>
                         <!-- 技能 -->
                         <g v-for="skill,i in skills">
@@ -540,6 +589,7 @@
                                 {{shownSkill.skillInfo.time | timeFormat}}
                             </text>
                         </g>
+                        
                     </svg>
                 </div>
             </div>
@@ -592,7 +642,8 @@
                     <hr>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
                     <br>
-                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式
+                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式<br>
+                    <ccino-switch style="transform: scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch> 选择区域计算GCD威力
                     <div>
                         技能显示间隔 {{option.skill.margin}}
                         <input type="range" v-model="option.skill.margin" min="0" max="100">
@@ -644,6 +695,6 @@
     
 </div>
 
-<script src="./timeline_data.js?v=0.26"></script>
-<script src="./timeline.js?v=0.26"></script>
+<script src="./timeline_data.js?v=0.30"></script>
+<script src="./timeline.js?v=0.30"></script>
 </body>

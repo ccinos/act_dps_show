@@ -56,6 +56,18 @@ text.dials-mouse{
 text.dials-select-line{
     fill: #08f;
 }
+text.dmg{
+    font-size:10px;
+}
+text.dmg-normal{
+    fill: red;
+}
+text.dmg-magic{
+    fill: #08f;
+}
+text.dmg-all{
+    font-size: 16px;
+}
 text.dials-skill{
     fill: #8c8;
 }
@@ -96,6 +108,10 @@ rect.skill-name-background{
 }
 rect.hover-rect{
     fill:pink;
+    opacity: 0.25;
+}
+rect.select-range{
+    fill: #ccf;
     opacity: 0.25;
 }
 .form-auto{

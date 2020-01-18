@@ -25,7 +25,7 @@
 
 Array.prototype.insertSort=function(obj,handler){
     if(!(handler instanceof Function)){
-        handler=function(a,b){ return a<b }
+        handler=function(a,b){ return a.time<b.time }
     }
     for(var i=this.length-1;i>=0;--i){
         var t=this[i];
@@ -84,6 +84,12 @@ var vueapp = new Vue({
     el: "#container",
     data: {
         versions:[
+            {
+                ver:"0.30",
+                type:"update",
+                date:"2020.01.18 17:39",
+                info:"计算选择区域内的GCD技能威力（测试功能）。打开计算区域GCD威力开关后，鼠标左键选择一个区域，可以计算出技能威力。（注意，威力计算假定你所有技能达成连击要求）",
+            },
             {
                 ver:"0.26",
                 type:"update",
@@ -151,13 +157,15 @@ var vueapp = new Vue({
                 info:"第一个版本以后还会在此基础上增加一系列功能，例如循环安排之类的。现在这么点功能已经用了我整整10个小时，累了吃饭了，以后再加功能把。因为是第一版，出现BUG也是正常的！"
             }
         ],
+        Math:Math,
         setting:{
-            reserveCols:1, //预留技能列数量
+            reserveCols:2, //预留技能列数量
             inputText:"",
             inputErrMsg:"",
             selectedSkill:null,
             selectedSkillType:null,
             lastSkillIsGcd:false,
+            selectRangeComputeDmg:true,
             skillSet:{
                 enable:false,
                 x:100,y:100
@@ -202,7 +210,7 @@ var vueapp = new Vue({
         ],
         gcdSetting:{
             cd:2.5, //秒
-            addIsInsert:true, 
+            addIsInsert:false, 
             dragAllMove:true, //是否可以一个GCD技能推动其他技能一起
             abilities:{//能力技能
             },
@@ -224,6 +232,9 @@ var vueapp = new Vue({
             abilities:[ //能力技轴
             ],
             buff:[ //buff轴(指gcd产生的buff)
+            ],
+            buffList:[ //buff产生的增益轴
+
             ]
         },
         dials:{
@@ -238,6 +249,7 @@ var vueapp = new Vue({
             lastLineIndex:-1,
             mouseY:0,
             selectedLineY:null,
+            selectedRange:null,
             skillShown:null,
             top:0,
             height:2000,
@@ -478,7 +490,6 @@ var vueapp = new Vue({
                     }
                 }
             }
-            console.log(allSkills);
             //---预选 report.players
             for(var skill of vueapp.skills){
                 var maxCount=0;
@@ -1297,6 +1308,7 @@ var vueapp = new Vue({
             this.setting.eventSet={enable:false};
             this.setting.skillSet={enable:false};
             this.dials.selectedLineY=null;
+            this.dials.selectedRange=null;
         },
         onSelectSkillType:function(skill,i){
             this.cancelAllSelect();
@@ -1304,10 +1316,14 @@ var vueapp = new Vue({
         },
         deleteSelectedSkill:function(){
             if(this.setting.selectedSkill){
-                var skillList=this.timeline.skills[this.setting.selectedSkill.skill.name];
+                var skill=this.setting.selectedSkill.skill;
+                var skillList=this.timeline.skills[skill.name];
                 var i=skillList.findIndex(function(a){return a==vueapp.setting.selectedSkill.skillInfo});
                 if(i>=0){
                     skillList.splice(i,1);
+                    if(skill.count>1){
+                        vueapp.checkSkillTime(skill,skillList[i].time,i,true,skillList[i]);
+                    }
                 }
                 this.cancelAllSelect();
             }
@@ -1640,6 +1656,158 @@ var vueapp = new Vue({
                 this.drag.movingData=null;
                 this.drag.handler={};
             }
+        },
+        /**
+         * 根据开始时间和结束时间，计算buff加成时间点
+         * @param {Number} startTime 
+         * @param {Number} endTime 
+         */
+        computeBuffList:function(startTime,endTime){
+            var buffList=[]; 
+            /* {  记录加伤减伤变化的轴
+                time: 时间点, increaseNormal: 25, increaseMagic: 0, increaseCri:0,
+            } */
+            //加入buff轴
+            for(var skill of this.skills){
+                if(skill.duration>0){ //必须有持续时间
+                    var increaseNormal=skill.increaseNormal||0;
+                    var increaseMagic=skill.increaseMagic||0;
+                    var increaseCri=skill.increaseCri||0;
+                    var duration=skill.duration*1000;
+                    if(increaseNormal+increaseMagic+increaseCri==0)
+                        continue; //必须有增益
+                    var line=this.timeline.skills[skill.name];
+                    if(!line) continue;
+                    for(var i=0;i<line.length;++i){
+                        var lineData=line[i];
+                        if(lineData.time+duration<startTime||lineData.time>endTime) 
+                            continue; //不在选择时间范围内 跳过
+                        buffList.insertSort({
+                            time:lineData.time,
+                            increaseNormal: increaseNormal, increaseMagic: increaseMagic, increaseCri:increaseCri,
+                        });
+                        if(lineData.time+duration<=endTime){
+                            buffList.insertSort({
+                                time:lineData.time+duration,
+                                increaseNormal: -increaseNormal, increaseMagic: -increaseMagic, increaseCri: -increaseCri,
+                            });
+                        }
+                    }
+                }
+            }
+            if(buffList.length>0){
+                var sumBuff=copy(buffList[0]);
+                for(var i=1;i<buffList.length;++i){
+                    var buff=buffList[i];
+                    sumBuff.increaseNormal+=buff.increaseNormal;
+                    sumBuff.increaseMagic+=buff.increaseMagic;
+                    sumBuff.increaseCri+=buff.increaseCri;
+                    buff.increaseNormal=sumBuff.increaseNormal;
+                    buff.increaseMagic=sumBuff.increaseMagic;
+                    buff.increaseCri=sumBuff.increaseCri;
+                }
+            }
+            return buffList;
+        },
+        clearSelectRange:function(){
+            this.timeline.buffList=null;
+            for(var gcd of this.timeline.gcd){
+                gcd.dmg=undefined;
+                gcd.addDmg=undefined;
+            }
+        },
+        computeSelectedRangeDmg:function(){
+            var range=this.dials.selectedRange;
+            var startTime=this.y2time(Math.min(range.y,range.oy)-this.timeline.offset);
+            var endTime=this.y2time(Math.max(range.y,range.oy)-this.timeline.offset);
+            //计算时间轴buff加成
+            var buffList=this.computeBuffList(startTime,endTime);
+            this.timeline.buffList=buffList;
+            var buffIndex=0,buff;
+            var dmgAll=0;
+            //计算GCD技能威力
+            for(var i=0;i<this.timeline.gcd.length;++i){
+                var gcd=this.timeline.gcd[i];
+                if(gcd.time<startTime) continue;
+                if(gcd.time>endTime) break;
+                var gcdSkill=this.gcdSkills[this.gcdSkills.findIndex(function(a){return a.name==gcd.skill})];
+                if(gcdSkill){
+                    gcd.dmg=gcdSkill.dmg||0;
+                    gcd.dmgType=gcdSkill.dmgType;
+                    gcd.dot=0;
+                    //计算dot
+                    if(gcdSkill.dot>0){
+                        //获得dot结束时间 持续结束时间，或分段结束时间 取较小值
+                        var dotEndTime=Math.min(gcd.time+gcdSkill.duration*1000,endTime);
+                        //计算此时间内是否有另一个相同dot技能（如果有则取到该技能时间）
+                        for(var j=i+1;j<this.timeline.gcd.length;++j){
+                            var nextGcd=this.timeline.gcd[j];
+                            if(nextGcd.time>dotEndTime) break; //超过dot结束时间不再查询
+                            if(nextGcd.skill==gcd.skill){ //相同gcd技能
+                                dotEndTime=nextGcd.time-1; break; //设置结束时间
+                            }
+                        }
+                        var dotCount=Math.floor((dotEndTime-gcd.time)/3000);
+                        gcd.dot=gcdSkill.dot*dotCount;
+                        gcd.dotCount=dotCount;
+                    }
+                    //计算下一个buff
+                    while(buffList[buffIndex]&&buffList[buffIndex].time<gcd.time){
+                        buff=buffList[buffIndex];
+                        ++buffIndex;
+                    }
+                    var addDmg=0,addDot=0;
+                    if(buff){
+                        if(gcdSkill.dmgType=='物理'){
+                            addDmg=gcd.dmg*(buff.increaseNormal/100);
+                            if(gcd.dotCount>0) {
+                                addDot=gcd.dot*(buff.increaseNormal/100);
+                            }
+                        }else if(gcdSkill.dmgType=='魔法'){
+                            addDmg=gcd.dmg*(buff.increaseMagic/100);
+                            if(gcd.dotCount>0){
+                                addDot=gcd.dot*(buff.increaseMagic/100);
+                            }
+                        }
+                        addDmg+=gcd.dmg*((buff.increaseCri/100)*0.35);
+                        if(gcd.dotCount>0){
+                            addDot+=gcd.dot*((buff.increaseCri/100)*0.35);
+                        }
+                    }
+                    gcd.addDmg=Math.floor(addDmg);
+                    gcd.addDot=Math.floor(addDot);
+                }
+                dmgAll+=(gcd.dmg||0)+(gcd.addDmg||0)+(gcd.addDot||0)+(gcd.dot||0);
+            }
+            //计算能力技能威力
+            // for(var skill of this.skills){
+            //     if(skill.dmg>0||skill.dot>0){
+
+            //     }
+            // }
+            range.dmgAll=dmgAll;
+        },
+        selectTimeRange:function(e){ //左键框选区域
+            this.clearSelectRange();
+            this.dials.selectedRange={
+                oy:e.offsetY,
+                ox:e.offsetX,
+                y:e.offsetY,
+                x:e.offsetX,
+            }
+            this.onMouseDrag(e,this.dials.selectedRange,null,function(data,time,e){ //拖动
+                data.y=e.offsetY;
+                data.x=e.offsetX;
+            },null,function(data){ //放开
+                if(data.oy==data.y){
+                    vueapp.dials.selectedRange=null;
+                    vueapp.dials.selectedLineY=data.y;
+                }else{
+                    if(vueapp.setting.selectRangeComputeDmg){
+                        vueapp.computeSelectedRangeDmg();
+                    }
+                }
+            })
         },
         scrollOnMouseDrag:function(e){ //右键拖动画布
             this.drag.scrollingTo=null;
@@ -1999,15 +2167,10 @@ document.addEventListener('keydown', function(evt){
     if(str=="Delete"){
         //删除选择内容
         if(vueapp.setting.eventSet.event){
-            var i=vueapp.timeline.events.indexOf(vueapp.setting.eventSet.event);
-            vueapp.timeline.events.splice(i,1);
+            vueapp.deleteSelectedEvent();
         }
         if(vueapp.setting.selectedSkill){
-            var skillName=vueapp.setting.selectedSkill.skill.name;
-            if(vueapp.timeline.skills[skillName]){
-                var i=vueapp.timeline.skills[skillName].indexOf(vueapp.setting.selectedSkill.skillInfo);
-                vueapp.timeline.skills[skillName].splice(i,1);
-            }
+            vueapp.deleteSelectedSkill();
         }
     }
     //evt.preventDefault();
