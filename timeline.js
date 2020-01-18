@@ -159,7 +159,7 @@ var vueapp = new Vue({
         ],
         Math:Math,
         setting:{
-            reserveCols:2, //预留技能列数量
+            reserveCols:1, //预留技能列数量
             inputText:"",
             inputErrMsg:"",
             selectedSkill:null,

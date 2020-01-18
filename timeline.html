@@ -425,7 +425,7 @@
                     @click="selectLine();"
                     @contextmenu.prevent="cancelAllSelect()"
                     @mousedown.right="scrollOnMouseDrag($event)"
-                    @mousedown.left.stop="cancelAllSelect();selectTimeRange($event)">
+                    @mousedown.left="cancelAllSelect();selectTimeRange($event)">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
                         @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
                         <!-- hover rect -->
