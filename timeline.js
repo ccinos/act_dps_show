@@ -2133,10 +2133,8 @@ function loadUserDefinedData(){
     }
 }
 loadUserDefinedData();
-
-
 vueapp.init();
-
+vueapp.setting.reserveCols=1;
 window.addEventListener("beforeunload",function(){
     vueapp.saveUserDefinedData();
 })
