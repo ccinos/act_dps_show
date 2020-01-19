@@ -99,7 +99,8 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，将自身所受的伤害减轻30%\n持续时间：10秒",
-    "duration": 10
+    "duration": 10,
+    "reduceDmg": 30
   },
   {
     "name": "日珥斩",
@@ -128,7 +129,7 @@ var allSkills=[
     "cd": 25,
     "intro": "对自身周围的敌人发动范围物理攻击\n威力：120\n追加效果：持续伤害\n威力：35\n持续时间：15秒",
     "dmg": 120,
-    "dot":35,
+    "dot": 35,
     "duration": 15,
     "dmgType": "物理"
   },
@@ -187,7 +188,8 @@ var allSkills=[
     "cd": 10,
     "cost": "「忠义」50",
     "intro": "指定一名队员，令其受到的伤害减轻10%\n持续时间：6秒\n追加效果：自身处于铁壁、预警状态时，目标也会获得50%的效果\n追加效果发动条件：铁壁或预警状态中\n发动条件：忠义50点",
-    "duration": 6
+    "duration": 6,
+    "reduceDmg": 10
   },
   {
     "name": "圣灵",
@@ -219,7 +221,8 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "向自身后方扇形范围展开减轻伤害的防护区域\n效果时间内自身的格挡发动率变为100%，范围内的队员受到的伤害减轻15%\n持续时间：18秒\n效果时间内发动技能或进行移动、转身都会立即解除武装戍卫\n发动之后会停止自动攻击",
-    "duration": 18
+    "duration": 18,
+    "reduceDmg": 15
   },
   {
     "name": "圣环",
@@ -269,7 +272,8 @@ var allSkills=[
     "read": 0,
     "cd": 90,
     "intro": "一定时间内，将自身所受的伤害减轻20%\n持续时间：20秒",
-    "duration": 20
+    "duration": 20,
+    "reduceDmg": 20
   },
   {
     "name": "下踢",
@@ -303,7 +307,8 @@ var allSkills=[
     "read": 0,
     "cd": 60,
     "intro": "目标的攻击伤害降低10%　持续时间：5秒",
-    "duration": 5
+    "duration": 5,
+    "reduceDmg": 10
   },
   {
     "name": "亲疏自行",
@@ -411,7 +416,8 @@ var allSkills=[
     "cd": 120,
     "intro": "一定时间内，令自身所受到的伤害减轻30%，同时受到物理攻击时会给予对方反击伤害\n威力：55　持续时间：10秒",
     "dmg": 55,
-    "duration": 10
+    "duration": 10,
+    "reduceDmg": 30
   },
   {
     "name": "秘银暴风",
@@ -481,7 +487,8 @@ var allSkills=[
     "read": 0,
     "cd": 25,
     "intro": "一定时间内，自身所受的伤害减轻20%\n持续时间：5秒\n与原初的勇猛共享复唱时间",
-    "duration": 5
+    "duration": 5,
+    "reduceDmg": 20
   },
   {
     "name": "泰然自若",
@@ -558,7 +565,8 @@ var allSkills=[
     "read": 0,
     "cd": 25,
     "intro": "以一名队员为目标\n对自身附加原初的勇猛状态，对目标附加原初的武猛状态\n原初的勇猛效果：自身的物理攻击命中后恢复体力\n原初的武猛效果：恢复战士自身恢复体力50%的体力同时受到的伤害减轻10%\n持续时间：6秒\n与原初的直觉共享复唱时间",
-    "duration": 6
+    "duration": 6,
+    "reduceDmg": 10
   },
   {
     "name": "狂魂",
@@ -654,7 +662,8 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，自身受到的伤害减轻30%\n持续时间：10秒",
-    "duration": 10
+    "duration": 10,
+    "reduceDmg": 30
   },
   {
     "name": "暗黑锋",
@@ -678,7 +687,8 @@ var allSkills=[
     "read": 0,
     "cd": 60,
     "intro": "一定时间内，令自身所受到的魔法伤害减轻20%\n持续时间：10秒",
-    "duration": 10
+    "duration": 10,
+    "reduceMagic": 20
   },
   {
     "name": "行尸走肉",
@@ -815,7 +825,8 @@ var allSkills=[
     "read": 0,
     "cd": 90,
     "intro": "一定时间内自身与周围队员的所受到的魔法伤害减轻10%\n持续时间：15秒",
-    "duration": 15
+    "duration": 15,
+    "reduceMagic": 10
   },
   {
     "name": "掠影示现",
@@ -863,7 +874,8 @@ var allSkills=[
     "read": 0,
     "cd": 90,
     "intro": "一定时间内，自身的招架发动率提高50%，所受的伤害减轻10%\n持续时间：20秒",
-    "duration": 20
+    "duration": 20,
+    "reduceDmg": 10
   },
   {
     "name": "恶魔切",
@@ -927,7 +939,8 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，将自身所受的伤害减轻30%\n持续时间：10秒",
-    "duration": 10
+    "duration": 10,
+    "reduceDmg": 30
   },
   {
     "name": "恶魔杀",
@@ -964,7 +977,7 @@ var allSkills=[
     "cd": 60,
     "intro": "对目标发动物理攻击　威力：300\n追加效果：持续伤害\n威力：90　持续时间：30秒\n该战技有单独计算的复唱时间",
     "dmg": 300,
-    "dot":90,
+    "dot": 90,
     "duration": 30,
     "dmgType": "物理"
   },
@@ -1019,7 +1032,7 @@ var allSkills=[
     "cd": 60,
     "intro": "对自身周围的敌人发动范围物理攻击　威力：200\n追加效果：持续伤害\n威力：90　持续时间：15秒",
     "dmg": 200,
-    "dot":90,
+    "dot": 90,
     "duration": 15,
     "dmgType": "物理"
   },
@@ -1030,7 +1043,8 @@ var allSkills=[
     "read": 0,
     "cd": 90,
     "intro": "一定时间内，令自身和周围队员所受到的魔法伤害减轻10%\n持续时间：15秒",
-    "duration": 15
+    "duration": 15,
+    "reduceMagic": 10
   },
   {
     "name": "石之心",
@@ -1039,7 +1053,8 @@ var allSkills=[
     "read": 0,
     "cd": 25,
     "intro": "令自身或一名队员受到的伤害减轻15%\n持续时间：7秒\n追加效果：对队员使用时，若自身附加了残暴弹状态，则目标队员也会附加该状态　持续时间：10秒",
-    "duration": 10
+    "duration": 10,
+    "reduceDmg": 15
   },
   {
     "name": "续剑",
@@ -1134,7 +1149,7 @@ var allSkills=[
     "cost": "魔力400",
     "intro": "对目标发动风属性魔法攻击　威力：50\n追加效果：风属性持续伤害\n威力：30　持续时间：18秒",
     "dmg": 50,
-    "dot":30,
+    "dot": 30,
     "duration": 18,
     "dmgType": "魔法"
   },
@@ -1376,7 +1391,8 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，自身发动治疗魔法的治疗量提高20%，自身与30米以内的队员受到的伤害减轻10%　持续时间：20秒",
-    "duration": 20
+    "duration": 20,
+    "reduceDmg": 10
   },
   {
     "name": "沉静",
@@ -2079,7 +2095,8 @@ var allSkills=[
     "type": "能力",
     "read": 0,
     "cd": 3,
-    "intro": "令自身受到的伤害减轻10%\n再次发动时则取消该状态　持续时间：永久\n无法与红莲体势、疾风体势同时使用\n与红莲体势、疾风体势共享复唱时间"
+    "intro": "令自身受到的伤害减轻10%\n再次发动时则取消该状态　持续时间：永久\n无法与红莲体势、疾风体势同时使用\n与红莲体势、疾风体势共享复唱时间",
+    "reduceDmg": 10
   },
   {
     "name": "双掌打",
@@ -2247,7 +2264,8 @@ var allSkills=[
     "read": 0,
     "cd": 60,
     "intro": "效果时间内受到伤害时对自身附加金刚决意状态\n持续时间：30秒\n并且，自身疾风迅雷的持续时间恢复到最大值\n金刚决意效果：自身所受的伤害减轻10%\n同时无视技能的方向要求\n持续时间：30秒",
-    "duration": 30
+    "duration": 30,
+    "reduceDmg": 10
   },
   {
     "name": "红莲极意",
@@ -2965,7 +2983,8 @@ var allSkills=[
     "read": 0,
     "cd": 15,
     "intro": "一定时间内，受到的第一次攻击伤害减轻10%\n持续时间：3秒\n追加效果：成功减轻伤害后对自身附加开眼状态\n持续时间：15秒",
-    "duration": 15
+    "duration": 15,
+    "reduceDmg": 10
   },
   {
     "name": "燕飞",
@@ -3069,6 +3088,8 @@ var allSkills=[
     "cd": 1,
     "cost": "「剑气」20",
     "intro": "效果时间内发动的第1个战技威力提高50%　持续时间：10秒\n发动条件：剑气20点",
+    "onceIncrease": 50,
+    "onceType": "战技",
     "duration": 10
   },
   {
@@ -3461,7 +3482,8 @@ var allSkills=[
     "read": 0,
     "cd": 180,
     "intro": "一定时间内，令自身和周围队员所受到的伤害减轻10%\n持续时间：15秒\n无法与机工士的策动、舞者的防守之桑巴效果叠加",
-    "duration": 15
+    "duration": 15,
+    "reduceDmg": 10
   },
   {
     "name": "烈毒咬箭",
@@ -3737,7 +3759,8 @@ var allSkills=[
     "read": 0,
     "cd": 180,
     "intro": "一定时间内，令自身和周围队员所受到的伤害减轻10%\n持续时间：15秒\n无法与吟游诗人的行吟、舞者的防守之桑巴效果叠加",
-    "duration": 15
+    "duration": 15,
+    "reduceDmg": 10
   },
   {
     "name": "钻头",
@@ -3996,7 +4019,8 @@ var allSkills=[
     "read": 0,
     "cd": 180,
     "intro": "一定时间内，令自身和周围队员所受到的伤害减轻10%\n持续时间：15秒\n无法与吟游诗人的行吟、机工士的策动效果叠加",
-    "duration": 15
+    "duration": 15,
+    "reduceDmg": 10
   },
   {
     "name": "闭式舞姿",
@@ -5287,7 +5311,7 @@ var allSkills=[
     "dmg": 250,
     "dmgType": "魔法"
   }
-]
+];
 var allSkillMap={}; //技能map
 for(var i=0;i<allSkills.length;++i){
     var skill=allSkills[i];

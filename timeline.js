@@ -85,10 +85,10 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
-                ver:"0.31.2",
+                ver:"0.31.5",
                 type:"update",
-                date:"2020.01.19 09:39",
-                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。增加时间轴提前量。事件可以进行过滤。",
+                date:"2020.01.19 19:20",
+                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。增加时间轴提前量。事件可以进行过滤。支持事件伤害，计算减伤等等。盾值尚未加入。",
             },
             {
                 ver:"0.30",
@@ -1619,7 +1619,7 @@ var vueapp = new Vue({
             }
         },
         /**
-         * 简单的拖拽时间方法，要求data必须有time属性
+         * 简单的拖拽事件方法，要求data必须有time属性，结束时sort
          * @param {Event}} e 事件
          * @param {{time:String}} data 
          */
@@ -1627,7 +1627,9 @@ var vueapp = new Vue({
             this.onMouseDrag(e,data,
                 function(d){return d.time},
                 function(d,time){d.time=time},
-                function(){return true});
+                function(){return true},function(){
+                    vueapp.timeline.events.sort(function(a,b){return a.time-b.time});
+                });
         },
         /**
          * 简单的拖拽时间方法，要求data必须有time属性
@@ -1688,47 +1690,81 @@ var vueapp = new Vue({
             var buffList=[]; 
             /* {  记录加伤减伤变化的轴
                 time: 时间点, increaseNormal: 25, increaseMagic: 0, increaseCri:0,
+                reduceDmg:20, reduceMagic:20, addShield:3000
             } */
             //加入buff轴
+            var props=["increaseNormal","increaseMagic","increaseCri",
+                        "reduceDmg","reduceMagic","reduceNormal","addShield"];
+            var reduceProp={};
+            for(var p of props){
+                if(p.indexOf("reduce")!=-1)
+                    reduceProp[p]=true;
+            }
             for(var skill of this.skills){
                 if(skill.duration>0){ //必须有持续时间
-                    var increaseNormal=skill.increaseNormal||0;
-                    var increaseMagic=skill.increaseMagic||0;
-                    var increaseCri=skill.increaseCri||0;
+                    var skillData={};
+                    var all=0;
+                    for(var p of props){
+                        skillData[p]=skill[p]||0;
+                        all+=skillData[p];
+                    }
                     var duration=skill.duration*1000;
-                    if(increaseNormal+increaseMagic+increaseCri==0)
-                        continue; //必须有增益
+                    if(all==0) continue; //必须有增益
                     var line=this.timeline.skills[skill.name];
                     if(!line) continue;
                     for(var i=0;i<line.length;++i){
                         var lineData=line[i];
                         if(lineData.time+duration<startTime||lineData.time>endTime) 
                             continue; //不在选择时间范围内 跳过
-                        buffList.insertSort({
-                            time:lineData.time,
-                            increaseNormal: increaseNormal, increaseMagic: increaseMagic, increaseCri:increaseCri,
-                        });
+                        var startBuff={ time:lineData.time };
+                        for(var p of props){
+                            startBuff[p]=+skillData[p];
+                        }
+                        buffList.insertSort(startBuff);
                         if(lineData.time+duration<=endTime){
-                            buffList.insertSort({
-                                time:lineData.time+duration,
-                                increaseNormal: -increaseNormal, increaseMagic: -increaseMagic, increaseCri: -increaseCri,
-                            });
+                            var endBuff={ time:lineData.time+duration };
+                            for(var p of props){
+                                endBuff[p]=-skillData[p];
+                            }
+                            buffList.insertSort(endBuff);
                         }
                     }
                 }
             }
             if(buffList.length>0){
                 var sumBuff=copy(buffList[0]);
+                for(var p of props){ //将减伤类buff设置为数组
+                    if(reduceProp[p]){
+                        sumBuff[p]=[sumBuff[p]];
+                        buffList[0][p]=[buffList[0][p]];
+                    }
+                }
                 for(var i=1;i<buffList.length;++i){
                     var buff=buffList[i];
-                    sumBuff.increaseNormal+=buff.increaseNormal;
-                    sumBuff.increaseMagic+=buff.increaseMagic;
-                    sumBuff.increaseCri+=buff.increaseCri;
-                    buff.increaseNormal=sumBuff.increaseNormal;
-                    buff.increaseMagic=sumBuff.increaseMagic;
-                    buff.increaseCri=sumBuff.increaseCri;
+                    for(var p of props){
+                        if(reduceProp[p]){
+                            if(buff[p]>0){ //减伤进数组
+                                sumBuff[p].push(buff[p])
+                            }else{ //负值（去掉减伤，从数组删除）
+                                var buffIndex=sumBuff[p].indexOf(-buff[p]);
+                                if(buffIndex!=-1){
+                                    sumBuff[p].splice(buffIndex,1);
+                                }
+                            }
+                        }else{
+                            sumBuff[p]+=buff[p];
+                        }
+                    }
+                    for(var p of props){
+                        if(reduceProp[p]){
+                            buff[p]=copy(sumBuff[p]);
+                        }else{
+                            buff[p]=sumBuff[p];
+                        }
+                    }
                 }
             }
+            console.log(buffList);
             return buffList;
         },
         clearSelectRange:function(){
@@ -1747,6 +1783,10 @@ var vueapp = new Vue({
                         }
                     }
                 }
+            }
+            for(var event of this.timeline.events){
+                event.reduceDmg=undefined;
+                event.trueDmg=undefined;
             }
         },
         /**
@@ -1846,6 +1886,40 @@ var vueapp = new Vue({
                 }
             }
             range.dmgAll=dmgAll;
+            var sumReduceDmgFunc=function(p,c){
+                console.log(p,c,Math.round((1-(1-p/100)*(1-c/100))*10000)/100);
+                return Math.round((1-(1-p/100)*(1-c/100))*10000)/100;
+            };
+            buffListData={buffIndex:0, buff:null, buffList:buffList}
+            //计算BOSS技能威力 盾值 减伤
+            for(var event of this.timeline.events){
+                if(event.time<startTime) continue;
+                if(event.time>endTime) continue;
+                if(event.dmg>0){
+                    var dmg=+event.dmg;
+                    if(isNaN(dmg)){
+                        event.dmg=0;
+                        continue;
+                    }
+                    if(event.dmgType=="true") continue;
+                    this.computeCurrentBuff(buffListData,event);
+                    var buff=buffListData.buff;
+                    if(buff && buff.reduceDmg instanceof Array){
+                        var dmgPercent=1;
+                        try{
+                            dmgPercent=(1-buff.reduceDmg.reduce(sumReduceDmgFunc,0)/100);
+                            if(event.dmgType=="magic"){ //魔法攻击
+                                dmgPercent*=(100-buff.reduceMagic.reduce(sumReduceDmgFunc,0))/100;
+                            }else{ //物理攻击
+                                dmgPercent*=(100-buff.reduceNormal.reduce(sumReduceDmgFunc,0))/100;
+                            }
+                        }catch(e){console.error(e)}
+                        //盾值
+                        event.reduceDmg=Math.round(dmg*(1-dmgPercent)+buff.addShield);
+                        event.trueDmg=Math.round(dmg*dmgPercent);
+                    }
+                }
+            }
         },
         selectTimeRange:function(e){ //左键框选区域
             if(vueapp.setting.selectRangeComputeDmg){

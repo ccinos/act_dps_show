@@ -59,11 +59,14 @@ text.dials-select-line{
 text.dmg{
     font-size:10px;
 }
-text.dmg-normal{
+text.dmg-normal, tSpan.dmg-normal{
     fill: red;
 }
-text.dmg-magic{
+text.dmg-magic, tSpan.dmg-magic{
     fill: #08f;
+}
+text.dmg-true, tSpan.dmg-true{
+    fill: #e0d;
 }
 text.dmg-all{
     font-size: 16px;
@@ -73,6 +76,12 @@ text.dials-skill{
 }
 text.event-active{
     fill: red;
+}
+tSpan.event-summary{
+    /* fill: #f33; */
+}
+tSpan.event-summary-reduce{
+    fill: #f90;
 }
 text.skill-type-active{
     fill:red;
