@@ -2666,6 +2666,8 @@ var allSkills=[
     "cd": 60,
     "intro": "对目标发动物理攻击　威力：340\n背面攻击威力：500\n背面攻击追加效果：受伤加重\n持续时间：10秒\n受伤加重效果：目标所受伤害提高10%\n发动条件：隐遁",
     "dmg": 500,
+    "increaseNormal": 10,
+    "increaseMagic": 10,
     "duration": 10,
     "dmgType": "物理"
   },

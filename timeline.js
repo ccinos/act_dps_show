@@ -85,6 +85,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.31",
+                type:"update",
+                date:"2020.01.19 09:39",
+                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）",
+            },
+            {
                 ver:"0.30",
                 type:"update",
                 date:"2020.01.18 17:39",
@@ -160,6 +166,7 @@ var vueapp = new Vue({
         Math:Math,
         setting:{
             reserveCols:1, //预留技能列数量
+            showTimeBySecond:false,
             inputText:"",
             inputErrMsg:"",
             selectedSkill:null,
@@ -414,6 +421,10 @@ var vueapp = new Vue({
                 player:{},
                 boss:[]
             };
+            var dict={};
+            if(report.fights.lang!="cn"){
+                dict=skillLangDict[report.fights.lang]||{};
+            }
             for(var dataSeries of [[report.downloadedCasts,0],[report.downloadedEvents,1]]){
                 var type=dataSeries[1];
                 var datas=dataSeries[0];
@@ -422,6 +433,9 @@ var vueapp = new Vue({
                     for(var d of dList.events){
                         if(d.type=="cast"||(hasBeginCase&&d.type=="begincast")){
                             var skillName=d.ability.name;
+                            if(dict[skillName]){
+                                skillName=dict[skillName].name;
+                            }
                             if(skillName=="攻击"||!skillName){
                                 continue;
                             }
@@ -1715,6 +1729,76 @@ var vueapp = new Vue({
                 gcd.dmg=undefined;
                 gcd.addDmg=undefined;
             }
+            for(var skillName in this.timeline.skills){
+                var timeline=this.timeline.skills[skillName];
+                if(timeline){
+                    for(var lineData of timeline){
+                        if(lineData.dmg){
+                            lineData.dmg=undefined;
+                            lineData.addDmg=undefined;
+                        }
+                    }
+                }
+            }
+        },
+        /**
+         * 计算时间轴数据dmg值，返回全部dmg
+         * @param {{time:Number}} lineData 时间轴中的一个数据
+         * @param {*} timeline 所属时间轴
+         * @param {*} skill 技能数据
+         */
+        computeLineDataDmg:function(lineData,timeline,skill,buff,startTime,endTime){
+            if(lineData.time<startTime) return 0;
+            if(lineData.time>endTime) return 0;
+            if(skill){
+                lineData.dmg=skill.dmg||0;
+                lineData.dmgType=skill.dmgType;
+                lineData.dot=0;
+                //计算dot
+                if(skill.dot>0){
+                    //获得dot结束时间 持续结束时间，或分段结束时间 取较小值
+                    var dotEndTime=Math.min(lineData.time+skill.duration*1000,endTime);
+                    //计算此时间内是否有另一个相同dot技能（如果有则取到该技能时间）
+                    for(var j=i+1;j<timeline.length;++j){
+                        var nextLineData=timeline[j];
+                        if(nextLineData.time>dotEndTime) break; //超过dot结束时间不再查询
+                        if(nextLineData.skill==lineData.skill){ //相同lineData技能
+                            dotEndTime=nextLineData.time-1; break; //设置结束时间
+                        }
+                    }
+                    var dotCount=Math.floor((dotEndTime-lineData.time)/3000);
+                    lineData.dot=skill.dot*dotCount;
+                    lineData.dotCount=dotCount;
+                }
+                
+                var addDmg=0,addDot=0;
+                if(buff){
+                    if(skill.dmgType=='物理'){
+                        addDmg=lineData.dmg*(buff.increaseNormal/100);
+                        if(lineData.dotCount>0) {
+                            addDot=lineData.dot*(buff.increaseNormal/100);
+                        }
+                    }else if(skill.dmgType=='魔法'){
+                        addDmg=lineData.dmg*(buff.increaseMagic/100);
+                        if(lineData.dotCount>0){
+                            addDot=lineData.dot*(buff.increaseMagic/100);
+                        }
+                    }
+                    addDmg+=lineData.dmg*((buff.increaseCri/100)*0.35);
+                    if(lineData.dotCount>0){
+                        addDot+=lineData.dot*((buff.increaseCri/100)*0.35);
+                    }
+                }
+                lineData.addDmg=Math.floor(addDmg);
+                lineData.addDot=Math.floor(addDot);
+            }
+            return (lineData.dmg||0)+(lineData.addDmg||0)+(lineData.addDot||0)+(lineData.dot||0);
+        },
+        computeCurrentBuff:function(buffListData,lineData){
+            while(buffListData.buffList[buffListData.buffIndex]&&buffListData.buffList[buffListData.buffIndex].time<lineData.time){
+                buffListData.buff=buffListData.buffList[buffListData.buffIndex];
+                ++buffListData.buffIndex;
+            }
         },
         computeSelectedRangeDmg:function(){
             var range=this.dials.selectedRange;
@@ -1723,7 +1807,7 @@ var vueapp = new Vue({
             //计算时间轴buff加成
             var buffList=this.computeBuffList(startTime,endTime);
             this.timeline.buffList=buffList;
-            var buffIndex=0,buff;
+            var buffListData={ buffIndex:0, buff:null, buffList:buffList}
             var dmgAll=0;
             //计算GCD技能威力
             for(var i=0;i<this.timeline.gcd.length;++i){
@@ -1731,60 +1815,28 @@ var vueapp = new Vue({
                 if(gcd.time<startTime) continue;
                 if(gcd.time>endTime) break;
                 var gcdSkill=this.gcdSkills[this.gcdSkills.findIndex(function(a){return a.name==gcd.skill})];
-                if(gcdSkill){
-                    gcd.dmg=gcdSkill.dmg||0;
-                    gcd.dmgType=gcdSkill.dmgType;
-                    gcd.dot=0;
-                    //计算dot
-                    if(gcdSkill.dot>0){
-                        //获得dot结束时间 持续结束时间，或分段结束时间 取较小值
-                        var dotEndTime=Math.min(gcd.time+gcdSkill.duration*1000,endTime);
-                        //计算此时间内是否有另一个相同dot技能（如果有则取到该技能时间）
-                        for(var j=i+1;j<this.timeline.gcd.length;++j){
-                            var nextGcd=this.timeline.gcd[j];
-                            if(nextGcd.time>dotEndTime) break; //超过dot结束时间不再查询
-                            if(nextGcd.skill==gcd.skill){ //相同gcd技能
-                                dotEndTime=nextGcd.time-1; break; //设置结束时间
-                            }
-                        }
-                        var dotCount=Math.floor((dotEndTime-gcd.time)/3000);
-                        gcd.dot=gcdSkill.dot*dotCount;
-                        gcd.dotCount=dotCount;
-                    }
-                    //计算下一个buff
-                    while(buffList[buffIndex]&&buffList[buffIndex].time<gcd.time){
-                        buff=buffList[buffIndex];
-                        ++buffIndex;
-                    }
-                    var addDmg=0,addDot=0;
-                    if(buff){
-                        if(gcdSkill.dmgType=='物理'){
-                            addDmg=gcd.dmg*(buff.increaseNormal/100);
-                            if(gcd.dotCount>0) {
-                                addDot=gcd.dot*(buff.increaseNormal/100);
-                            }
-                        }else if(gcdSkill.dmgType=='魔法'){
-                            addDmg=gcd.dmg*(buff.increaseMagic/100);
-                            if(gcd.dotCount>0){
-                                addDot=gcd.dot*(buff.increaseMagic/100);
-                            }
-                        }
-                        addDmg+=gcd.dmg*((buff.increaseCri/100)*0.35);
-                        if(gcd.dotCount>0){
-                            addDot+=gcd.dot*((buff.increaseCri/100)*0.35);
-                        }
-                    }
-                    gcd.addDmg=Math.floor(addDmg);
-                    gcd.addDot=Math.floor(addDot);
-                }
-                dmgAll+=(gcd.dmg||0)+(gcd.addDmg||0)+(gcd.addDot||0)+(gcd.dot||0);
+                //计算下一个buff
+                this.computeCurrentBuff(buffListData,gcd)
+                var dmg=this.computeLineDataDmg(gcd,this.timeline.gcd,gcdSkill,buffListData.buff,startTime,endTime)
+                dmgAll+=dmg;
             }
             //计算能力技能威力
-            // for(var skill of this.skills){
-            //     if(skill.dmg>0||skill.dot>0){
-
-            //     }
-            // }
+            buffListData={buffIndex:0, buff:null, buffList:buffList}
+            for(var skill of this.skills){
+                if(skill.dmg>0||skill.dot>0){
+                    var timeline=this.timeline.skills[skill.name];
+                    if(timeline){
+                        for(var i=0;i<timeline.length;++i){
+                            var lineData=timeline[i];
+                            if(lineData.time<startTime) continue;
+                            if(lineData.time>endTime) break;
+                            this.computeCurrentBuff(buffListData,lineData);
+                            var dmg=this.computeLineDataDmg(lineData,timeline,skill,buffListData.buff,startTime,endTime)
+                            dmgAll+=dmg;
+                        }
+                    }
+                }
+            }
             range.dmgAll=dmgAll;
         },
         selectTimeRange:function(e){ //左键框选区域
@@ -2058,10 +2110,16 @@ var vueapp = new Vue({
                 // }
                 for(var i=0;y<=maxY;y+=tick){
                     var time=y/this.dials.tick*1000;
+                    var text;
+                    if(this.setting.showTimeBySecond){
+                        text=(Math.round(time)/1000).toFixed(1);
+                    }else{
+                        text=new Date(Math.round(time)-28800000).format(getFormat(time))
+                    }
                     lines.push({
                         i:i,
                         y:y,
-                        text:new Date(Math.round(time)-28800000).format(getFormat(time))
+                        text:text
                     })
                     // pushMiniLine(y);
                 }
@@ -2089,6 +2147,9 @@ var vueapp = new Vue({
     },
     filters:{
         timeFormat:(time,fmt)=>{
+            if(vueapp.setting.showTimeBySecond){
+                return (Math.round(time)/1000).toFixed(1);
+            }
             if(!fmt){
                 fmt=getFormat(time);
             }
@@ -2133,6 +2194,7 @@ function loadUserDefinedData(){
     }
 }
 loadUserDefinedData();
+vueapp.dials.lastLineIndex=-1; //刷新一次刻度
 vueapp.init();
 vueapp.setting.reserveCols=1;
 window.addEventListener("beforeunload",function(){

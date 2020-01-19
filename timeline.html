@@ -422,6 +422,7 @@
                     @mousewheel="drag.scrollingTo=null"
                     :style="{height:option.svg.height+'px'}"
                     @dblclick="insertNew"
+                    @click.alt="insertNew"
                     @click="selectLine();"
                     @contextmenu.prevent="cancelAllSelect()"
                     @mousedown.right="scrollOnMouseDrag($event)"
@@ -508,7 +509,7 @@
                                 {{dials.selectedRange.dmgAll}}
                             </text>
                             <!-- 增益显示 -->
-                            <template v-for="buffData in timeline.buffList">
+                            <!-- <template v-for="buffData in timeline.buffList">
                                 <text v-if="buffData.increaseNormal" class="dmg dmg-normal" :x="(+timeline.infoWidth)" dx="22" dy="2" :y="time2yOffset(buffData.time)">
                                     {{buffData.increaseNormal}}%
                                 </text>
@@ -519,7 +520,7 @@
                                     class="dials-select-line" :x="(+timeline.infoWidth)" dx="22" dy="4" :y="time2yOffset(buffData.time)">
                                     0%
                                 </text>
-                            </template>
+                            </template> -->
                             
                             
                         </g>
@@ -556,6 +557,19 @@
                                         width="20"
                                         height="20"
                                         onerror="this.href='./icons/skill/unknown.png'"/>
+                                    <text v-if="dials.selectedRange&&skillInfo.dmg" style="font-size:13px;"
+                                            class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}"
+                                        :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-2"
+                                        :y="time2yOffset(skillInfo.time)">
+                                        {{skillInfo.dmg+skillInfo.addDmg+skillInfo.dot+skillInfo.addDot}}
+                                        <tSpan v-if="skillInfo.dotCount">({{skillInfo.dotCount}})</tSpan>
+                                    </text>
+                                    <text v-if="dials.selectedRange&&skillInfo.addDmg"
+                                            class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}"
+                                        :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-15"
+                                        :y="time2yOffset(skillInfo.time)">
+                                        (+{{skillInfo.addDmg+skillInfo.addDot}})
+                                    </text>
 
                                     <text v-if="skillInfo.count!=null"
                                         :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-8" 
@@ -640,10 +654,10 @@
                         </div>
                     </div>
                     <hr>
-                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动 
-                    <br>
+                    <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch> GCD技能允许推动<br>
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式<br>
-                    <ccino-switch style="transform: scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch> 选择区域计算GCD威力
+                    <ccino-switch style="transform: scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch> 选择区域计算威力<br>
+                    <ccino-switch style="transform: scale(0.7);" v-model="setting.showTimeBySecond"></ccino-switch> 以秒显示刻度<br>
                     <div>
                         技能显示间隔 {{option.skill.margin}}
                         <input type="range" v-model="option.skill.margin" min="0" max="100">
@@ -670,7 +684,7 @@
                             <a target="_blank" href="https://bbs.nga.cn/read.php?tid=20013978">NGA发布帖</a><br>
                             <a target="_blank" href="https://www.bilibili.com/video/av83273633">B站使用说明</a>
                         </li>
-                        <li>双击左侧增加新事件/新技能</li>
+                        <li><span style="color:red">Alt+鼠标左键</span>（或双击）增加新事件/新技能</li>
                         <li>单击事件可以修改具体信息</li>
                         <li>按住alt+滚轮可以放大/缩小</li>
                         <li>拖动物件可以调整时间</li>
@@ -695,6 +709,7 @@
     
 </div>
 
-<script src="./timeline_data.js?v=0.30"></script>
-<script src="./timeline.js?v=0.30"></script>
+<script src="./timeline_data.js?v=0.31"></script>
+<script src="./timeline_lang.js?v=0.31"></script>
+<script src="./timeline.js?v=0.31.1"></script>
 </body>
