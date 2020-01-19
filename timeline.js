@@ -85,10 +85,10 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
-                ver:"0.31",
+                ver:"0.31.2",
                 type:"update",
                 date:"2020.01.19 09:39",
-                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。",
+                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。增加时间轴提前量",
             },
             {
                 ver:"0.30",
@@ -675,7 +675,7 @@ var vueapp = new Vue({
             if(!this.dials.selectedLineY){
                 return;
             }
-            var time=this.y2time(this.dials.selectedLineY-this.timeline.offset);
+            var time=this.y2time(this.dials.selectedLineY-this.timelineOffset);
             var list;
             if(type=="gcd"){
                 list=[this.timeline.gcd];
@@ -1233,8 +1233,8 @@ var vueapp = new Vue({
          */
         addGcdSkill:function(name,isInsert){
             var y=this.dials.selectedLineY;
-            if(!y) y=this.timeline.offset;
-            var time=this.y2time(y-this.timeline.offset);
+            if(!y) y=this.timelineOffset;
+            var time=this.y2time(y-this.timelineOffset);
             time=this.addGcdSkillAtTime(time,name,isInsert);
             this.dials.selectedLineY=this.time2yOffset(time);
             return time;
@@ -1488,7 +1488,7 @@ var vueapp = new Vue({
             //判断当前位置
             if(this.hover.rect.enable){
                 if(this.dials.mouseY){
-                    var time=this.y2time(this.dials.mouseY-this.timeline.offset);
+                    var time=this.y2time(this.dials.mouseY-this.timelineOffset);
                     if(this.hover.rect.type=="event"){
                         var text=prompt("输入事件内容","");
                         if(text){
@@ -1554,7 +1554,7 @@ var vueapp = new Vue({
             return time/1000*this.dials.tick;
         },
         time2yOffset:function(time){ //通过时间计算y
-            return time/1000*this.dials.tick+this.timeline.offset;
+            return time/1000*this.dials.tick+this.timelineOffset;
         },
         second2y:function(time){ //通过时间计算y
             return time*this.dials.tick;
@@ -1562,7 +1562,7 @@ var vueapp = new Vue({
         checkSkillTime:function(skill,time,index,indexThis,originData){   //index: 插入的间隙   0  1  2 | 3  4  => 3
             var skills=this.timeline.skills[skill.name];
             //技能不允许越过其上下的技能
-            var lastSkill=skills[index-1]||{time:0};
+            var lastSkill=skills[index-1]||{time:-this.timeline.offset};
             var nextSkill=skills[indexThis?index+1:index]||{time:99999999};
             if(time<=lastSkill.time||time>nextSkill.time) {
                 return false;
@@ -1802,8 +1802,8 @@ var vueapp = new Vue({
         },
         computeSelectedRangeDmg:function(){
             var range=this.dials.selectedRange;
-            var startTime=this.y2time(Math.min(range.y,range.oy)-this.timeline.offset);
-            var endTime=this.y2time(Math.max(range.y,range.oy)-this.timeline.offset);
+            var startTime=this.y2time(Math.min(range.y,range.oy)-this.timelineOffset);
+            var endTime=this.y2time(Math.max(range.y,range.oy)-this.timelineOffset);
             //计算时间轴buff加成
             var buffList=this.computeBuffList(startTime,endTime);
             this.timeline.buffList=buffList;
@@ -2036,6 +2036,9 @@ var vueapp = new Vue({
        
     },
     computed:{
+        timelineOffset:function(){
+            return 50+this.time2y(this.timeline.offset);
+        },
         allUserDefinedSkillMap:function(){
             var allSkillMap={}; //技能map
             for(var i=0;i<this.userDefinedSkills.length;++i){
@@ -2085,7 +2088,7 @@ var vueapp = new Vue({
             }
         },
         dialsLines:function(){
-            var top=this.dials.top;
+            var top=this.dials.top-this.timelineOffset;
             var height=this.dials.height;
             var tick=this.dials.tick*this.dials.tickRange;
             var lineIndex=Math.floor(top/tick);
@@ -2095,23 +2098,10 @@ var vueapp = new Vue({
                 var y=lineIndex*tick;
                 var maxY=top+height;
                 var lines=[];
-                // var miniLines=[];
-                // var pushMiniLine=(y)=>{
-                //     var miniTick=tick/5;
-                //     var miniY=y-tick+miniTick;
-                //     for(var j=0;miniY<y;miniY+=miniTick){
-                //         if(miniY>0){
-                //             miniLines.push({
-                //                 i:j,
-                //                 y:miniY
-                //             })
-                //         }
-                //     }
-                // }
                 for(var i=0;y<=maxY;y+=tick){
                     var time=y/this.dials.tick*1000;
                     var text;
-                    if(this.setting.showTimeBySecond){
+                    if(this.setting.showTimeBySecond||time<0){
                         text=(Math.round(time)/1000).toFixed(1);
                     }else{
                         text=new Date(Math.round(time)-28800000).format(getFormat(time))
@@ -2121,10 +2111,8 @@ var vueapp = new Vue({
                         y:y,
                         text:text
                     })
-                    // pushMiniLine(y);
                 }
                 this.dials.lines=lines;
-                // this.dials.miniLines=miniLines;
             }
             return [ this.dials.lines, this.dials.miniLines ];
         },
@@ -2147,7 +2135,7 @@ var vueapp = new Vue({
     },
     filters:{
         timeFormat:(time,fmt)=>{
-            if(vueapp.setting.showTimeBySecond){
+            if(vueapp.setting.showTimeBySecond||time<0){
                 return (Math.round(time)/1000).toFixed(1);
             }
             if(!fmt){
@@ -2194,7 +2182,7 @@ function loadUserDefinedData(){
     }
 }
 loadUserDefinedData();
-vueapp.dials.lastLineIndex=-1; //刷新一次刻度
+vueapp.dials.lastLineIndex=-99999; //刷新一次刻度
 vueapp.init();
 vueapp.setting.reserveCols=1;
 window.addEventListener("beforeunload",function(){
@@ -2239,9 +2227,6 @@ document.addEventListener('keydown', function(evt){
 
 /*
     TODO:
-    1、GCD技能指定选择一个玩家。（因为混入不同玩家的GCD技能是没有意义的）
-然后每个GCD技能来选择具体的来源技能，如果名字匹配就直接选择，
-    2、每个技能来源，都设置一层对应技能名称翻译 
-    4、增加能力技通道(持续时间在buff栏显示) 能力技能只能放在gcd的1/3处
+
 
  */

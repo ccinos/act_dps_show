@@ -435,26 +435,26 @@
                         
                         <!-- 刻度线 -->
                         <g v-for="line in dialsLines[0]">
-                            <line class="dials" :x1="dials.left+70" :y1="line.y+timeline.offset" :x2="option.svg.width" :y2="line.y+timeline.offset" />
-                            <text class="dials" :x="dials.left+0" :y="line.y+timeline.offset" dy="4">
+                            <line class="dials" :x1="dials.left+70" :y1="line.y+timelineOffset" :x2="option.svg.width" :y2="line.y+timelineOffset" />
+                            <text class="dials" :x="dials.left+0" :y="line.y+timelineOffset" dy="4">
                                 {{line.text}}
                             </text>
                         </g>
                         <!-- 迷你刻度 -->
                         <!-- <line class="dials-mini" v-for="miniLine in dialsLines[1]" 
-                            x1="0" x2="5" :y1="miniLine.y+timeline.offset" :y2="miniLine.y+timeline.offset" /> -->
+                            x1="0" x2="5" :y1="miniLine.y+timelineOffset" :y2="miniLine.y+timelineOffset" /> -->
                         <!-- 鼠标移动 -->
-                        <g v-if="dials.mouseY>timeline.offset">
+                        <g v-if="dials.mouseY">
                             <line class="dials-mouse" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY" />
                             <text class="dials-mouse" :x="dials.left+0" :y="dials.mouseY" dy="4">
-                                {{y2time(dials.mouseY-timeline.offset) | timeFormat}}
+                                {{y2time(dials.mouseY-timelineOffset) | timeFormat}}
                             </text>
                         </g>
                         <!-- 选择时间点 -->
                         <g v-if="dials.selectedLineY">
                             <line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedLineY" :y2="dials.selectedLineY" />
                             <text class="dials-select-line" :x="dials.left+0" :y="dials.selectedLineY" dy="4">
-                                {{y2time(dials.selectedLineY-timeline.offset) | timeFormat}}
+                                {{y2time(dials.selectedLineY-timelineOffset) | timeFormat}}
                             </text>
                         </g>
                         
@@ -502,7 +502,7 @@
                             <line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" 
                                 :y1="dials.selectedRange.oy" :y2="dials.selectedRange.oy" />
                             <text class="dials-select-line" :x="dials.left+0" :y="dials.selectedRange.oy" dy="4">
-                                {{y2time(dials.selectedRange.oy-timeline.offset) | timeFormat}}
+                                {{y2time(dials.selectedRange.oy-timelineOffset) | timeFormat}}
                             </text>
                             <!-- 伤害合计 -->
                             <text class="dmg-normal dmg-all" :x="(+timeline.infoWidth)-50" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" dy="-8">
@@ -578,7 +578,7 @@
                                 </g>
                             </template>
                         </g>
-                        <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="timeline.offset-10" />
+                        <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="40" />
                         <g v-for="skill,i in skills" @click.stop="onSelectSkillType(skill,i)">
                             <!-- 技能名称 -->
                             <text :x="(+timeline.infoWidth)+option.skill.nameOffset+(i+setting.reserveCols)*(skillOption.all)" text-anchor="middle" 
@@ -659,20 +659,24 @@
                     <ccino-switch style="transform: scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch> 选择区域计算威力<br>
                     <ccino-switch style="transform: scale(0.7);" v-model="setting.showTimeBySecond"></ccino-switch> 以秒显示刻度<br>
                     <div>
+                        时间轴提前量 {{(Math.round(timeline.offset/100)/10).toFixed(1)}}s
+                        <input type="range" v-model="timeline.offset" min="0" max="60000" step="100">
+                    </div>
+                    <div>
                         技能显示间隔 {{option.skill.margin}}
                         <input type="range" v-model="option.skill.margin" min="0" max="100">
                     </div>
                     <div>
                         事件显示宽度 {{timeline.infoWidth}}
-                        <input type="range" v-model="timeline.infoWidth" min="100" max="3000">
+                        <input type="range" v-model="timeline.infoWidth" min="100" max="3000" step="10">
                     </div>
                     <div>
                         时间轴长度(秒) {{timeline.length}}
-                        <input type="range" v-model="timeline.length" min="60" max="10000">
+                        <input type="range" v-model="timeline.length" min="60" max="10000" step="10">
                     </div>
                     <div>
                         图表宽度 {{option.svg.width}}
-                        <input type="range" v-model="option.svg.width" min="800" max="8000">
+                        <input type="range" v-model="option.svg.width" min="800" max="8000" step="10">
                     </div>
                     <hr>
                     <h2>
@@ -711,5 +715,5 @@
 
 <script src="./timeline_data.js?v=0.31"></script>
 <script src="./timeline_lang.js?v=0.31"></script>
-<script src="./timeline.js?v=0.31.1"></script>
+<script src="./timeline.js?v=0.31.2"></script>
 </body>
