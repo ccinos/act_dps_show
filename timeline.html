@@ -44,6 +44,7 @@
                         </small>
                     </h3>
                     <div style="display:flex;">
+
                         <span class="value-name">解析事件<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.event"></ccino-switch></span> 
                         <span class="value-name" style="width:14em;" v-if="temp.importLogsSet.import.event">
                             解析开始读条事件
@@ -52,7 +53,11 @@
                         <span class="value-name">能力技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.job"></ccino-switch></span> 
                         <span class="value-name">GCD技<ccino-switch style="transform: scale(0.7);" v-model="temp.importLogsSet.import.gcd"></ccino-switch></span> 
                     </div>
-                    <ul class="list-group" style="max-height: 300px; overflow: auto;">
+                    <template v-if="temp.importLogsSet.import.event">
+                        <span>事件过滤(正则):过滤掉符合条件的事件，简单的列举可以使用 | 分隔，例如 攻击|年糕烫烫</span> 
+                        <input class="form-control" v-model="setting.importLogEventFilterRegex" placeholder="攻击"/>
+                    </template>
+                    <ul class="list-group" style="max-height: 300px; overflow: auto; margin-top:10px">
                         <a v-for="fight in temp.importLogsSet.report.fights.fights"
                             class="list-group-item" :class="{'list-group-item-success':fight.kill,'list-group-item-danger':!fight.kill,
                                                     active:fight==temp.importLogsSet.report.selectedFight}"
@@ -715,5 +720,5 @@
 
 <script src="./timeline_data.js?v=0.31"></script>
 <script src="./timeline_lang.js?v=0.31"></script>
-<script src="./timeline.js?v=0.31.2"></script>
+<script src="./timeline.js?v=0.31.3"></script>
 </body>

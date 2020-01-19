@@ -88,7 +88,7 @@ var vueapp = new Vue({
                 ver:"0.31.2",
                 type:"update",
                 date:"2020.01.19 09:39",
-                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。增加时间轴提前量",
+                info:"增加按秒显示刻度功能，威力计算增加能力技。增加按alt单击增加新数据（双击可能不太好使）。增加fflogs导入外服数据支持。增加时间轴提前量。事件可以进行过滤。",
             },
             {
                 ver:"0.30",
@@ -181,7 +181,7 @@ var vueapp = new Vue({
                 enable:false,
                 x:100, y:100, event:{},
             },
-            
+            importLogEventFilterRegex:"攻击",
             skillSelectSet:{
                 enable:false,
                 jobName:"骑士",
@@ -323,7 +323,7 @@ var vueapp = new Vue({
                 importSource:{
                     job:{},
                     gcd:{},
-                    event:[]
+                    event:[],
                 },
                 report:{
                     fights:null,
@@ -425,6 +425,12 @@ var vueapp = new Vue({
             if(report.fights.lang!="cn"){
                 dict=skillLangDict[report.fights.lang]||{};
             }
+            var regex;
+            try{
+                regex=new RegExp(this.setting.importLogEventFilterRegex||"攻击");
+            }catch(e){
+                regex=/攻击/;
+            }
             for(var dataSeries of [[report.downloadedCasts,0],[report.downloadedEvents,1]]){
                 var type=dataSeries[1];
                 var datas=dataSeries[0];
@@ -436,7 +442,7 @@ var vueapp = new Vue({
                             if(dict[skillName]){
                                 skillName=dict[skillName].name;
                             }
-                            if(skillName=="攻击"||!skillName){
+                            if(!skillName||regex.test(skillName)){
                                 continue;
                             }
                             if(report.boss[d.sourceID]){
@@ -465,9 +471,11 @@ var vueapp = new Vue({
                             var time=d.timestamp-startTime;
                             if(type==1){
                                 if(importEnable.event){
-                                    if(!report.boss[d.sourceID]) continue;
+                                    if(!(report.boss[d.sourceID]||report.npc[d.sourceID])) continue;
                                     report.parsedPlayerData[d.sourceID].events.push({
                                         time:time,
+                                        castType:d.type,
+                                        skillName: skillName,
                                         text: report.targets[d.sourceID].name + " "+castType[d.type]+" ["+skillName+"]",
                                     })
                                     // vueapp.timeline.events.push();
@@ -1821,9 +1829,9 @@ var vueapp = new Vue({
                 dmgAll+=dmg;
             }
             //计算能力技能威力
-            buffListData={buffIndex:0, buff:null, buffList:buffList}
             for(var skill of this.skills){
                 if(skill.dmg>0||skill.dot>0){
+                    buffListData={buffIndex:0, buff:null, buffList:buffList}
                     var timeline=this.timeline.skills[skill.name];
                     if(timeline){
                         for(var i=0;i<timeline.length;++i){
@@ -1840,26 +1848,28 @@ var vueapp = new Vue({
             range.dmgAll=dmgAll;
         },
         selectTimeRange:function(e){ //左键框选区域
-            this.clearSelectRange();
-            this.dials.selectedRange={
-                oy:e.offsetY,
-                ox:e.offsetX,
-                y:e.offsetY,
-                x:e.offsetX,
-            }
-            this.onMouseDrag(e,this.dials.selectedRange,null,function(data,time,e){ //拖动
-                data.y=e.offsetY;
-                data.x=e.offsetX;
-            },null,function(data){ //放开
-                if(data.oy==data.y){
-                    vueapp.dials.selectedRange=null;
-                    vueapp.dials.selectedLineY=data.y;
-                }else{
-                    if(vueapp.setting.selectRangeComputeDmg){
-                        vueapp.computeSelectedRangeDmg();
-                    }
+            if(vueapp.setting.selectRangeComputeDmg){
+                this.clearSelectRange();
+                this.dials.selectedRange={
+                    oy:e.offsetY,
+                    ox:e.offsetX,
+                    y:e.offsetY,
+                    x:e.offsetX,
                 }
-            })
+                this.onMouseDrag(e,this.dials.selectedRange,null,function(data,time,e){ //拖动
+                    data.y=e.offsetY;
+                    data.x=e.offsetX;
+                },null,function(data){ //放开
+                    if(data.oy==data.y){
+                        vueapp.dials.selectedRange=null;
+                        vueapp.dials.selectedLineY=data.y;
+                    }else{
+                        if(vueapp.setting.selectRangeComputeDmg){
+                            vueapp.computeSelectedRangeDmg();
+                        }
+                    }
+                })
+            }
         },
         scrollOnMouseDrag:function(e){ //右键拖动画布
             this.drag.scrollingTo=null;
@@ -2192,6 +2202,7 @@ window.addEventListener("beforeunload",function(){
 
 document.addEventListener('keydown', function(evt){
     var code=evt.code;
+    if(!code) return;
     var subcode=code.substr(0,5);
     if(subcode=="Digit"){
         code=code.substr(5);
