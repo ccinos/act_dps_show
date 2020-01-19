@@ -2042,6 +2042,14 @@ var vueapp = new Vue({
         },
         init:function(){
             svgContainer=document.getElementById("svg_container");
+        },
+        isRegex:function(regex){
+            try{
+                new RegExp(regex);
+                return true;
+            }catch(e){
+                return false;
+            }
         }
        
     },
