@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <title>simple dps show</title>
+    <style>
+        body>div{
+            background-color:rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding:5px;
+            color:white;
+            text-shadow: 0 0 3px gold;
+            font-size:14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="vueapp">
+        <div style="display:flex">
+            <div style="flex:50%">合计</div>
+            <div style="flex:50%">{{encounter["encdps-*"]}}</div>
+        </div>
+        <div style="display:flex" v-for="c,name in combatant">
+            <div style="flex:50%">{{c.name}}</div>
+            <div style="flex:50%">{{c["encdps-*"]}}</div>
+        </div>
+    </div>
+    <script>
+        var vueapp=new Vue({
+            el:"#vueapp",
+            data:{
+                combatant:{},
+                encounter:{}
+            }
+        })
+        document.addEventListener("onOverlayDataUpdate", function (e) {
+            vueapp.combatant=e.detail.Combatant;
+            vueapp.encounter=e.detail.Encounter;
+        });
+    </script>
+</body>
+</html>
