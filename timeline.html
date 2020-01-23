@@ -677,6 +677,8 @@
                     <ccino-switch style="transform: scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch> GCD技能插入模式<br>
                     <ccino-switch style="transform: scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch> 选择区域计算威力<br>
                     <ccino-switch style="transform: scale(0.7);" v-model="setting.showTimeBySecond"></ccino-switch> 以秒显示刻度<br>
+                    <ccino-switch style="transform: scale(0.7);" v-model="setting.pressDeleteKeyDeleteSelectedObject"></ccino-switch> 按Delete键删除事件和技能<br>
+                    
                     <div>
                         时间轴提前量 {{(Math.round(timeline.offset/100)/10).toFixed(1)}}s
                         <input type="range" v-model="timeline.offset" min="0" max="60000" step="100">
@@ -733,6 +735,6 @@
 </div>
 
 <script src="./timeline_data.js?v=0.31.5"></script>
-<script src="./timeline_lang.js?v=0.31"></script>
-<script src="./timeline.js?v=0.31.5"></script>
+<script src="./timeline_lang.js?v=0.31.6"></script>
+<script src="./timeline.js?v=0.31.6"></script>
 </body>

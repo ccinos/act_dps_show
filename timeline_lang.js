@@ -16884,9 +16884,9 @@ var skillLangDict={
     en:{},ja:{},de:{},fr:{}
 };
 for(var lang of skillLangData){
-    skillLangDict.en[lang.name_en]=lang;
+    skillLangDict.en[lang.name_en.toUpperCase()]=lang;
     skillLangDict.ja[lang.name_jp]=lang;
-    skillLangDict.de[lang.name_de]=lang;
-    skillLangDict.fr[lang.name_fr]=lang;
+    skillLangDict.de[lang.name_de.toUpperCase()]=lang;
+    skillLangDict.fr[lang.name_fr.toUpperCase()]=lang;
 }
 skillLangData=undefined;

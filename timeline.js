@@ -173,6 +173,7 @@ var vueapp = new Vue({
             selectedSkillType:null,
             lastSkillIsGcd:false,
             selectRangeComputeDmg:true,
+            pressDeleteKeyDeleteSelectedObject:true,
             skillSet:{
                 enable:false,
                 x:100,y:100
@@ -439,8 +440,9 @@ var vueapp = new Vue({
                     for(var d of dList.events){
                         if(d.type=="cast"||(hasBeginCase&&d.type=="begincast")){
                             var skillName=d.ability.name;
-                            if(dict[skillName]){
-                                skillName=dict[skillName].name;
+                            var upperSkillName=skillName.toUpperCase(); //转换大写用于匹配技能字典
+                            if(dict[upperSkillName]){
+                                skillName=dict[upperSkillName].name;
                             }
                             if(!skillName||regex.test(skillName)){
                                 continue;
@@ -2305,7 +2307,7 @@ document.addEventListener('keydown', function(evt){
         var str=(evt.ctrlKey?"Ctrl+":"")+(evt.shiftKey?"Shift+":"")+(evt.altKey?"Alt+":"")+code;
         console.log(str);
     }
-    if(str=="Delete"){
+    if(str=="Delete" && vueapp.setting.pressDeleteKeyDeleteSelectedObject){
         //删除选择内容
         if(vueapp.setting.eventSet.event){
             vueapp.deleteSelectedEvent();
