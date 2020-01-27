@@ -126,7 +126,7 @@ function getOption(option) {
     try {
         for (var series of option.series) {
             if (!series) continue;
-            var remain_size = 0
+            var remain_size = 0, sizeCount=0;
             series.columns.forEach(function (c) {
                 if (c.size) {
                     var size = +c.size;
@@ -134,8 +134,12 @@ function getOption(option) {
                         remain_size += size;
                 }
             });
+            sizeCount=remain_size+(+option.nameColumnWidth);
             remain_size = (95 - option.nameColumnWidth || 30) - remain_size;
-            if (remain_size < 0) remain_size = 10;
+            if (remain_size < 0){
+                remain_size = 10;
+                sizeCount+=10;
+            }
             var nosizeSeries = series.columns.filter(function (c) { return !c.size });
             if (nosizeSeries.length > 0) {
                 var size = Math.round(remain_size / nosizeSeries.length * 100) / 100;
@@ -143,6 +147,18 @@ function getOption(option) {
                     c.size = "" + size;
                 })
             }
+            //--调整整体列宽
+            //整体按照95调整
+            if(Math.abs(sizeCount-95)>5){
+                var sizeScale=95/sizeCount;
+                option.nameColumnWidth=Math.round(option.nameColumnWidth*sizeScale*100)/100;
+                series.columns.forEach(function (c) {
+                    if (c.size) {
+                        c.size= (c.size*sizeScale).toFixed(2);
+                    }
+                });
+            }
+            
         }
     } catch (e) {
         console.error(e);
