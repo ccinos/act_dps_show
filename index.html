@@ -30,8 +30,7 @@
 				
 			</span>
 
-			<span v-show="encounter.title">
-				
+			<span>
 				<span :class="{'at-right-nextline':titleNextLine,
 							'at-right':!titleNextLine}" >
 					<span id="title-right">
@@ -41,9 +40,12 @@
 								{{series.name}}
 							</span>
 						</template>
-						<span v-if="myDps"># {{myOrder}} &nbsp; {{myDps|round}} / </span>
-						{{encounter.dps|round}}</span>
+						<span v-show="encounter.title">
+							<span v-if="myDps" ># {{myOrder}} &nbsp; {{myDps|round}} / </span>
+							{{encounter.dps|round}}
+						</span>
 					</span>
+				</span>
 			</span>
 		</div>
 		<div v-show="!miniStyle">
@@ -51,7 +53,7 @@
 
 			<ul v-if="showColumnHeader" style="font-weight: bold;">
 				<li style="flex: 0 0 1.5em;"></li>
-				<li :style="{flex: '0 0 '+option.nameColumnWidth+'%'}"></li>
+				<li :style="{flex: '0 0 '+(currentSeries.nameColumnWidth||option.nameColumnWidth)+'%'}"></li>
 				<li v-for="column in currentSeries.columns" 
 					:style="{textAlign:column.textAlign||'left',
 						flex:column.size?('0 0 '+column.size+'%'):('auto')}">
@@ -69,7 +71,7 @@
 							backgroundColor:getJobColor(c.Job),
 						    height:dataBarHeight}"></div>
 					</li>
-					<li :style="{flex: '0 0 '+option.nameColumnWidth+'%','font-family':option.fontFamily.name}" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
+					<li :style="{flex: '0 0 '+(currentSeries.nameColumnWidth||option.nameColumnWidth)+'%','font-family':option.fontFamily.name}" :class="{'hidden-text':option.hiddenOthers&&c.name!='YOU'}">
 						{{c.name}}
 					</li>
 					<li v-for="column in currentSeries.columns" 
@@ -86,6 +88,6 @@
 		</div>
 	</div>
 
-	<script src="./index.js?v=7.4"></script>
+	<script src="./index.js?v=7.5"></script>
 </body>
 </html>

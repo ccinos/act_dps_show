@@ -206,7 +206,7 @@
                     <th>列名</th>
                     <th>属性</th>
                     <th style="width:50px;">取整</th>
-                    <th>宽度 <span style="cursor:pointer" @click="clearAllColumnSize(series)">{{columnMaxSize(series)}}</span></th>
+                    <th><span style="cursor:pointer" @click="clearAllColumnSize(series)">宽度</span></th>
                     <th>前缀</th>
                     <th>后缀</th>
                     <th>对齐</th>
@@ -214,6 +214,13 @@
                         排序<template v-if="series.orderAsc">▲</template><template v-else>▼</template>
                     </th>
                     <th>操作</th>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right;">该系列名字列宽度</td>
+                    <td title="该值会覆盖整体名字列宽度设置，留空则保留默认">
+                        <input type="number" max="100" min="0" v-model="series.nameColumnWidth"/>
+                    </td>
+                    <td colspan="5"></td>
                 </tr>
                 <tr v-for="column,i in series.columns">
                     <td width="50px">
@@ -228,7 +235,7 @@
                         <input type="checkbox" v-model="column.round">
                     </td>
                     <td>
-                        <input type="number" :max="columnMaxSize(series,i)" min="0" v-model="column.size"/>
+                        <input type="number" max="100" min="0" v-model="column.size"/>
                     </td>
                     <td >
                         <input type="text" v-model="column.prefix"/>

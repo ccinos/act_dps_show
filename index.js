@@ -134,7 +134,7 @@ function getOption(option) {
                         remain_size += size;
                 }
             });
-            sizeCount=remain_size+(+option.nameColumnWidth);
+            sizeCount=remain_size;
             remain_size = (95 - option.nameColumnWidth || 30) - remain_size;
             if (remain_size < 0){
                 remain_size = 10;
@@ -150,8 +150,14 @@ function getOption(option) {
             //--调整整体列宽
             //整体按照95调整
             if(Math.abs(sizeCount-95)>5){
+                // console.log(series.nameColumnWidth,option.nameColumnWidth);
+                if(!series.nameColumnWidth){
+                    series.nameColumnWidth=option.nameColumnWidth;
+                }
+                sizeCount+= (+series.nameColumnWidth);
                 var sizeScale=95/sizeCount;
-                option.nameColumnWidth=Math.round(option.nameColumnWidth*sizeScale*100)/100;
+                series.nameColumnWidth=Math.round(series.nameColumnWidth*sizeScale*100)/100;
+                
                 series.columns.forEach(function (c) {
                     if (c.size) {
                         c.size= (c.size*sizeScale).toFixed(2);
