@@ -99,7 +99,7 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，将自身所受的伤害减轻30%\n持续时间：10秒",
-    "duration": 10,
+    "duration": 15,
     "reduceDmg": 30
   },
   {
@@ -416,7 +416,7 @@ var allSkills=[
     "cd": 120,
     "intro": "一定时间内，令自身所受到的伤害减轻30%，同时受到物理攻击时会给予对方反击伤害\n威力：55　持续时间：10秒",
     "dmg": 55,
-    "duration": 10,
+    "duration": 15,
     "reduceDmg": 30
   },
   {
@@ -437,7 +437,7 @@ var allSkills=[
     "read": 0,
     "cd": 240,
     "intro": "效果中除特定攻击之外其他所有对自身发动的攻击均无法令体力减少到1以下\n当目标为敌人时，禁止目标移动\n持续时间：6秒",
-    "duration": 6
+    "duration": 8
   },
   {
     "name": "钢铁旋风",
@@ -487,7 +487,7 @@ var allSkills=[
     "read": 0,
     "cd": 25,
     "intro": "一定时间内，自身所受的伤害减轻20%\n持续时间：5秒\n与原初的勇猛共享复唱时间",
-    "duration": 5,
+    "duration": 6,
     "reduceDmg": 20
   },
   {
@@ -662,7 +662,7 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，自身受到的伤害减轻30%\n持续时间：10秒",
-    "duration": 10,
+    "duration": 15,
     "reduceDmg": 30
   },
   {
@@ -939,7 +939,7 @@ var allSkills=[
     "read": 0,
     "cd": 120,
     "intro": "一定时间内，将自身所受的伤害减轻30%\n持续时间：10秒",
-    "duration": 10,
+    "duration": 15,
     "reduceDmg": 30
   },
   {
