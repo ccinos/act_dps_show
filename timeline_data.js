@@ -90,7 +90,8 @@ var allSkills=[
     "cd": 5,
     "cost": "「忠义」50",
     "intro": "一定时间内，受到攻击必定会发动格挡\n持续时间：6秒\n发动条件：忠义50点",
-    "duration": 6
+    "duration": 6,
+    "reduceDmg": 20
   },
   {
     "name": "预警",
@@ -306,8 +307,8 @@ var allSkills=[
     "type": "能力",
     "read": 0,
     "cd": 60,
-    "intro": "目标的攻击伤害降低10%　持续时间：5秒",
-    "duration": 5,
+    "intro": "目标的攻击伤害降低10%　持续时间：10秒",
+    "duration": 10,
     "reduceDmg": 10
   },
   {
@@ -1053,7 +1054,7 @@ var allSkills=[
     "read": 0,
     "cd": 25,
     "intro": "令自身或一名队员受到的伤害减轻15%\n持续时间：7秒\n追加效果：对队员使用时，若自身附加了残暴弹状态，则目标队员也会附加该状态　持续时间：10秒",
-    "duration": 10,
+    "duration": 7,
     "reduceDmg": 15
   },
   {
