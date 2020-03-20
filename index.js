@@ -41,6 +41,7 @@ var defaultOption = {
         name:"",
         data:""
     },
+    showLimitBreak: false,
     showColumnHeader: false,
     nameColumnWidth: 30,
     backgroundAlpha: 30,
@@ -364,7 +365,7 @@ function update(e) {
     var combatants = [];
     for (var i in e.detail.Combatant) {
         var c = e.detail.Combatant[i];
-        if (c.name != "Limit Break"
+        if (  (vueapp.option.showLimitBreak||c.name != "Limit Break")
             && !isNaN(+c.dps)) {
             if (c.Job && c.Job.length >= 1) {
                 c.Job = c.Job.substr(0, 1).toUpperCase() + c.Job.substr(1);
