@@ -397,6 +397,10 @@ window.onresize = function () {
 }
 
 
+if(window.testdata){
+    update(testdata);
+    document.body.style.backgroundColor="black";
+}
 
 
 
