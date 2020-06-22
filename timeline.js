@@ -94,10 +94,10 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
-                ver:"0.32",
+                ver:"0.32.1",
                 type:"update",
-                date:"2020.06.22 09:20",
-                info:"部分修复了插入不到技能的情况。自定义技能可以设置全部设置项。增加了用于数据清除的选项（解决奇怪的白屏问题）",
+                date:"2020.06.22 10:20",
+                info:"部分修复了插入不到技能的情况。自定义技能可以设置全部设置项。增加了用于数据清除的选项（解决奇怪的白屏问题）。修复单独冷却的GCD技能无法正常计算的问题。",
             },
             {
                 ver:"0.31.5",
@@ -1183,6 +1183,10 @@ var vueapp = new Vue({
                 var newI=up?i-1:i+1;
                 var g=this.timeline.gcd[newI];
                 var cd=this.gcdSetting.cd*1000;
+                var singleCd=this.getGcdCd(up?this.timeline.gcd[i-1].skill:gcd.skill);
+                if(singleCd){//具有单独CD
+                    cd=singleCd;
+                }
                 var checkTime=g.time+(up?cd:-cd);
                 if(down^time<checkTime){
                     //无法移动
@@ -1196,26 +1200,25 @@ var vueapp = new Vue({
                     }
                 }
                 //允许移动，检查相同GCD技能
-                var gcdCd=this.getGcdCd(gcd.skill);
-                if(gcdCd){ //具有单独gcd
-                    var siblingGcd;
-                    if(up){
-                        siblingGcd=this.getLastGcdSkill(gcd.skill,i,gcdCd);
-                    }else{
-                        siblingGcd=this.getNextGcdSkill(gcd.skill,i,gcdCd);
-                    }
-                    if(siblingGcd){ //时间范围内有相同GCD技能
-                        //无法移动
-                        if(this.gcdSetting.dragAllMove||dragAllMove){ //推动全部
-                            var t=this.changeGcdTime(siblingGcd[0],time+(up?-gcdCd:gcdCd),siblingGcd[1],false,dragAllMove);
-                            if(t<=0||t>=this.timeline.length*1000){
-                                return -1;
-                            }
-                        }else{
-                            return gcd.time;
-                        }
-                    }
-                }
+                // if(gcdCd){ //具有单独gcd
+                //     var siblingGcd;
+                //     if(up){
+                //         siblingGcd=this.getLastGcdSkill(gcd.skill,i,gcdCd);
+                //     }else{
+                //         siblingGcd=this.getNextGcdSkill(gcd.skill,i,gcdCd);
+                //     }
+                //     if(siblingGcd){ //时间范围内有相同GCD技能
+                //         //无法移动
+                //         if(this.gcdSetting.dragAllMove||dragAllMove){ //推动全部
+                //             var t=this.changeGcdTime(siblingGcd[0],time+(up?-gcdCd:gcdCd),siblingGcd[1],false,dragAllMove);
+                //             if(t<=0||t>=this.timeline.length*1000){
+                //                 return -1;
+                //             }
+                //         }else{
+                //             return gcd.time;
+                //         }
+                //     }
+                // }
             }else{ //两侧可以直接移动
                 if(time<0||time>this.timeline.length*1000){
                     return -1;
