@@ -37,8 +37,16 @@ Array.prototype.insertSort=function(obj,handler){
     this.splice(0,0,obj);
     return 0;
 }
-function copy(data){
-    return JSON.parse(JSON.stringify(data));
+function copy(src,dest){
+    if(dest){
+        for(var prop in src){
+            if(src.hasOwnProperty(prop)){
+                dest[prop]=src[prop];
+            }
+        }
+        return dest;
+    }
+    return JSON.parse(JSON.stringify(src));
 }
 function save(alldata){
     localStorage.setItem("CCINO_TIMELINE",JSON.stringify(alldata));
@@ -79,11 +87,18 @@ var skillNameIcon={
     "血仇":"雪仇",
 
 }
+var autoSave=true; //自动保存，如果设置成false，则本次不会保存
 var svgContainer;
 var vueapp = new Vue({
     el: "#container",
     data: {
         versions:[
+            {
+                ver:"0.32",
+                type:"update",
+                date:"2020.06.22 09:20",
+                info:"部分修复了插入不到技能的情况。自定义技能可以设置全部设置项。增加了用于数据清除的选项（解决奇怪的白屏问题）",
+            },
             {
                 ver:"0.31.5",
                 type:"update",
@@ -351,6 +366,18 @@ var vueapp = new Vue({
         },
     },
     methods: {
+        clearAll:function(){
+            if(confirm("此功能将清除全部保存的数据，用于不明情况造成的白屏错误。是否继续？")){
+                var input=prompt("将清除此页面全部数据，输入 DEL 确认");
+                if(!input) return;
+                if(input.toLowerCase()=="del"){
+                    localStorage.clear();
+                    autoSave=false;
+                    alert("数据已清除");
+                    location.reload();
+                }
+            }
+        },
         importSelectedFight:function(){
             if(vueapp.temp.importLogsSet.import.event){
                 vueapp.timeline.events=[];
@@ -1025,21 +1052,22 @@ var vueapp = new Vue({
                     name=prompt("技能重复，请输入一个别名:",name);
                     if(!name) return;
                 }
-                skill.fullname=skill.name;
+                //skill.fullname=skill.name;
                 skill.name=name;
             }
             this.setting.skillSelectSet.selectedSkills[skillType].push(skill);
         },
         selectUserDefinedSkill:function(skill,skillType){
             this.setting.skillSelectSet.userDefinedSkill={
-                enable:true, name:skill.name, cd:skill.cd, fullname:skill.fullname,
-                skillType:skillType,
+                enable:true, 
                 duration:skill.duration,new:false
             }
+            copy(skill, this.setting.skillSelectSet.userDefinedSkill);
             this.setting.skillSelectSet.selectedUserDefinedSkill=skill;
 
         },
         saveUserDefinedData:function(){
+            if(!autoSave) return;
             var userDefinedData={ }
             for(var dataName of vueapp.userDefinedDatas){
                 userDefinedData[dataName]=vueapp[dataName];
@@ -1057,13 +1085,8 @@ var vueapp = new Vue({
                     alert("技能名不能重复");
                     return;
                 }
-                this.userDefinedSkills.push({
-                    name:name,
-                    cd:this.setting.skillSelectSet.userDefinedSkill.cd,
-                    duration:this.setting.skillSelectSet.userDefinedSkill.duration,
-                    fullname:this.setting.skillSelectSet.userDefinedSkill.fullname
-                });
-                
+                var newSkill=copy(this.setting.skillSelectSet.userDefinedSkill);
+                this.userDefinedSkills.push(newSkill);
             }else if(this.setting.skillSelectSet.selectedUserDefinedSkill){
                 //修改技能
                 var skill=this.setting.skillSelectSet.selectedUserDefinedSkill;
@@ -1074,9 +1097,7 @@ var vueapp = new Vue({
                     alert("技能名不能重复");
                     return;
                 }
-                skill.cd=newSkill.cd;
-                skill.duration=newSkill.duration;
-                skill.fullname=newSkill.fullname;
+                copy(newSkill,skill);
                 var skillType=newSkill.skillType;
                 //--列表中全部删除
                 let deleteFunc=function(list){
@@ -1495,6 +1516,7 @@ var vueapp = new Vue({
             return false;
         },
         insertNew:function(){//插入新元素
+            console.log("insertNew")
             //判断当前位置
             if(this.hover.rect.enable){
                 if(this.dials.mouseY){
@@ -1918,21 +1940,20 @@ var vueapp = new Vue({
                         }catch(e){console.error(e)}
                         //盾值
                         event.reduceDmg=Math.round(dmg*(1-dmgPercent)+buff.addShield);
-                        event.trueDmg=Math.round(dmg*dmgPercent);
+                        event.trueDmg=Math.round(dmg*dmgPercent-buff.addShield);
                     }
                 }
             }
         },
         selectTimeRange:function(e){ //左键框选区域
             if(vueapp.setting.selectRangeComputeDmg){
-                this.clearSelectRange();
-                this.dials.selectedRange={
+                vueapp.dials.selectedRange={
                     oy:e.offsetY,
                     ox:e.offsetX,
                     y:e.offsetY,
                     x:e.offsetX,
                 }
-                this.onMouseDrag(e,this.dials.selectedRange,null,function(data,time,e){ //拖动
+                vueapp.onMouseDrag(e,vueapp.dials.selectedRange,null,function(data,time,e){ //拖动
                     data.y=e.offsetY;
                     data.x=e.offsetX;
                 },null,function(data){ //放开
@@ -1945,6 +1966,10 @@ var vueapp = new Vue({
                         }
                     }
                 })
+                setTimeout(function(){
+                    vueapp.clearSelectRange();
+                })
+                
             }
         },
         scrollOnMouseDrag:function(e){ //右键拖动画布
@@ -2127,7 +2152,6 @@ var vueapp = new Vue({
                 return false;
             }
         }
-       
     },
     computed:{
         timelineOffset:function(){

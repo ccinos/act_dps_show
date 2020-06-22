@@ -15,6 +15,7 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;" @mouseup="onMouseDrag($event)">
+    <button style="position: fixed;top:5px;right:500px;z-index:1000000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
     <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
     <!-- LOGS上传浮窗 -->
     <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;" v-if="temp.importLogsSet.enable">
@@ -263,7 +264,7 @@
             <span v-if="temp.hoverSkill.skill.cd">CD: {{temp.hoverSkill.skill.cd}}秒</span>  
             <span v-else>即时</span>
         </div>
-        <div style="width:300px" v-html="temp.hoverSkill.skill.intro.replace(/\n/g,'<br>')"></div>
+        <div style="width:300px" v-if="temp.hoverSkill.skill.intro" v-html="temp.hoverSkill.skill.intro.replace(/\n/g,'<br>')"></div>
     </div>
     <div class="float-window" v-if="setting.skillSelectSet.enable"
         style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
@@ -274,7 +275,7 @@
                     <option v-for="jobSkill,jobName in jobSkillSetting" :value="jobName">{{jobName}}</option>
                 </select>
                
-                <button class="btn btn-success" @click="savePicked">保存</button>
+                <button class="btn btn-success" @click="savePicked();temp.hoverSkill.enable=false;">保存</button>
                 <button class="btn btn-default" @click="setting.skillSelectSet.enable=false;temp.hoverSkill.enable=false;">关闭</button>
                 <span style="margin-left:50px;">
                     GCD时间 <input class="form-control form-auto" v-model="setting.skillSelectSet.gcdDuration" type="number" style="width:100px;">秒
@@ -283,37 +284,37 @@
         </div>
         <hr>
         <div class="row" style="overflow:auto;">
-            <div class="panel panel-default" >
-                <div class="panel-heading">
-                    <h4>已选技能 <small>单击取消 右键修改别名</small></h4>
-                </div>
-                <div class="panel-body">
-                    <ul>
-                        <li>每个职业技能与职能技能都会单独一列显示</li>
-                        <li>在顶部切换职业，你可以选择不同职业的技能</li>
-                        <li>拖动技能以调整排序</li>
+            <div class="col-xs-6">
+                <div class="panel panel-default" >
+                    <div class="panel-heading">
+                        <h4>已选技能 <small>单击取消 右键修改别名</small></h4>
+                    </div>
+                    <div class="panel-body">
+                        <ul>
+                            <li>每个职业技能与职能技能都会单独一列显示</li>
+                            <li>在顶部切换职业，你可以选择不同职业的技能</li>
+                            <li>拖动技能以调整排序</li>
+                        </ul>
+                    </div>
+                    <ul class="list-group"></ul>
+                        <li class="list-group-item" v-for="skillTypes in [['能力技','job'],['GCD技能','gcd']]">
+                            {{skillTypes[0]}}
+                            <div class="skill-container">
+                                <div v-for="skill,i in setting.skillSelectSet.selectedSkills[skillTypes[1]]" class="skill-list"
+                                    draggable="true" @dragover.prevent="" @drop.prevent="pickedSkillDrop($event,i,skillTypes[1])" @drag="pickedSkillDrag($event,i,skillTypes[1])"
+                                    @click="unpickSkill(i,skillTypes[1])"
+                                    @contextmenu.prevent="onMouseRightClickInPickedSkill(skill,i)"
+                                    @mousemove="onSkillHover(skill,$event)"
+                                    @mouseout="temp.hoverSkill.enable=false">
+                                    <img draggable="false" :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
+                                    <br>
+                                    <span style="font-size:12px">{{skill.name}}</span>
+                                </div>
+                                
+                            </div>
+                        </li>
                     </ul>
                 </div>
-                <ul class="list-group"></ul>
-                    <li class="list-group-item" v-for="skillTypes in [['能力技','job'],['GCD技能','gcd']]">
-                        {{skillTypes[0]}}
-                        <div class="skill-container">
-                            <div v-for="skill,i in setting.skillSelectSet.selectedSkills[skillTypes[1]]" class="skill-list"
-                                draggable="true" @dragover.prevent="" @drop.prevent="pickedSkillDrop($event,i,skillTypes[1])" @drag="pickedSkillDrag($event,i,skillTypes[1])"
-                                @click="unpickSkill(i,skillTypes[1])"
-                                @contextmenu.prevent="onMouseRightClickInPickedSkill(skill,i)"
-                                @mousemove="onSkillHover(skill,$event)"
-                                @mouseout="temp.hoverSkill.enable=false">
-                                <img draggable="false" :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='./icons/skill/unknown.png'"/>
-                                <br>
-                                <span style="font-size:12px">{{skill.name}}</span>
-                            </div>
-                            
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="col-xs-6">
                 <div class="panel panel-default" >
                     <div class="panel-heading">
                         <h4>预设技能 <small>单击选择</small></h4>
@@ -334,7 +335,6 @@
                         </li>
                     </ul>
                 </div>
-               
             </div>
             <div class="col-xs-6">
                 <div class="panel panel-default" >
@@ -388,6 +388,34 @@
                                     持续时间
                                     <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration"/>
                                 </template>
+                                <template>
+                                    增加物理伤害
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseNormal"/>
+                                </template>
+                                <template>
+                                    增加魔法伤害
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseMagic"/>
+                                </template>
+                                <template>
+                                    增加暴击率
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseCri"/>
+                                </template>
+                                <template>
+                                    减少伤害
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceDmg"/>
+                                </template>
+                                <template>
+                                    减少物理伤害
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceMagic"/>
+                                </template>
+                                <template>
+                                    减少魔法伤害
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceNormal"/>
+                                </template>
+                                <template>
+                                    增加盾值
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.addShield"/>
+                                </template>
                             </template>
                             <!-- 图标
                             <input class="form-control" type="text" v-model="setting.selectedSkillType.icon"/> -->
@@ -439,7 +467,7 @@
                     @click="selectLine();"
                     @contextmenu.prevent="cancelAllSelect()"
                     @mousedown.right="scrollOnMouseDrag($event)"
-                    @mousedown.left="cancelAllSelect();selectTimeRange($event)">
+                    @mousedown.left="selectTimeRange($event)">
                     <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight"
                         @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
                         <!-- hover rect -->
@@ -724,6 +752,7 @@
                             <small v-html="v.info"></small>     
                         </template>
                     </ul>
+                    
                    
                 </div>
 
@@ -736,5 +765,5 @@
 
 <script src="./timeline_data.js?v=0.31.8"></script>
 <script src="./timeline_lang.js?v=0.31.6"></script>
-<script src="./timeline.js?v=0.31.6"></script>
+<script src="./timeline.js?v=0.32"></script>
 </body>
