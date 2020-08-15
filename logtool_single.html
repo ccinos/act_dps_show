@@ -203,19 +203,23 @@
                         callback(logData);
                     }
                 }).catch(err => {
+                    tts(characterName+":"+"未找到");
                     console.log(err)
                 })
             }
             function checkLogs(fullname){
                 getRankings(fullname,function(logData){
                     let speakLog=logData.highestLog||"无log";
-                    if(callOverlayHandler){
-                        callOverlayHandler({
-                            call: 'cactbotSay',
-                            text: `${logData.character.name}:${speakLog}`,
-                        });
-                    }
+                    tts(`${logData.character.name}:${speakLog}`);
                 });
+            }
+            function tts(msg){
+                if(callOverlayHandler){
+                    callOverlayHandler({
+                        call: 'cactbotSay',
+                        text: msg,
+                    });
+                }
             }
             window.checkLogs=checkLogs;
 
