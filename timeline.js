@@ -94,6 +94,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.32.2",
+                type:"update",
+                date:"2020.10.01 19:45",
+                info:"修复了自定义技能同名无法保存的问题。",
+            },
+            {
                 ver:"0.32.1",
                 type:"update",
                 date:"2020.06.22 10:20",
@@ -1058,11 +1064,10 @@ var vueapp = new Vue({
             this.setting.skillSelectSet.selectedSkills[skillType].push(skill);
         },
         selectUserDefinedSkill:function(skill,skillType){
-            this.setting.skillSelectSet.userDefinedSkill={
-                enable:true, 
-                duration:skill.duration,new:false
-            }
+            this.setting.skillSelectSet.userDefinedSkill={}
             copy(skill, this.setting.skillSelectSet.userDefinedSkill);
+            this.setting.skillSelectSet.userDefinedSkill.enable=true;
+            this.setting.skillSelectSet.userDefinedSkill.new=false;
             this.setting.skillSelectSet.selectedUserDefinedSkill=skill;
 
         },
@@ -2184,19 +2189,34 @@ var vueapp = new Vue({
                 jobSkillRef[jobName]=job;
                 //增加职能技能
                 var jobTypeSkillList=this.userDefinedjobTypeSkill[job.type];
-                for(var skillName of jobTypeSkillList){
+                for(var i=jobTypeSkillList.length-1;i>=0;--i){
+                    var skillName=jobTypeSkillList[i];
                     var skill=this.allUserDefinedSkillMap[skillName];
-                    job.skills.jobType.push(skill);
+                    if(skill){
+                        job.skills.jobType.push(skill);
+                    }else{
+                        jobTypeSkillList.splice(i,1);
+                    }
                 }
                 //增加职业技能
-                for(var skillName of jobSkillLists.job){
+                for(var i=jobSkillLists.job.length-1;i>=0;--i){
+                    var skillName=jobSkillLists.job[i];
                     var skill=this.allUserDefinedSkillMap[skillName];
-                    job.skills.job.push(skill);
+                    if(skill){
+                        job.skills.job.push(skill);
+                    }else{
+                        jobSkillLists.job.splice(i,1);
+                    }
                 }
                 //增加职业的GCD技能
-                for(var skillName of jobSkillLists.gcd){
+                for(var i=jobSkillLists.gcd.length-1;i>=0;--i){
+                    var skillName=jobSkillLists.gcd[i];
                     var skill=this.allUserDefinedSkillMap[skillName]||{name:skillName};
-                    job.skills.gcd.push(skill);
+                    if(skill){
+                        job.skills.gcd.push(skill);
+                    }else{
+                        jobSkillLists.gcd.splice(i,1);
+                    }
                 }
             }
             return jobSkillRef;
