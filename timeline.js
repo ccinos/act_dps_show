@@ -22,6 +22,7 @@
     }
 }())
 
+var TIME_ZONE_OFFSET=new Date().getTimezoneOffset()*60000;
 
 Array.prototype.insertSort=function(obj,handler){
     if(!(handler instanceof Function)){
@@ -749,7 +750,7 @@ var vueapp = new Vue({
         batchExportEvent:function(){
             var lines=[];
             for(var event of this.timeline.events){
-                lines.push(new Date(event.time-28800000).format(getFormat(event.time))+" "+event.text);
+                lines.push(new Date(event.time+TIME_ZONE_OFFSET).format(getFormat(event.time))+" "+event.text);
             }
             this.temp.importEventSet.text=lines.join("\n");
         },
@@ -2245,7 +2246,7 @@ var vueapp = new Vue({
                     if(this.setting.showTimeBySecond||time<0){
                         text=(Math.round(time)/1000).toFixed(1);
                     }else{
-                        text=new Date(Math.round(time)-28800000).format(getFormat(time))
+                        text=new Date(Math.round(time)+TIME_ZONE_OFFSET).format(getFormat(time))
                     }
                     lines.push({
                         i:i,
@@ -2282,7 +2283,7 @@ var vueapp = new Vue({
             if(!fmt){
                 fmt=getFormat(time);
             }
-            let d=new Date(time-28800000);
+            let d=new Date(time+TIME_ZONE_OFFSET);
             return d.format(fmt);
         },
         skillNameFilter:function(skillName){
