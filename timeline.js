@@ -1058,7 +1058,7 @@ var vueapp = new Vue({
                     name=prompt("技能重复，请输入一个别名:",name);
                     if(!name) return;
                 }
-                //skill.fullname=skill.name;
+                skill.fullname=skill.name;
                 skill.name=name;
             }
             this.setting.skillSelectSet.selectedSkills[skillType].push(skill);
