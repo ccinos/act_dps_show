@@ -750,7 +750,9 @@ var vueapp = new Vue({
         batchExportEvent:function(){
             var lines=[];
             for(var event of this.timeline.events){
-                lines.push(new Date(event.time+TIME_ZONE_OFFSET).format(getFormat(event.time))+" "+event.text);
+                //lines.push(new Date(event.time+TIME_ZONE_OFFSET).format(getFormat(event.time))+" "+event.text);
+                lines.push(formatTime(event.time)+" "+event.text);
+                
             }
             this.temp.importEventSet.text=lines.join("\n");
         },
@@ -2246,7 +2248,7 @@ var vueapp = new Vue({
                     if(this.setting.showTimeBySecond||time<0){
                         text=(Math.round(time)/1000).toFixed(1);
                     }else{
-                        text=new Date(Math.round(time)+TIME_ZONE_OFFSET).format(getFormat(time))
+                        text=formatTime(time); //new Date(Math.round(time)+TIME_ZONE_OFFSET).format(getFormat(time))
                     }
                     lines.push({
                         i:i,
@@ -2280,11 +2282,10 @@ var vueapp = new Vue({
             if(vueapp.setting.showTimeBySecond||time<0){
                 return (Math.round(time)/1000).toFixed(1);
             }
-            if(!fmt){
-                fmt=getFormat(time);
+            if(fmt){
+                return new Date(time+TIME_ZONE_OFFSET).format(fmt);
             }
-            let d=new Date(time+TIME_ZONE_OFFSET);
-            return d.format(fmt);
+            return formatTime(time);
         },
         skillNameFilter:function(skillName){
             if(skillName){
@@ -2300,6 +2301,33 @@ function getFormat(time){
     }else{
         return "mm:ss.fff";
     }
+}
+function formatTime(time){
+    var h,m,s,f;
+    if(time>3600000){
+        h=Math.floor(time/3600000);
+        time-=h*3600000;
+    }
+    if(time>60000){
+        m=Math.floor(time/60000);
+        if(m<10){
+            m="0"+m;
+        }
+        time-=m*60000;
+    }else{
+        m="00";
+    }
+    if(time>1000){
+        s=Math.floor(time/1000);
+        if(s<10){
+            s="0"+s;
+        }
+        time-=s*1000;
+    }else{
+        s="00";
+    }
+    f=padLeft(Math.floor(time)+"","0",3);
+    return h>0?(h+":"+m+":"+s+"."+f):(m+":"+s+"."+f);
 }
 
 function loadUserDefinedData(){
