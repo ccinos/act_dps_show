@@ -2,7 +2,7 @@
 
 var jobType = {
     tank: ["War", "Mrd", "Drk", "Pld", "Gla", "Gnb"],
-    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm"],
+    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm", "Blu"],
     healer: ["Whm", "Cnj", "Ast", "Sch"],
 };
 var jobNameCnToType={
@@ -22,7 +22,8 @@ var jobNameCnToType={
     "赤魔法师":"Rdm",
     "武士":"Sam",
     "舞者":"Dnc",
-    "绝枪战士":"Gnb"
+    "绝枪战士":"Gnb",
+    "青魔法师":"Blu"
 }
 var jobSort = [].concat(jobType.tank, jobType.healer, jobType.dps);
 for (var i in jobType) {
@@ -54,7 +55,7 @@ var defaultOption = {
         Nin: "#AF1964", Drg: "#4164CD", Smn: "#2D9B78", Brd: "#91BA5E",
         Dnc: "#E2B0AF", Rdm: "#e87b7b", Gnb: "#796D30", Pld: "#A8D2E6",
         War: "#cf2621", Drk: "#D126CC", Whm: "#FFF0DC", Sch: "#8657FF",
-        Ast: "#FFE74A"
+        Ast: "#FFE74A", Blu: "#57ABAB"
     },
     colors: {
         tank: "#8080ff",
@@ -218,7 +219,7 @@ var vueapp = new Vue({
             if (this.option.useJobColor) {
                 return this.color2rgba(this.option.jobColor[job] || "#ffffff");
             } else {
-                return this.color2rgba(this.option.colors[jobType[job]]);
+                return this.color2rgba(this.option.colors[jobType[job]] || "#ffffff");
             }
         },
         color2rgba: function (color) {
