@@ -95,6 +95,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.33",
+                type:"update",
+                date:"2021.06.07 18:15",
+                info:"技能相关的设定修改，需要在技能设置里重新选择一次技能才可以生效。1.增加支持拖拽持续时间的功能，增加技能“圣光幕帘”的拖拽持续时间设置。2.增加多段CD显示的功能，增加技能“地星”、“天宫图”的分段CD显示设置。3.增加技能轴提取（在批量导入事件的功能里）。",
+            },
+            {
                 ver:"0.32.2",
                 type:"update",
                 date:"2020.10.01 19:45",
@@ -746,6 +752,46 @@ var vueapp = new Vue({
                     }
                 }
             }
+        },
+        batchExportSkill:function(){
+            var lines=[];
+            for(var skillName in this.timeline.skills){
+                var skillList = this.timeline.skills[skillName];
+                for(var skill of skillList){
+                    lines.insertSort({time:skill.time, text:skillName});
+                }
+            }
+            this.temp.importEventSet.text=lines.map(function(d){
+                return formatTime(d.time)+" \""+d.text+"\"";
+            }).join("\n");
+        },
+        batchImportSkill:function(){
+            var text=this.temp.importEventSet.text;
+            var lines=text.split("\n");
+            var count=0;
+            let reg=/^\s*(\d+)[:：](\d{1,2})([.:：](\d+))?\s+\"(.+)\"/;
+            for(var i=0;i<lines.length;++i){
+                var lineStr=lines[i];
+                let match=reg.exec(lineStr);
+                if(match){
+                    let min=+match[1];
+                    let sec=+match[2];
+                    let millis=+match[4];
+                    let skill=match[5];
+                    if(isNaN(min)) min=0;
+                    if(isNaN(sec)) min=0;
+                    if(isNaN(millis)) millis=0;
+                    let time=millis+sec*1000+min*60*1000;
+                    if(skill) skill=skill.trim();
+                    if(skill){
+                        if(this.insertSkill(skill, time)){
+                            ++count;
+                        }
+                    }
+                }
+            }
+            alert("导入成功"+count+"条");
+            this.temp.importEventSet.enable=false;
         },
         batchExportEvent:function(){
             var lines=[];
@@ -1542,31 +1588,42 @@ var vueapp = new Vue({
                         }
                     }else if(this.hover.rect.type=="skill" && this.hover.rect.skillIndex>=0){
                         var skill=this.skills[this.hover.rect.skillIndex];
-                        if(skill){
-                            if(!this.timeline.skills[skill.name]){
-                                this.timeline.skills[skill.name]=[];
-                            }
-                            var list=this.timeline.skills[skill.name];
-                            var index=list.findIndex(function(e){
-                                return e.time>time;
-                            });
-                            var insertData={
-                                time:time
-                            };
-                            if(!skill.cd){//无CD直接插入
-                                list.insertSort(insertData,function(a,b){ return a.time<b.time });
-                                return;
-                            }
-                            if(index==-1) index=list.length;
-                            if(this.checkSkillTime(skill,time,index,false,insertData)){
-                                list.insertSort(insertData,function(a,b){ return a.time<b.time });
-                            }
-                        }else{
-                            console.error("找不到技能");
-                        }
+                        this.insertSkill(skill,time);
                     }
                 }
             }
+        },
+        insertSkill:function(skill,time){//尝试插入技能，并返回是否成功
+            if(typeof(skill)=="string"){
+                var si=this.skills.findIndex(function(d){
+                    return (d.name||d.fullname)==skill;
+                });
+                skill=this.skills[si];
+            }
+            if(skill){
+                if(!this.timeline.skills[skill.name]){
+                    this.timeline.skills[skill.name]=[];
+                }
+                var list=this.timeline.skills[skill.name];
+                var index=list.findIndex(function(e){
+                    return e.time>time;
+                });
+                var insertData={
+                    time:time
+                };
+                if(!skill.cd){//无CD直接插入
+                    list.insertSort(insertData,function(a,b){ return a.time<b.time });
+                    return true;
+                }
+                if(index==-1) index=list.length;
+                if(this.checkSkillTime(skill,time,index,false,insertData)){
+                    list.insertSort(insertData,function(a,b){ return a.time<b.time });
+                    return true;
+                }
+            }else{
+                console.error("找不到技能");
+            }
+            return false;
         },
         setTick:function(tick){//设置每秒像素数
             if(tick<1) {
@@ -2028,7 +2085,8 @@ var vueapp = new Vue({
                 vueapp.changeGcdTime(d,time,i)
             },function(d){return true});
         },
-        skillOnMouseDrag:function(skillInfo,skill,flag,e,index){//拖拽
+        //skillOnMouseDrag(skillInfo,skill,true,$event,skillIndex)
+        skillOnMouseDrag:function(skillInfo,skill,flag,e,index){//拖拽技能
             this.onMouseDrag(e,{
                 skillInfo:skillInfo,skill:skill, index:index
             },function(data){
@@ -2039,6 +2097,23 @@ var vueapp = new Vue({
                 return vueapp.checkSkillTime(data.skill,time,data.index,true,data.skillInfo)
             },function(data){
             })
+        },
+        //skillDurationSliderOnMouseDrag(skillInfo,skill,true,$event,skillIndex)
+        skillDurationSliderOnMouseDrag:function(skillInfo,skill,flag,e,index){//拖拽技能可拖动作用范围区域
+            if(!skill.durationSlideRange){ //如果没有可拖拽作用范围设定，则直接调用上面普通拖拽技能
+                this.skillOnMouseDrag(skillInfo,skill,flag,e,index);
+            }else{ //拖拽作用范围
+                this.onMouseDrag(e,{
+                    skillInfo:skillInfo,skill:skill, index:index
+                },function(data){
+                    return (skillInfo.slideTime||0);
+                },function(data,time){
+                    data.skillInfo.slideTime = time;
+                },function(data,time){
+                    return (time)>=0 && (time)<=skill.durationSlideRange*1000;
+                },function(data){
+                })
+            }
         },
         //-------------鼠标滚动
         onMouseWheelScale:function(e){

@@ -107,7 +107,17 @@ rect.skill-duration{
     fill:#8f8;
     opacity: 0.5;
 }
-.skill-active>rect.skill-duration{
+rect.skill-duration2{
+    fill:#0f0;
+    opacity: 0.5;
+}
+rect.skill-duration-slide-range{
+    stroke-width: 1px;
+    fill: transparent;
+    stroke:#fac;
+}
+
+.skill-active rect.skill-duration{
     stroke-width: 1px;
     stroke: red;
 }
@@ -138,9 +148,18 @@ rect.select-range{
     z-index:100;
 }
 
+.float-window-behind{
+    position:fixed;
+    z-index:700;
+    background-color:rgba(255,255,255,0.7);
+    box-shadow: 0 0 5px #8da;
+    border-radius: 5px;
+    padding:5px 10px;
+}
+
 .float-window{
     position:fixed;
-    z-index:99999;
+    z-index:9999;
     background-color:rgba(255,255,255,0.7);
     box-shadow: 0 0 5px #8da;
     border-radius: 5px;

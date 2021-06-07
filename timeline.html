@@ -15,7 +15,7 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;" @mouseup="onMouseDrag($event)">
-    <button style="position: fixed;top:5px;right:500px;z-index:1000000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
+    <button style="position: fixed;top:5px;right:500px;z-index:1000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
     <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
     <!-- LOGS上传浮窗 -->
     <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;" v-if="temp.importLogsSet.enable">
@@ -164,9 +164,12 @@
     </div>
     <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
         <!-- 事件批量导入 -->
-        <button class="btn btn-primary" @click="batchImportEvent">导入</button>
         <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
+        <button class="btn btn-primary" @click="batchImportEvent">导入事件</button>
         <button class="btn btn-info" @click="batchExportEvent">提取当前事件轴</button>
+        
+        <button class="btn btn-primary" @click="batchImportSkill">导入技能</button>
+        <button class="btn btn-info" @click="batchExportSkill">提取当前技能轴</button>
         <textarea class="form-control" style="height:calc( 100% - 50px );resize:none;margin-top: 10px;" v-model="temp.importEventSet.text"
          placeholder="每行一条事件，按照单条事件的导入格式
 0:00 事件内容(分钟:秒.毫秒)"></textarea>
@@ -267,7 +270,7 @@
         <div style="width:300px" v-if="temp.hoverSkill.skill.intro" v-html="temp.hoverSkill.skill.intro.replace(/\n/g,'<br>')"></div>
     </div>
     <div class="float-window" v-if="setting.skillSelectSet.enable"
-        style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;">
+        style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;z-index:99999999">
         <div class="row">
             <div class="col-xs-12" style="padding:10px 10px 0px 30px">
                 职业
@@ -428,6 +431,7 @@
     <!-- 事件浮窗 -->
     <div class="float-window" 
         v-if="setting.eventSet.enable"
+        style="z-index:500"
         :style="{top:setting.eventSet.y+'px',left:setting.eventSet.x+'px'}">
         <div class="input-group" :style="{width:((+timeline.infoWidth)-100)+'px'}">
             <span class="input-group-btn">
@@ -449,6 +453,7 @@
     <!-- 技能浮窗 -->
     <div class="float-window" 
         v-if="setting.skillSet.enable"
+        style="z-index:500"
         :style="{top:setting.skillSet.y+'px',left:setting.skillSet.x+'px'}">
             <!-- <button class="btn btn-default" type="button" @click="setting.skillSet.enable=false">取消</button> -->
             <button class="btn btn-danger" type="button" @click="deleteSelectedSkill">删除</button>
@@ -594,9 +599,22 @@
                                                                                    : ( skillInfo.count==0?(skillInfo.remainToAdd/1000):skill.cd)
                                                             )" 
                                             :width="(option.skill.cd)"/>
+                                    <!-- 可滑动范围 -->
+                                    <g>
+                                        <rect v-if="skill.durationSlideRange" class="skill-duration-slide-range" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-3" 
+                                        :y="time2yOffset(skillInfo.time)" :height="second2y(skill.durationSlideRange+skill.duration)" :width="option.skill.duration+7"/>
+                                    </g>
                                     <!-- 持续时间 -->
-                                    <rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
-                                            :y="time2yOffset(skillInfo.time)" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
+                                    <g @mousedown.left.stop="skillDurationSliderOnMouseDrag(skillInfo,skill,true,$event,skillIndex)">
+                                        <!-- 持续时间 -->
+                                        <rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
+                                        :y="time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration)" :width="(option.skill.duration)"/>
+                                        <!-- 持续时间2 -->
+                                        <rect v-if="skill.duration2" class="skill-duration2" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
+                                        :y="second2y(skill.duration)+time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration2)" :width="(option.skill.duration)"/>
+                                    </g>
+                                    
+                                    
                                     <!-- 技能图标 -->
                                     <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" 
                                         :href="skill.icon||getSkillIcon(skill)"
@@ -764,7 +782,7 @@
     
 </div>
 
-<script src="./timeline_data.js?v=0.31.9"></script>
+<script src="./timeline_data.js?v=0.33"></script>
 <script src="./timeline_lang.js?v=0.31.6"></script>
-<script src="./timeline.js?v=0.32.4"></script>
+<script src="./timeline.js?v=0.33"></script>
 </body>
