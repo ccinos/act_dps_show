@@ -95,6 +95,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.34",
+                type:"update",
+                date:"2021.06.08 09:30",
+                info:"增加技能打标签的功能，可以在技能上一个相对时间点做一个文本标记。",
+            },
+            {
                 ver:"0.33",
                 type:"update",
                 date:"2021.06.07 18:15",
@@ -204,7 +210,9 @@ var vueapp = new Vue({
             pressDeleteKeyDeleteSelectedObject:true,
             skillSet:{
                 enable:false,
-                x:100,y:100
+                x:100,y:100,
+                selectedMark:null,
+                markTime:0,
             },
             eventSet:{
                 enable:false,
@@ -1404,6 +1412,12 @@ var vueapp = new Vue({
         selectLine:function(){
             this.dials.selectedLineY=this.dials.mouseY;
         },
+        onSelectMark:function(m){
+            Vue.set(this.setting.selectedSkill,"selectedMark",m);
+            this.setting.skillSet.markType=m.type;
+            this.setting.skillSet.markTime=m.time;
+            this.setting.skillSet.markText=m.text;
+        },
         cancelAllSelect:function(){
             this.setting.selectedSkillType=null;
             this.setting.selectedSkill=null;
@@ -1443,8 +1457,30 @@ var vueapp = new Vue({
             }
             Object.assign(this.setting.skillSet,{
                 enable:true,
+                selectedMark:null,
+                markTime:0,
                 x:evt.x+this.option.skill.width,
                 y:evt.y+20});
+        },
+        addMarkOnSkill:function(skillInfo,time,text,type){
+            if(skillInfo==null){
+                alert("请选择一个具体的技能");
+                return;
+            }
+            if(time==null) time=0;
+            if(text==null) text="";
+            if(type==null) type="short";
+            if(this.setting.selectedSkill.selectedMark){
+                Object.assign(this.setting.selectedSkill.selectedMark,{
+                    time:time, text:text, type:type
+                })
+            }else{
+                if(skillInfo.marks==null)
+                    Vue.set(skillInfo,"marks",[]);
+                skillInfo.marks.push({
+                    time:time, text:text, type:type
+                });
+            }
         },
         onClearInput:function(){
             this.setting.inputText="";

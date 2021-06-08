@@ -44,6 +44,12 @@ line.dials-select-line{
 line.dials-skill{
     stroke:#8c8;
 }
+line.dials-skill-mark{
+    stroke:rgb(252, 39, 110);
+}
+text.dials-skill-mark{
+    fill: rgb(252, 39, 110);
+}
 line.events{
     stroke:rgb(247, 210, 249);
 }
@@ -148,6 +154,9 @@ rect.select-range{
     z-index:100;
 }
 
+.input-wrapper{
+    margin-top:3px;
+}
 .float-window-behind{
     position:fixed;
     z-index:700;
