@@ -95,6 +95,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.34.1",
+                type:"update",
+                date:"2021.06.09 10:46",
+                info:"导入导出技能文本支持“以秒显示刻度”，由该选项控制。",
+            },
+            {
                 ver:"0.34",
                 type:"update",
                 date:"2021.06.08 09:30",
@@ -769,8 +775,9 @@ var vueapp = new Vue({
                     lines.insertSort({time:skill.time, text:skillName});
                 }
             }
+            var showTimeBySecond=this.setting.showTimeBySecond;
             this.temp.importEventSet.text=lines.map(function(d){
-                return formatTime(d.time)+" \""+d.text+"\"";
+                return (showTimeBySecond?(d.time/1000).toFixed(1):formatTime(d.time))+" \""+d.text+"\"";
             }).join("\n");
         },
         batchImportSkill:function(){
@@ -795,6 +802,17 @@ var vueapp = new Vue({
                         if(this.insertSkill(skill, time)){
                             ++count;
                         }
+                    }
+                }else{
+                    //可能是秒
+                    var ls=lineStr.split(" ");
+                    var time=+ls[0];
+                    var skill=ls[1];
+                    if(!skill) continue;
+                    skill=skill.replace(/\"/g,"").trim();
+                    if(isNaN(time)) continue;
+                    if(this.insertSkill(skill, time*1000)){
+                        ++count;
                     }
                 }
             }
