@@ -24,6 +24,9 @@ svg line ,svg rect {
 }
 #svg_container{
     transition: scrollTop 2s;
+    width:100%;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 #svg_container.scrolling{
     cursor:grabbing;
@@ -83,21 +86,12 @@ text.dials-skill{
 text.event-active{
     fill: red;
 }
-tSpan.event-summary{
-    /* fill: #f33; */
-}
 tSpan.event-summary-reduce{
     fill: #f90;
 }
 text.skill-type-active{
     fill:red;
 }
-#svg_container{
-    width:100%;
-    overflow-y: scroll;
-    overflow-x: auto;
-}
-
 rect.skill-cd{
     fill:black;
     opacity: 0.15;

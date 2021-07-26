@@ -184,7 +184,9 @@
                     let rankings=[];
                     for(let r of res.data){
                         r.percentile=Math.round(r.percentile);
-                        if(r.encounterID >= 65 && r.encounterID <= 72 && r.difficulty != 101){
+                        if(( 
+                            (r.encounterID >= 65 && r.encounterID <= 77)
+                        ) && r.difficulty != 101){
                             continue;
                         }
                         rankings.push(r);

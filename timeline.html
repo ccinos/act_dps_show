@@ -15,7 +15,7 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;" @mouseup="onMouseDrag($event)">
-    <button style="position: fixed;top:5px;right:500px;z-index:1000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
+    <button style="position: fixed;top:1px;right:28%;z-index:1000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
     <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
     <!-- LOGS上传浮窗 -->
     <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;" v-if="temp.importLogsSet.enable">
@@ -543,8 +543,8 @@
                         <g v-for="e in timeline.events" @mousedown.left.stop="onMouseDragSimple($event,e)">
                             <line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/>
                             <text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4"  @click.stop="onEventClick(e,$event)"
-                                :class="{'event-active':setting.eventSet.event==e}">
-                                {{e.time | timeFormat}} &nbsp; {{e.text}} 
+                                :class="{'event-active':setting.eventSet.event==e}" xml:space="preserve">
+                                {{e.time | timeFormat}}<tSpan dx="1em">{{e.text}}</tSpan>
                                 <tSpan v-if="e.dmg>0" class="event-summary"
                                     :class="{'dmg-normal':e.dmgType=='normal'||!e.dmgType,
                                         'dmg-magic':e.dmgType=='magic','dmg-true':e.dmgType=='true'}"
