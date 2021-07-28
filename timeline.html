@@ -6,8 +6,9 @@
     <script src="./common.js"></script>
     <script src="./vue.min.js"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
+    <!-- <link href="./lib/bootstrap.min.css" rel="stylesheet"> -->
     <link href="./lib/bootstrap.min.css" rel="stylesheet">
-    <link href="./timeline.css?v=0.34" rel="stylesheet">
+    <link href="./timeline.css?v=0.34.2" rel="stylesheet">
 
     <script src="./vue_ccino_switch.js"></script>
     <link rel="stylesheet" href="./vue_ccino_switch.css">
@@ -15,7 +16,7 @@
 </head>
 <body>
 <div id="container" v-cloak style="padding:10px;" @mouseup="onMouseDrag($event)">
-    <button style="position: fixed;top:1px;right:28%;z-index:1000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button>
+    <!-- <button style="position: fixed;top:1px;right:28%;z-index:1000;" class="btn btn-danger btn-xs" @click="clearAll()">清空数据</button> -->
     <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
     <!-- LOGS上传浮窗 -->
     <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y: auto;overflow-x: hidden;" v-if="temp.importLogsSet.enable">
@@ -495,7 +496,7 @@
     </div>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-xs-9" style="overflow:hidden;">
+            <div class="col-xs-12" style="overflow:hidden;transition: max-width 0.5s;" :style="{'max-width':showPannel?'calc(100% - 500px)':'100%'}">
                 <div id="svg_container" class="noselect" 
                     :class="{scrolling:drag.scrolling}"
                     @scroll="onSvgScroll($event)" 
@@ -735,7 +736,7 @@
                     </svg>
                 </div>
             </div>
-            <div class="col-xs-3" style="overflow:auto;">
+            <div :style="{right:showPannel?'0px':'-600px'}" style="overflow:auto;position:absolute;right:0;top:0;bottom:0;width:500px;transition: right 0.5s;">
                 <div :style="{height:option.svg.height+'px'}">
 
                     <div class="share-container" v-if="sharing">
@@ -814,7 +815,8 @@
                     </h2>
                     <ul>
                         <li>使用反馈 ：
-                            5327373@qq.com <br>
+                            5327373@qq.com  QQ群: 752190267
+                            <br>
                             <a target="_blank" href="https://bbs.nga.cn/read.php?tid=20013978">NGA发布帖</a><br>
                             <a target="_blank" href="https://www.bilibili.com/video/av83273633">B站使用说明</a>
                         </li>
@@ -839,6 +841,12 @@
                 </div>
 
             </div>
+            <div :style="{right:showPannel?'550px':'50px'}" style="overflow:auto;position:absolute;right:0;top:10px;width:50px;transition: right 0.5s;">
+                <button type="button" class="btn btn-default" aria-label="Left Align" @click="showPannel=!showPannel">
+                    <span v-if="showPannel" class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    <span v-else class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                </button>
+            </div>
         </div>
        
     </div>
@@ -847,5 +855,5 @@
 
 <script src="./timeline_data.js?v=0.33"></script>
 <script src="./timeline_lang.js?v=0.31.6"></script>
-<script src="./timeline.js?v=0.34.1"></script>
+<script src="./timeline.js?v=0.34.2"></script>
 </body>

@@ -95,6 +95,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.34.2",
+                type:"update",
+                date:"2021.07.28 17:05",
+                info:"1、右侧面板可以隐藏。2、修复页面整体缩小时出现的错误。",
+            },
+            {
                 ver:"0.34.1",
                 type:"update",
                 date:"2021.06.09 10:46",
@@ -203,6 +209,7 @@ var vueapp = new Vue({
                 info:"第一个版本以后还会在此基础上增加一系列功能，例如循环安排之类的。现在这么点功能已经用了我整整10个小时，累了吃饭了，以后再加功能把。因为是第一版，出现BUG也是正常的！"
             }
         ],
+        showPannel:true,
         Math:Math,
         setting:{
             reserveCols:1, //预留技能列数量
@@ -2487,7 +2494,9 @@ vueapp.setting.reserveCols=1;
 window.addEventListener("beforeunload",function(){
     vueapp.saveUserDefinedData();
 })
-
+window.addEventListener("resize",function(){
+    vueapp.option.svg.height=window.innerHeight-20;
+})
 
 document.addEventListener('keydown', function(evt){
     var code=evt.code;
