@@ -95,6 +95,12 @@ var vueapp = new Vue({
     data: {
         versions:[
             {
+                ver:"0.34.5",
+                type:"update",
+                date:"2021.11.16 14:35",
+                info:"修复fflogs导入报错问题",
+            },
+            {
                 ver:"0.34.2",
                 type:"update",
                 date:"2021.07.28 17:05",
@@ -637,7 +643,7 @@ var vueapp = new Vue({
                     if(!hostility) hostility=0;
                     if(dataList==null) dataList=[];
                     if(callback instanceof Function) callback(start,startTime,endTime);
-                    var url="https://cn.fflogs.com/v1/report/events/casts/"+code+"?hostility="+hostility+"&start="+start+"&end="+endTime+"&api_key="+apiKey;
+                    var url="https://www.ffxivlogs.cn/v1/report/events/casts/"+code+"?hostility="+hostility+"&start="+start+"&end="+endTime+"&api_key="+apiKey;
                     if(translate){
                         url+="&translate=true";
                     }
@@ -699,7 +705,7 @@ var vueapp = new Vue({
             vueapp.temp.importLogsSet.loading=true;
             this.cancelCurrentDownload();
             var code=this.temp.importLogsSet.code;
-            var match=/fflogs\.com\/reports\/(\w+)#/.exec(code);
+            var match=/reports\/(\w+)#/.exec(code);
             if(match){
                 code=match[1];
             }
@@ -710,7 +716,7 @@ var vueapp = new Vue({
                 return;
             }
             this.temp.importLogsSet.selectedCode=code;
-            var url="https://cn.fflogs.com/v1/report/fights/"+code+"?api_key="+this.temp.importLogsSet.apiKey;
+            var url="https://www.ffxivlogs.cn/v1/report/fights/"+code+"?api_key="+this.temp.importLogsSet.apiKey;
             axios.get(url).then(function(res){
             // new Promise(r => r({data:testFightData})).then(function(res){
                 vueapp.temp.importLogsSet.loading=false;

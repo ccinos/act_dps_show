@@ -27,7 +27,7 @@
                     LOGS CODE <input class="form-control form-auto" name="log_code" v-model="temp.importLogsSet.code"> 
                     <button class="btn btn-default" @click="downLoadLogsData" :disabled="temp.importLogsSet.loading">查询</button>
                     <br>
-                    <span>示例地址 https://cn.fflogs.com/reports/<span style="color:red;">9VcYMnPXHx3FCzgw</span>#fight=1&type=damage-done 的
+                    <span>示例地址 https://www.ffxivlogs.cn/reports/<span style="color:red;">9VcYMnPXHx3FCzgw</span>#fight=1&type=damage-done 的
                     <span style="color:red;">红色部分</span></span>
                     <br>
                     <span v-if="temp.importLogsSet.error&&temp.importLogsSet.error.error" style="color:red;">{{temp.importLogsSet.error.error}}</span>
@@ -857,5 +857,5 @@
 
 <script src="./timeline_data.js?v=0.33"></script>
 <script src="./timeline_lang.js?v=0.31.6"></script>
-<script src="./timeline.js?v=0.34.2"></script>
+<script src="./timeline.js?v=0.35.2"></script>
 </body>
