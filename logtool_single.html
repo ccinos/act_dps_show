@@ -172,7 +172,7 @@
                 let character={name:characterName,server:serverName};
                 serverName=encodeURIComponent(serverName);
                 characterName=encodeURIComponent(characterName);
-                let url=`https://www.ffxivlogs.cn/v1/rankings/character/${characterName}/${serverName}/CN?timeframe=historical&api_key=${option.apiKey}`;
+                let url=`https://cn.fflogs.com/v1/rankings/character/${characterName}/${serverName}/CN?timeframe=historical&api_key=${option.apiKey}`;
                 if(option.selectedZone && option.selectedZone.id){
                     url+="&zone="+option.selectedZone.id;
                     if(option.selectedEncounter&&option.selectedEncounter.id){
