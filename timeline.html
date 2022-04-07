@@ -385,12 +385,18 @@
                                 <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">
                                     技能全称（如果有图标则会显示，可省略）
                                     <input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.fullname"/>
+                                    技能图标（链接地址）
+                                    <input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.icon"/>
                                 </template>
                                     冷却时间
                                     <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.cd"/>
                                 <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">
                                     持续时间
                                     <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration"/>
+                                    可以手动延迟触发的技能秒数（例如幕帘）
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.durationSlideRange"/>
+                                    2段持续时间（例如地星）
+                                    <input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration2"/>
                                 </template>
                                 <template>
                                     增加物理伤害

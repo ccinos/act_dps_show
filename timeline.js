@@ -1435,6 +1435,7 @@ var vueapp = new Vue({
         },
         getSkillIcon:function(skill){
             if(!skill) return;
+            if(skill.icon) return skill.icon;
             var iconname=skillNameIcon[skill.name]||skill.fullname||skill.name;
             iconname=iconname.replace(/@.+/,"");
             return "./icons/skill/"+iconname+".png";
