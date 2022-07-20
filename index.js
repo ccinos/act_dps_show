@@ -2,10 +2,12 @@
 
 var jobType = {
     tank: ["War", "Mrd", "Drk", "Pld", "Gla", "Gnb"],
-    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm", "Blu"],
-    healer: ["Whm", "Cnj", "Ast", "Sch"],
+    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm", "Blu", "Rpr"],
+    healer: ["Whm", "Cnj", "Ast", "Sch", "Sge"],
 };
 var jobNameCnToType={
+    "钐镰客":"Rpr",
+    "贤者":"Sge",
     "占星术士":"Ast",
     "吟游诗人":"Brd",
     "黑魔法师":"Blm",
@@ -55,7 +57,7 @@ var defaultOption = {
         Nin: "#AF1964", Drg: "#4164CD", Smn: "#2D9B78", Brd: "#91BA5E",
         Dnc: "#E2B0AF", Rdm: "#e87b7b", Gnb: "#796D30", Pld: "#A8D2E6",
         War: "#cf2621", Drk: "#D126CC", Whm: "#FFF0DC", Sch: "#8657FF",
-        Ast: "#FFE74A", Blu: "#57ABAB"
+        Ast: "#FFE74A", Blu: "#57ABAB", Rpr: "#965A90", Sge: "#80A0F0",
     },
     colors: {
         tank: "#8080ff",
