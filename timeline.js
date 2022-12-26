@@ -79,7 +79,7 @@ var defaultOption={
         durationOffset:0,
         nameOffset:10,
         margin:20,
-        
+
     }
 }
 var skillNameIcon={
@@ -262,7 +262,7 @@ var vueapp = new Vue({
         option:defaultOption,
         allGcdSkillMap:allSkillMap, //GCD技能字典
         userDefinedDatas:["userDefinedSkills","userDefinedjobTypeSkill","userDefinedJobSkill",
-                           "skills","gcdSkills","setting","gcdSetting","timeline"],
+            "skills","gcdSkills","setting","gcdSetting","timeline"],
         userDefinedSkills:[], //用户定义的技能列表
         userDefinedjobTypeSkill:{
             坦克:[],
@@ -279,7 +279,7 @@ var vueapp = new Vue({
         ],
         gcdSetting:{
             cd:2.5, //秒
-            addIsInsert:false, 
+            addIsInsert:false,
             dragAllMove:true, //是否可以一个GCD技能推动其他技能一起
             abilities:{//能力技能
             },
@@ -452,7 +452,7 @@ var vueapp = new Vue({
                                 }else{
                                     vueapp.timeline[tempData].insertSort(item);
                                 }
-                                
+
                             }
                         }
                     }
@@ -532,7 +532,7 @@ var vueapp = new Vue({
                                     allSkills.player[d.sourceID].push(skillName);
                                 }
                             }
-                            
+
                             //判断重复技能时间
                             if(!skillTimeCache[d.sourceID]){
                                 skillTimeCache[d.sourceID]={};
@@ -694,7 +694,7 @@ var vueapp = new Vue({
                     report.downloaded=false;
                     vueapp.temp.importLogsSet.error.error=e;
                 })
-                
+
             }
         },
         cancelCurrentDownload:function(){
@@ -724,7 +724,7 @@ var vueapp = new Vue({
             this.temp.importLogsSet.selectedCode=code;
             var url="https://cn.fflogs.com/v1/report/fights/"+code+"?api_key="+this.temp.importLogsSet.apiKey;
             axios.get(url).then(function(res){
-            // new Promise(r => r({data:testFightData})).then(function(res){
+                // new Promise(r => r({data:testFightData})).then(function(res){
                 vueapp.temp.importLogsSet.loading=false;
                 report.fights=res.data;
                 report.fights.fights.reverse();
@@ -843,7 +843,7 @@ var vueapp = new Vue({
             for(var event of this.timeline.events){
                 //lines.push(new Date(event.time+TIME_ZONE_OFFSET).format(getFormat(event.time))+" "+event.text);
                 lines.push(formatTime(event.time)+" "+event.text);
-                
+
             }
             this.temp.importEventSet.text=lines.join("\n");
         },
@@ -864,7 +864,7 @@ var vueapp = new Vue({
                 this.timeline.gcd=[];
                 this.timeline.skills={};
                 var skillNameSet={};
-                
+
                 for(var skill of this.skills){
                     skillNameSet[skill.fullname||skill.name]=skill.name;
                 }
@@ -879,7 +879,7 @@ var vueapp = new Vue({
                     if(this.temp.importDataTypes.gcd){
                         props.push("gcd");
                     }
-                    
+
                     for(var prop of props){
                         for(var s of data[prop]){
                             if(skill.time>endTime) break;
@@ -888,7 +888,7 @@ var vueapp = new Vue({
                             skill.time-=startTime;
                             var name=skillNameSet[skill.name];
                             var skillPlayer=this.temp.parseDatasSkillSet[prop][skill.name];
-                            
+
                             if(skillPlayer==player){
                                 if(prop=="gcd"){
                                     this.timeline.gcd.insertSort({
@@ -930,7 +930,7 @@ var vueapp = new Vue({
                                 text: player+" 施放 ["+skill.name+"]"
                             })
                         }
-                        
+
                     }
                 }
 
@@ -1056,7 +1056,7 @@ var vueapp = new Vue({
                         }
                         Vue.set(vueapp.temp,"parseDatasSkillSet",skillSet);
                     }
-                    
+
                 }
                 reader.readAsText(file);
             }else{
@@ -1076,10 +1076,11 @@ var vueapp = new Vue({
             if(i!=oldI){
                 var dragingSkill=this.setting.skillSelectSet.selectedSkills[type].splice(oldI,1);
                 if(i>oldI){ //后方插入
-                   --i;
+                    --i;
                 }
                 this.setting.skillSelectSet.selectedSkills[type].splice(i,0,dragingSkill[0]);
             }
+            this.setting.skillSelectSet.selectedSkills[type] = this.setting.skillSelectSet.selectedSkills[type].filter(a => a);
         },
         onSkillHover:function(skill,e){
             this.temp.hoverSkill.enable=true;
@@ -1118,7 +1119,7 @@ var vueapp = new Vue({
             if(!isNaN(this.gcdSetting.cd)){
                 this.gcdSetting.cd=gcdDuration
             }
-            
+
             //--清理timeline中无用的技能
             for(var name in this.timeline.skills){
                 var i=this.skills.findIndex(function(e){
@@ -1360,7 +1361,7 @@ var vueapp = new Vue({
         },
         /**
          * 在当前选择的时间点增加一条GCD技能
-         * @param {String} name GCD技能名 
+         * @param {String} name GCD技能名
          * @param {Boolean} isInsert 是否插入（如果插入，后续所有技能时间++)
          * @returns {Number} 实际插入的时间
          */
@@ -1376,7 +1377,7 @@ var vueapp = new Vue({
          * 在此时间增加一条GCD技能，会在此时间往后查找一个合适的空隙进行插入
          * 返回插入的确切时间
          * @param {Number} time 时间
-         * @param {String} name GCD技能名 
+         * @param {String} name GCD技能名
          * @param {Boolean} isInsert 是否插入（如果插入，后续所有技能时间++)
          * @returns {Number} 实际插入的时间
          */
@@ -1446,7 +1447,7 @@ var vueapp = new Vue({
             }
             return "./icons/skill/"+skillName+".png";
         },
-        
+
         selectLine:function(){
             this.dials.selectedLineY=this.dials.mouseY;
         },
@@ -1598,7 +1599,7 @@ var vueapp = new Vue({
                             if(addCount>=skill.count){
                                 s.count=skill.count-1;
                                 s.remainToAdd=cd;
-                            }else{ 
+                            }else{
                                 s.count=addCount-1;
                                 s.remainToAdd=cd-diffTime;
                             }
@@ -1609,7 +1610,7 @@ var vueapp = new Vue({
                     }
                 }else{ //无上次技能，则直接设置为cd时间
                     s.count=(skill.count-1);
-                    s.remainToAdd=cd; 
+                    s.remainToAdd=cd;
                 }
             }
             return s;
@@ -1751,7 +1752,7 @@ var vueapp = new Vue({
                 }
             }else{
                 if(!skill.cd) return true;
-                
+
                 var offsetTime=skill.cd*1000;
                 //根据index计算
                 // 判断上一个技能是否完成CD
@@ -1787,7 +1788,7 @@ var vueapp = new Vue({
         /**
          * 简单的拖拽事件方法，要求data必须有time属性，结束时sort
          * @param {Event}} e 事件
-         * @param {{time:String}} data 
+         * @param {{time:String}} data
          */
         onMouseDragSimple:function(e,data){
             this.onMouseDrag(e,data,
@@ -1800,7 +1801,7 @@ var vueapp = new Vue({
         /**
          * 简单的拖拽时间方法，要求data必须有time属性
          * @param {Event}} e 事件
-         * @param {{time:String}} data 
+         * @param {{time:String}} data
          */
         onMouseDragSimpleCheck:function(e,data,checkTimeHandler){
             this.onMouseDrag(e,data,
@@ -1816,7 +1817,7 @@ var vueapp = new Vue({
          * @param {Function} setTimeHandler 设置time属性方法(只有mousedown中使用)
          * @param {Function} checkTimeHandler 检查time属性是否允许的方法(只有mousedown中使用)
          */
-        onMouseDrag:function(e,data,getTimeHandler,setTimeHandler,checkTimeHandler,mouseUpHandler){ 
+        onMouseDrag:function(e,data,getTimeHandler,setTimeHandler,checkTimeHandler,mouseUpHandler){
             if(e.type=="mousedown"){
                 this.drag.enable=true;
                 this.drag.lastY=e.offsetY;
@@ -1849,18 +1850,18 @@ var vueapp = new Vue({
         },
         /**
          * 根据开始时间和结束时间，计算buff加成时间点
-         * @param {Number} startTime 
-         * @param {Number} endTime 
+         * @param {Number} startTime
+         * @param {Number} endTime
          */
         computeBuffList:function(startTime,endTime){
-            var buffList=[]; 
+            var buffList=[];
             /* {  记录加伤减伤变化的轴
                 time: 时间点, increaseNormal: 25, increaseMagic: 0, increaseCri:0,
                 reduceDmg:20, reduceMagic:20, addShield:3000
             } */
             //加入buff轴
             var props=["increaseNormal","increaseMagic","increaseCri",
-                        "reduceDmg","reduceMagic","reduceNormal","addShield"];
+                "reduceDmg","reduceMagic","reduceNormal","addShield"];
             var reduceProp={};
             for(var p of props){
                 if(p.indexOf("reduce")!=-1)
@@ -1880,7 +1881,7 @@ var vueapp = new Vue({
                     if(!line) continue;
                     for(var i=0;i<line.length;++i){
                         var lineData=line[i];
-                        if(lineData.time+duration<startTime||lineData.time>endTime) 
+                        if(lineData.time+duration<startTime||lineData.time>endTime)
                             continue; //不在选择时间范围内 跳过
                         var startBuff={ time:lineData.time };
                         for(var p of props){
@@ -1984,7 +1985,7 @@ var vueapp = new Vue({
                     lineData.dot=skill.dot*dotCount;
                     lineData.dotCount=dotCount;
                 }
-                
+
                 var addDmg=0,addDot=0;
                 if(buff){
                     if(skill.dmgType=='物理'){
@@ -2111,7 +2112,7 @@ var vueapp = new Vue({
                 setTimeout(function(){
                     vueapp.clearSelectRange();
                 })
-                
+
             }
         },
         scrollOnMouseDrag:function(e){ //右键拖动画布
@@ -2155,9 +2156,9 @@ var vueapp = new Vue({
         },
         gcdOnMouseDrag:function(e,gcd,i){
             this.onMouseDrag(e,gcd,function(d){return d.time},
-            function(d,time){
-                vueapp.changeGcdTime(d,time,i)
-            },function(d){return true});
+                function(d,time){
+                    vueapp.changeGcdTime(d,time,i)
+                },function(d){return true});
         },
         //skillOnMouseDrag(skillInfo,skill,true,$event,skillIndex)
         skillOnMouseDrag:function(skillInfo,skill,flag,e,index){//拖拽技能
@@ -2288,7 +2289,7 @@ var vueapp = new Vue({
                 var data=JSON.parse(this.sharingText);
                 this.savedDatas.push(data);
                 this.sharing=false,
-                alert("导入成功");
+                    alert("导入成功");
                 save(this.savedDatas);
             }catch(e){
                 alert("数据格式不正确");
@@ -2478,24 +2479,38 @@ function formatTime(time){
     f=padLeft(Math.floor(time)+"","0",3);
     return h>0?(h+":"+m+":"+s+"."+f):(m+":"+s+"."+f);
 }
+/*
+function setUserDefinedData(data, dataName) {
+  return new Promise((resolve, reject) => {
+    console.log('setUserDefinedData start', dataName)
+Vue.set(vueapp, dataName, data[dataName]);
+    vueapp.$nextTick(() => {
+      console.log('setUserDefinedData end', dataName)
+      setTimeout(resolve, 1000)
 
-function loadUserDefinedData(){
-    var data=localStorage.getItem("CCINO_TIMELINE_USERDEFINED_DATA");
-    if(data){
-        try{
-            data=JSON.parse(data);
-            if(data){
-                for(var dataName of vueapp.userDefinedDatas){
-                    if(data[dataName]){
-                        try{
-                            Vue.set(vueapp,dataName,data[dataName]);
-                        }catch(e){
-                            console.error(e);
-                        }
+    })
+  })
+}
+*/
+function loadUserDefinedData() {
+    var data = localStorage.getItem("CCINO_TIMELINE_USERDEFINED_DATA");
+    if (data) {
+        try {
+            data = JSON.parse(data);
+            if (data) {
+                //var promise = Promise.resolve();
+                for (let dataName of vueapp.userDefinedDatas) {
+                    if (data[dataName]) {
+                        //promise = promise.then(() => { return setUserDefinedData(data, dataName) })
+                        Vue.set(vueapp, dataName, data[dataName]);
                     }
                 }
+                let selectedSkills = vueapp.setting.skillSelectSet.selectedSkills;
+                for (let k in selectedSkills) {
+                    selectedSkills[k] = selectedSkills[k].filter(a => a);
+                }
             }
-        }catch(e){
+        } catch (e) {
             console.error(e);
         }
     }
