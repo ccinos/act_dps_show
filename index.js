@@ -260,7 +260,7 @@ var vueapp = new Vue({
             try {
                 var sortColumn = this.orderBy.sortColumn;
                 var orderAsc = this.orderBy.orderAsc;
-                return Math.round((parseFloat(c[sortColumn]) / parseFloat(this.combatant_max[sortColumn])) * 10000) / 100;
+                return Math.round((parseNumber(c[sortColumn]) / parseNumber(this.combatant_max[sortColumn])) * 10000) / 100;
 
             } catch (e) {
                 return 0;
@@ -320,8 +320,15 @@ var vueapp = new Vue({
     filters: {
         round: function (val) {
             try {
-                return Math.round(val);
-            } catch (e) { }
+                let v=parseFloat(val);
+                if(typeof(val)==="string"){
+                    let r=val.substring(val.length-1);
+                    if(isNaN(+r)){
+                        return Math.round(v)+r;
+                    }
+                }
+                return Math.round(v);
+            } catch (e) { console.error(e)}
             return val;
         }
     }
@@ -329,13 +336,25 @@ var vueapp = new Vue({
 function openWindow(url, name, iWidth, iHeight) {
     return window.open(url, name, 'height=' + iHeight + ',innerHeight=' + iHeight + ',width=' + iWidth + ',innerWidth=' + iWidth + ',toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no');
 }
+function parseNumber(v){
+    let n = parseFloat(v);
+    if(typeof(v)==="string"){
+        let r=v.substring(v.length-1).toUpperCase();
+        switch(r){
+            case "K": n*=1000;break;
+            case "M": n*=1000000;break;
+            case "G": n*=1000000000;break;
+        }
+    }
+    return n;
+}
 function SortCombatants(combatants) {
     if (vueapp.orderBy) {
         var sortColumn = vueapp.orderBy.sortColumn;
         var orderAsc = vueapp.orderBy.orderAsc;
         combatants.sort(function (a, b) {
-            var val_a = parseFloat(a[sortColumn]);
-            var val_b = parseFloat(b[sortColumn]);
+            var val_a = parseNumber(a[sortColumn]);
+            var val_b = parseNumber(b[sortColumn]);
             if (isNaN(val_a) || isNaN(val_b)) {
                 val_a = a[sortColumn];
                 val_b = b[sortColumn];
