@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test</title>
+    <script>
+        // 一些辅助方法放这里
+        function getStyleValue(v){
+            if(v){
+                v=v.trim()
+                let r=/(-?\d+)/.test(v);
+                if(r){
+                    return { value: v.match(/(-?[\d.]+)/g).map(v=>+v), pattern: v.replace(/(-?[\d.]+)/g,'${value}')}
+                }
+            }
+        }
+        function ilerp(a, b, t){
+            return (t-a)/(b-a);
+        }
+        function lerp(a, b, t){
+            return a+(b-a)*t;
+        }
+        function styleLerp(a, b, t){ //简单对一个带单位的数据进行lerp操作
+            let aa=getStyleValue(a);
+            let bb=getStyleValue(b);
+            if(aa==null||bb==null) {
+                console.warn('lerp参数不正确',a,b);
+                return a;
+            }
+            if(aa.pattern!==bb.pattern){
+                console.warn('lerp参数格式不相同',a,b);
+                return a;
+            }
+            let val=[];
+            for(let i=0;i<aa.value.length;++i){
+                val[i]=Math.round(lerp(aa.value[i], bb.value[i], t)*100)/100;
+            }
+            let i=0;
+            return aa.pattern.replace(/\${value}/g, e=>val[i++]);
+        }
+        function defaultEase(k){
+            return (k *= 2) < 1 ? 0.5 * k * k : -0.5 * (--k * (k - 2) - 1)
+        }
+    </script>
+    <style>
+        body{
+            background-color:black;
+            margin:0;
+            padding:0;
+            color:white;
+            overflow:hidden;
+        }
+        #container{
+            width:800px;
+            height:800px;
+            position:absolute;
+        }
+        .box{
+            border-radius: 20%;
+            width:100px;
+            height:100px;
+            background-color:white;
+            position:absolute;
+            transition: all 0.5s;
+        }
+        .card{
+            position:absolute;
+            transition: all 0.5s;
+        }
+        .icon{
+            position:absolute;
+            transition: all 0.5s;
+            border-radius: 20%;
+            width:100px;
+            height:100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+
+        <!-- 扩大盒子 -->
+        <div class="box" id="box1"></div>
+        <div class="box" id="box2"></div>
+        <div class="box" id="box3"></div>
+        <div class="box" id="box4"></div>
+
+        <!-- 扩大logo -->
+        <div class="box" id="logo1">
+            <div style="font-size: 20pt;
+            white-space: nowrap;
+            width: 300px;
+            display: block;
+            position: absolute;
+            left: -100px;
+            bottom: -50%;
+            text-align: center;">让进步发生</div>
+        </div>
+
+        <!-- 一堆图标 -->
+        <div id="others1" class="card" style="width: 700px;height:600px;left:50px;">
+            <div style="text-align:center;font-size:24pt;margin-top:80px;">企业数字化一个XX就解决</div>
+            <div id="iconContainer1" style="height:60%;margin-top:100px;position: relative;">
+                
+            </div>
+        </div>
+
+        <div id="icon1" class="icon"></div>
+        <div id="icon2" class="icon"></div>
+        <div id="icon3" class="icon"></div>
+        <div id="icon4" class="icon"></div>
+        <div id="icon5" class="icon"></div>
+        <div id="icon6" class="icon"></div>
+        <div id="icon7" class="icon"></div>
+        <div id="icon8" class="icon"></div>
+        
+
+    </div>
+    <script>
+        // 动画配置列表
+        const animeList=[
+            {
+                id:'box1', 
+                start:0, end:800,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(1)', top: '100px', left:'100px', 'background-color':'rgba(128,0,128,1)' },
+                        endStyle:{ transform: 'scale(2)', top: '0px', left:'-300px' },
+                    },
+                    {
+                        start: 0.4,  end: 1,
+                        startStyle:{  'background-color':'rgba(128,0,128,1)' }, 
+                        endStyle:{  'background-color':'rgba(128,0,128,0.1)' },
+                    }
+                ],
+                ease: defaultEase
+            },
+            {
+                id:'box2', 
+                start:0, end:1600,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0.1)', top: '200px', left:'200px', 'background-color':'rgba(128,128,0,1)' },
+                        endStyle:{ transform: 'scale(1.2)', top: '170px', left:'10px' },
+                    },
+                    {
+                        start: 0.4,  end: 1,
+                        startStyle:{  'background-color':'rgba(128,128,0,1)' }, 
+                        endStyle:{  'background-color':'rgba(128,128,0,0.1)' },
+                    }
+                ],
+            },
+            {
+                id:'box3', 
+                start:0, end:1600,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0.5)', top: '200px', left:'500px', 'background-color':'rgba(255,128,0,1)' },
+                        endStyle:{ transform: 'scale(1.4)', top: '10px', left:'700px' },
+                    },
+                    {
+                        start: 0.4,  end: 1,
+                        startStyle:{  'background-color':'rgba(255,128,0,1)' }, 
+                        endStyle:{  'background-color':'rgba(255,128,0,0.1)' },
+                    }
+                ],
+            },
+            {
+                id:'box4', 
+                start:0, end:1600,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0.3)', top: '400px', left:'200px', 'background-color':'rgba(0,128,255,1)' },
+                        endStyle:{ transform: 'scale(1)', top: '600px', left:'-100px' },
+                    },
+                    {
+                        start: 0.4,  end: 1,
+                        startStyle:{  'background-color':'rgba(0,128,255,1)' }, 
+                        endStyle:{  'background-color':'rgba(0,255,255,0.1)' },
+                    }
+                ],
+            },
+            {
+                id:'logo1', 
+                start:300, end:1440,
+                frames:[
+                    {
+                        start: 0,  end: 0.7,
+                        startStyle:{ transform: 'scale(0.3)', top: '600px', left:'400px', 'background-color':'rgba(0,128,255,1)' },
+                        endStyle:{ transform: 'scale(5)', top: '100px', left:'400px' },
+                    },
+                    {
+                        start: 0.5,  end: 1,
+                        startStyle:{ top: '100px', left:'400px', 'background-color':'rgba(0,128,255,1)'  },
+                        endStyle:{ top: '-500px', left:'400px', 'background-color':'rgba(0,128,255,0)' },
+                    },
+                ],
+            },
+            {
+                id:'others1', 
+                start:1200, end:2000,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0)', top: '400px', left:'10%' },
+                        endStyle:{ transform: 'scale(1)', top: '200px', left:'10%' },
+                    },
+                    {
+                        start: 0.8,  end: 1,
+                        startStyle:{ 'background-color':'rgba(255,255,255,0)' },
+                        endStyle:{ 'background-color':'rgba(255,255,255,0.1)'},
+                    },
+                ],
+            },
+            {
+                id:'icon1', 
+                start:1200, end:2000,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0.1)', top: '650px', left:'400px', 'background-color':'rgba(0,128,255,0.1)' },
+                        endStyle:{  transform: 'scale(1)',top: '500px', left:'100px','background-color':'rgba(0,128,255,1)' },
+                    },
+                ],
+            },
+            {
+                id:'icon2', 
+                start:1200, end:2000,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{   transform: 'scale(0.1)',top: '650px', left:'400px', 'background-color':'rgba(0,128,255,0.1)' },
+                        endStyle:{  transform: 'scale(1)', top: '650px', left:'100px','background-color':'rgba(0,128,255,1)' },
+                    },
+                ],
+            },
+            {
+                id:'icon3', 
+                start:1200, end:2000,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{ transform: 'scale(0.1)', top: '650px', left:'400px', 'background-color':'rgba(0,128,255,0.1)' },
+                        endStyle:{ transform: 'scale(1)',top: '500px', left:'250px','background-color':'rgba(0,128,255,1)' },
+                    },
+                ],
+            },
+            {
+                id:'icon4', 
+                start:1200, end:2000,
+                frames:[
+                    {
+                        start: 0,  end: 1,
+                        startStyle:{   transform: 'scale(0.1)',top: '650px', left:'400px', 'background-color':'rgba(0,128,255,0.1)' },
+                        endStyle:{  transform: 'scale(1)', top: '650px', left:'250px','background-color':'rgba(0,128,255,1)' },
+                    },
+                ],
+            }
+        ]; 
+
+        //======== 数据准备
+
+
+        animeList.forEach((a,i)=>{ 
+            a.i=i;
+            document.getElementById(a.id).style.display='none';
+        });
+
+        //======== 数据准备 END
+
+        let currentAnimeList=[];
+        let currentAnimeMap={};
+        // 滚动度
+        let scroll=0;
+        const maxScroll=animeList.reduce((s,e)=>Math.max(s,e.end),Number.NEGATIVE_INFINITY);
+
+        /**
+         * 计算滚动度动画列表
+         */
+        function compute(scroll){
+            let result=[];
+            //1.筛选动画添加状态
+            let nowList=animeList.filter(a=>scroll>=a.start&&scroll<=a.end);
+            let nowMap=nowList.reduce((s,a)=>(s[a.i]=a,s), {})
+            animeList.forEach(a=>{
+                let lastHas=currentAnimeMap[a.i]!=null;
+                let nowHas=nowMap[a.i]!=null;
+                if(lastHas && nowHas){
+                    result.push({anime: a, type:'update'})
+                }else if(lastHas){
+                    result.push({anime: a, type:'remove'})
+                }else if(nowHas){
+                    result.push({anime: a, type:'add'})
+                }
+            });
+            currentAnimeList=nowList;
+            currentAnimeMap=nowMap;
+            //2.计算动画状态
+            result.forEach(r=>{
+                if(r.type!=='remove'){
+                    r.now={}; //本次动画状态汇总
+                    let animeT=ilerp(r.anime.start, r.anime.end, scroll); //在当前动画的具体位置
+                    r.anime.frames.forEach((frame,j)=>{
+                        let k=ilerp(frame.start, frame.end, animeT); //在当前帧的具体位置
+                        console.log('frame:'+j, 'k:'+k)
+                        if(k>=0&&k<=1){
+                            if(frame.k==null){
+                                r.now=Object.assign({}, frame.startStyle, r.now);
+                            }else{
+                                r.now=Object.assign({}, r.now);
+                            }
+                            frame.k=k; //记录k，用于判断是否第一次进入
+                            r.now=Object.assign({}, r.now);
+                            if(frame.endStyle){
+                                let ease=frame.ease || defaultEase;
+                                let t=ease(k);
+                                if(t<0) t=0;
+                                if(t>1) t=1;
+                                for(let key in frame.endStyle){
+                                    let startValue=frame.startStyle[key];
+                                    let endValue=frame.endStyle[key];
+                                    let nowValue=styleLerp(startValue, endValue, t);
+                                    r.now[key]=nowValue;
+                                }
+                            }
+                        }
+                    });
+                    console.log(scroll, r.now);
+                }
+            });
+            return result;
+        }
+        /**
+         * 应用动画改变
+         */
+        function apply(scroll){
+            let rList=compute(scroll);
+            rList.forEach(r=>{
+                let dom=document.getElementById(r.anime.id);
+                if(r.type==='remove'){
+                    dom.style.display='none';
+                }else{
+                    dom.style.display=null;
+                    for(let key in r.now){
+                        dom.style[key]=r.now[key];
+                    }
+                }
+            })
+        }
+        apply(0);
+
+
+        window.addEventListener('mousewheel',e=>{
+            scroll+=e.deltaY;
+            if(scroll<0) scroll=0;
+            if(scroll>maxScroll) scroll=maxScroll;
+            apply(scroll)
+        })
+
+    </script>
+</body>
+</html>
