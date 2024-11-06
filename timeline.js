@@ -86,7 +86,7 @@ var skillNameIcon={
     "翅膀":"武装戍卫",
     "幕帘":"圣光幕帘",
     "血仇":"雪仇",
-
+    "雪仇(10)":"雪仇",
 }
 var autoSave=true; //自动保存，如果设置成false，则本次不会保存
 var svgContainer;
@@ -94,6 +94,12 @@ var vueapp = new Vue({
     el: "#container",
     data: {
         versions:[
+            {
+                ver:"0.35",
+                type:"update",
+                date:"2024.11.06 10:00",
+                info:"粗略更新一下各类技能，以及图标",
+            },
             {
                 ver:"0.34.51",
                 type:"update",

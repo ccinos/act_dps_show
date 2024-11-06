@@ -358,7 +358,7 @@
 
 
         window.addEventListener('mousewheel',e=>{
-            scroll+=e.deltaY;
+            scroll+=e.deltaY*1.5;
             if(scroll<0) scroll=0;
             if(scroll>maxScroll) scroll=maxScroll;
             apply(scroll)

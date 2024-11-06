@@ -2,7 +2,7 @@
 
 var jobType = {
     tank: ["War", "Mrd", "Drk", "Pld", "Gla", "Gnb"],
-    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm", "Blu", "Rpr"],
+    dps: ["Pgl", "Mnk", "Lnc", "Drg", "Rog", "Nin", "Sam", "Arc", "Brd", "Mch", "Dnc", "Thm", "Blm", "Acn", "Smn", "Rdm", "Blu", "Rpr","Vpr","Pct"],
     healer: ["Whm", "Cnj", "Ast", "Sch", "Sge"],
 };
 var jobNameCnToType={
@@ -25,7 +25,9 @@ var jobNameCnToType={
     "武士":"Sam",
     "舞者":"Dnc",
     "绝枪战士":"Gnb",
-    "青魔法师":"Blu"
+    "青魔法师":"Blu",
+    "蝰蛇剑士":"Vpr",
+    "绘灵法师":"Pct"
 }
 var jobSort = [].concat(jobType.tank, jobType.healer, jobType.dps);
 for (var i in jobType) {
@@ -58,6 +60,7 @@ var defaultOption = {
         Dnc: "#E2B0AF", Rdm: "#e87b7b", Gnb: "#796D30", Pld: "#A8D2E6",
         War: "#cf2621", Drk: "#D126CC", Whm: "#FFF0DC", Sch: "#8657FF",
         Ast: "#FFE74A", Blu: "#57ABAB", Rpr: "#965A90", Sge: "#80A0F0",
+        Pct: "#875488", Vpr: "#0e750e",
     },
     colors: {
         tank: "#8080ff",
