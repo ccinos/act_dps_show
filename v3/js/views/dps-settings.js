@@ -1,0 +1,342 @@
+'use strict';
+
+var DpsSettings = {
+  template: `
+    <div id="container">
+      <div class="item">
+        <div class="label">字体大小</div>
+        <div class="value"><input type="number" max="100" min="9" v-model="option.fontSize"/> px</div>
+        <div class="label" style="width:150px;margin-left:30px;">隐藏其他玩家ID</div>
+        <div class="value"><input type="checkbox" v-model="option.hiddenOthers"/></div>
+        <div class="label" style="margin-left:30px;">关闭动画</div>
+        <div class="value"><input type="checkbox" v-model="option.animationOff"/></div>
+        <div class="label" style="margin-left:30px;" title="理论上与队伍列表顺序相同（职业相同时有时会产生顺序错误）">按职业排序</div>
+        <div class="value"><input type="checkbox" v-model="option.orderByJob"/></div>
+        <br>
+        <div class="label">字体样式</div>
+        <div class="value">
+          全部<input type="font" v-model="option.fontFamily.all"/> &nbsp;
+          名字<input type="font" v-model="option.fontFamily.name"/> &nbsp;
+          数据<input type="font" v-model="option.fontFamily.data"/>
+        </div>
+        <br>
+        <div class="label">&nbsp;</div>
+        <div class="value" style="width:800px;">
+          <small>多个字体用英文逗号分隔，带空格的字体需要用双引号括起来。前面的字体会先生效，前面字体中没有的字再从后面的字体生效。
+          例如："只支持数字的字体,只支持英文的字体,支持中文的字体" 就可以让数字、英文、中文显示不同的字体。
+          留空则为默认。</small>
+        </div>
+      </div>
+      <hr>
+      <div class="item">
+        <div class="label">显示标题</div>
+        <div class="value"><input type="checkbox" v-model="option.showColumnHeader"/></div>
+        <div class="label" style="width:150px;margin-left:50px;">背景透明度</div>
+        <div class="value"><input type="range" max="100" min="0" v-model.number="backgroundAlpha"/>{{backgroundAlpha}}</div>
+        <div class="label" style="margin-left:50px;">名字列宽度</div>
+        <div class="value"><input type="range" max="95" min="0" v-model.number="option.nameColumnWidth"/>{{option.nameColumnWidth}}</div>
+      </div>
+      <hr>
+      <div class="item">
+        <div class="label" title="按职业颜色进行显示，取消后是职能颜色">职业颜色</div>
+        <div class="value"><input type="checkbox" v-model="option.useJobColor"/></div>
+        <div class="label" style="width:150px;margin-left:50px;">数据条透明度</div>
+        <div class="value"><input type="range" max="100" min="0" v-model.number="option.backgroundAlpha"/>{{option.backgroundAlpha}}</div>
+        <div class="label" style="margin-left:50px;">数据条样式</div>
+        <div class="value">
+          <select v-model="option.dataBarStyle">
+            <option value="fill">填充</option>
+            <option value="line">线形</option>
+          </select>
+          <template v-if="option.dataBarStyle=='line'">
+            <input type="number" v-model="option.dataBarHeight" min="1" style="width:30px"/>px
+          </template>
+        </div>
+      </div>
+      <hr>
+      <div class="item">
+        <div class="label" title="可以关闭这个选项让极限技不显示在数据中" style="width:150px;">显示Limit Break</div>
+        <div class="value"><input type="checkbox" v-model="option.showLimitBreak"/></div>
+      </div>
+      <hr>
+      <div class="item">
+        <div class="label">系列</div>
+        <div class="value">
+          <button @click="addSeries">增加系列</button>
+          <button @click="revertModify('series')">撤销修改</button>
+          <div class="value" style="margin-left:20px;">
+            <input id="delete-confirm" type="checkbox" v-model="deleteConfirm"/>
+            <label for="delete-confirm">删除确认</label>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="padding-left:100px;">
+        <table v-for="(series, i) in option.series" style="width:100%;">
+          <caption style="color:gray;text-align: left;">
+            系列名: <input v-model="series.name"/>
+            &nbsp;
+            标题 <select v-model="series.showColumnHeader">
+              <option v-for="o in showColumnHeaderOption" :value="o[0]">{{o[1]}}</option>
+            </select>
+            <button @click="addRow(series)">新行</button>
+            <button @click="deleteSeries(i)">删除</button>
+            <button @click="copySeries(i)">复制</button>
+            <span style="cursor: pointer; user-select: none;" @click="seriesToIndex(i,i-1)">⇧</span>
+            <span style="cursor: pointer; user-select: none;" @click="seriesToIndex(i,i+1)">⇩</span>
+          </caption>
+          <tr>
+            <th>列名</th><th>属性</th><th style="width:50px;">取整</th>
+            <th><span style="cursor:pointer" @click="clearAllColumnSize(series)">宽度</span></th>
+            <th>前缀</th><th>后缀</th><th>对齐</th>
+            <th style="cursor:pointer; color:#0062f5;" @click="series.orderAsc=!series.orderAsc">
+              排序<template v-if="series.orderAsc">▲</template><template v-else>▼</template>
+            </th>
+            <th>操作</th>
+          </tr>
+          <tr>
+            <td colspan="3" style="text-align: right;">该系列名字列宽度</td>
+            <td title="该值会覆盖整体名字列宽度设置，留空则保留默认"><input type="number" max="100" min="0" v-model.number="series.nameColumnWidth"/></td>
+            <td colspan="5"></td>
+          </tr>
+          <tr v-for="(column, ci) in series.columns">
+            <td width="50px"><input type="text" v-model="column.name"/></td>
+            <td width="150px"><select v-model="column.value"><option v-for="vd in valueDict" :value="vd[0]">{{vd[1]}}</option></select></td>
+            <td><input type="checkbox" v-model="column.round"/></td>
+            <td><input type="number" max="100" min="0" v-model.number="column.size"/></td>
+            <td><input type="text" v-model="column.prefix"/></td>
+            <td><input type="text" v-model="column.suffix"/></td>
+            <td><select v-model="column.textAlign"><option value="left">居左</option><option value="center">居中</option><option value="right">居右</option></select></td>
+            <td><input type="radio" :name="series.name" :value="ci" v-model="series.orderBy" @contextmenu.prevent="radioRightClick(series, ci)"/></td>
+            <td>
+              <button @click="deleteRow(series, ci)">删除</button>
+              <span style="cursor: pointer; user-select: none;" @click="columnToIndex(series, ci, ci-1)">⇧</span>
+              <span style="cursor: pointer; user-select: none;" @click="columnToIndex(series, ci, ci+1)">⇩</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="item">
+        <hr>
+        <div class="label"></div>
+        <div class="value">
+          <button @click="save">保存</button>
+          <button @click="revert">重置</button>
+          <span style="margin:20px;"></span>
+          <button @click="showImportOption">配置信息</button>
+          <button @click="revertDefault">重置默认</button>
+          <a href="javascript:;">使用反馈QQ群号：552084996</a>
+        </div>
+      </div>
+      <div class="option-pad-mask" v-if="showOptionPad"></div>
+      <div class="option-pad" v-if="showOptionPad">
+        <span class="option-pad-close" @click="showOptionPad=false"></span>
+        <textarea id="option_pad_textarea" v-model="optionStr" style="width:100%;height:calc(100% - 30px);resize:none"></textarea>
+        <button @click="replaceOption" title="完全将配置替换为当前输入内容">覆盖配置</button>
+        <button @click="importOption" title="将当前输入内容更新到当前配置中">导入配置</button>
+        <span style="margin:20px;"></span>
+        <button @click="selectAll">全选</button>
+        <button @click="showOptionPad=false">关闭</button>
+      </div>
+      <hr>
+      招待码【056x-ierk-k5xy-01hs】，登陆页面<a target="_blank" href='http://ff.sdo.com/entertain'>ff.sdo.com/entertain</a>，点击【被招待者】，在页面上输入招待码，马上结成招待关系！
+    </div>
+  `,
+  setup() {
+    const { ref, reactive, nextTick } = Vue;
+
+    function copy(o) { return JSON.parse(JSON.stringify(o)); }
+
+    var savedOption = localStorage.getItem("CCINO_DPS_OPTION");
+    savedOption = savedOption ? JSON.parse(savedOption) : null;
+
+    var defaultOption = {
+      fontSize: 13,
+      showColumnHeader: false,
+      nameColumnWidth: 30,
+      backgroundAlpha: 30,
+      useJobColor: false,
+      orderByJob: false,
+      supportLogsInfo: false,
+      logsInfoShownDuration: 10,
+      logsInfoEncounterNameWidth: 30,
+      logsInfoShowDetail: true,
+      dataBarStyle: "fill",
+      dataBarHeight: 2,
+      jobColor: {
+        Blm: "#A579D6", Mnk: "#d69c00", Sam: "#e46d04", Mch: "#6EE1D6",
+        Nin: "#AF1964", Drg: "#4164CD", Smn: "#2D9B78", Brd: "#91BA5E",
+        Dnc: "#E2B0AF", Rdm: "#e87b7b", Gnb: "#796D30", Pld: "#A8D2E6",
+        War: "#cf2621", Drk: "#D126CC", Whm: "#FFF0DC", Sch: "#8657FF",
+        Ast: "#FFE74A"
+      },
+      colors: { tank: "#8080ff", dps: "#ff8080", healer: "#80ff80", background: "rgba(0,0,0,0.2)" },
+      series: [
+        {
+          name: "伤害",
+          columns: [
+            { name: "DPS", value: "dps", round: true, size: 20 },
+            { name: "直击", value: "DirectHitPct", prefix: "直", size: 15 },
+            { name: "暴击", value: "crithit%", prefix: "暴", size: 15 },
+            { name: "倒地", value: "deaths", suffix: "死", textAlign: "center" }
+          ],
+          orderBy: 0, orderAsc: false
+        },
+        {
+          name: "奶量",
+          columns: [
+            { name: "HPS", value: "enchps", round: true, size: 20 },
+            { name: "过量", value: "OverHealPct", prefix: "过", size: 15 },
+            { name: "承伤", value: "damagetaken-*", prefix: "承", size: 15 },
+            { name: "倒地", value: "deaths", suffix: "死", textAlign: "center" }
+          ],
+          orderBy: 0, orderAsc: false
+        }
+      ]
+    };
+
+    var initOption = savedOption ? mergeObj(copy(defaultOption), savedOption) : copy(defaultOption);
+    var originalOption = copy(initOption);
+
+    const option = reactive(initOption);
+    const deleteConfirm = ref(true);
+    const showOptionPad = ref(false);
+    const optionStr = ref("");
+
+    var backgroundAlphaVal = 30;
+    if (initOption.colors && initOption.colors.background) {
+      var match = /\s*rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*((.|\d)+)\s*\)/.exec(initOption.colors.background);
+      if (match) backgroundAlphaVal = Math.round(Number(match[4]) * 100);
+    }
+    const backgroundAlpha = ref(backgroundAlphaVal);
+
+    const showColumnHeaderOption = [[undefined, "默认"], [true, "显示"], [false, "隐藏"]];
+    const valueDict = [
+      ["duration", "战斗时间"], ["dps", "DPS(数值)"], ["dps-*", "DPS(格式化)"],
+      ["Last10DPS", "10秒dps"], ["Last30DPS", "30秒dps"], ["Last60DPS", "60秒dps"],
+      ["damage%", "伤比"], ["damage-*", "伤害量"], ["maxhit", "最大技能伤害值"],
+      ["maxhit-*", "最大技能伤害值(格式化)"], ["crithit%", "暴击率"], ["crithit", "暴击次数"],
+      ["CritDirectHitCount", "直+暴次数"], ["CritDirectHitPct", "直+暴几率"],
+      ["DirectHitCount", "直击次数"], ["DirectHitPct", "直击几率"],
+      ["enchps-*", "秒疗(格式化)"], ["enchps", "秒疗(数值)"], ["healed", "疗量"],
+      ["healed%", "疗比"], ["OverHealPct", "过量"], ["critheal%", "治疗暴击率"],
+      ["critheal", "治疗暴击次数"], ["maxheal", "最大治疗量"],
+      ["maxheal-*", "最大治疗量(格式化)"], ["BlockPct", "格挡几率"],
+      ["healstaken-*", "受治疗量"], ["damagetaken-*", "承伤"], ["deaths", "死亡次数"]
+    ];
+
+    function clearAllColumnSize(series) {
+      for (var i in series.columns) { series.columns[i].size = null; }
+    }
+
+    function radioRightClick(series, i) {
+      series.orderBy = series.orderBy === i ? null : i;
+    }
+
+    function seriesToIndex(oldIndex, newIndex) {
+      if (newIndex >= option.series.length) newIndex = option.series.length - 1;
+      if (newIndex < 0) newIndex = 0;
+      if (oldIndex === newIndex) return;
+      var s = option.series[oldIndex];
+      option.series.splice(oldIndex, 1);
+      option.series.splice(newIndex, 0, s);
+    }
+
+    function columnToIndex(series, oldIndex, newIndex) {
+      if (newIndex >= series.columns.length) newIndex = series.columns.length - 1;
+      if (newIndex < 0) newIndex = 0;
+      if (oldIndex === newIndex) return;
+      var c = series.columns[oldIndex];
+      series.columns.splice(oldIndex, 1);
+      series.columns.splice(newIndex, 0, c);
+    }
+
+    function revertDefault() {
+      var d = copy(defaultOption);
+      Object.keys(option).forEach(function(k) { delete option[k]; });
+      Object.keys(d).forEach(function(k) { option[k] = d[k]; });
+      backgroundAlpha.value = 30;
+    }
+
+    function selectAll() {
+      var dom = document.getElementById("option_pad_textarea");
+      if (dom) { dom.focus(); dom.select(); dom.scrollTo(0, 0); }
+    }
+
+    function showImportOptionFn() {
+      optionStr.value = JSON.stringify(option, null, 2);
+      showOptionPad.value = true;
+      nextTick(function() { selectAll(); });
+    }
+
+    function replaceOption() {
+      if (confirm("是否确认进行导入?\n导入后会完全替换为现有配置")) {
+        try {
+          var newOpt = JSON.parse(optionStr.value);
+          Object.keys(option).forEach(function(k) { delete option[k]; });
+          Object.keys(newOpt).forEach(function(k) { option[k] = newOpt[k]; });
+          alert("导入成功");
+        } catch(e) { console.error(e); alert("该数据存在异常无法导入:\n" + (typeof e === "string" ? e : "")); }
+      }
+    }
+
+    function importOption() {
+      if (confirm("是否确认进行导入?\n会将内容属性更新到现有配置中")) {
+        try {
+          var newOpt = JSON.parse(optionStr.value);
+          var merged = mergeObj(copy(option), newOpt);
+          Object.keys(merged).forEach(function(k) { option[k] = merged[k]; });
+          alert("导入成功");
+        } catch(e) { console.error(e); alert("该数据存在异常无法导入:\n" + (typeof e === "string" ? e : "")); }
+      }
+    }
+
+    function save() {
+      var toSave = copy(option);
+      if (!toSave.colors) toSave.colors = {};
+      toSave.colors.background = "rgba(0,0,0," + (backgroundAlpha.value / 100) + ")";
+      toSave._knownSetting = true;
+      localStorage.setItem("CCINO_DPS_OPTION", JSON.stringify(toSave));
+      originalOption = copy(option);
+    }
+
+    function revert() {
+      var saved = localStorage.getItem("CCINO_DPS_OPTION");
+      if (saved) {
+        var o = JSON.parse(saved);
+        Object.keys(option).forEach(function(k) { delete option[k]; });
+        Object.keys(o).forEach(function(k) { option[k] = o[k]; });
+      }
+    }
+
+    function revertModify(prop) {
+      var o = copy(originalOption[prop]);
+      option[prop] = o;
+    }
+
+    function deleteRow(series, i) {
+      if (!deleteConfirm.value || confirm("是否确认删除该行?")) {
+        series.columns.splice(i, 1);
+      }
+    }
+
+    function addRow(series) { series.columns.push({}); }
+    function addSeries() {
+      option.series.push({ name: "系列" + (option.series.length + 1), columns: [], orderBy: 0 });
+    }
+    function copySeries(i) { option.series.splice(i, 0, copy(option.series[i])); }
+    function deleteSeries(i) {
+      if (!deleteConfirm.value || confirm("是否确认删除该系列?")) {
+        option.series.splice(i, 1);
+      }
+    }
+
+    return {
+      option, deleteConfirm, showOptionPad, optionStr, backgroundAlpha,
+      showColumnHeaderOption, valueDict,
+      save, revert, revertModify, revertDefault,
+      showImportOption: showImportOptionFn, replaceOption, importOption, selectAll,
+      clearAllColumnSize, radioRightClick, seriesToIndex, columnToIndex,
+      deleteRow, addRow, addSeries, copySeries, deleteSeries
+    };
+  }
+};
