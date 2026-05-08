@@ -3,11 +3,40 @@
 
 for ff14 
 dps美化模板，时不时的会更新。
+
+---
+
+## 🆕 新版本
+
+v3 是基于 **Vue 3 + Vue Router 4** 完全重写的新版本，相比旧版提供了更丰富的功能和更好的性能。
+
+### 核心特性
+
+- **DPS 实时统计** — 支持多数据系列切换（伤害/奶量等），自定义配色和列显隐
+- **技能时间轴分析** — 可视化展示技能施放序列，支持对齐、筛选、拖拽排序
+- **日志导入解析** — 支持从 ffxivlogs 在线日志和 ACT 本地 .log 文件导入数据
+- **职业技能数据库** — 内置 20 个职业的官方技能数据，支持自定义技能
+- **多语言支持** — 技能名称支持中/英/日/德/法五种语言
+- **弹窗分离** — 设置页可独立弹窗显示，不影响主悬浮窗
+
+### 使用方式
+
+ACT 悬浮窗模板路径填写：
+```
+https://ccinos.github.io/act_dps_show/v3/
+```
+
+### 目录结构
+
+详见 [v3/README.md](v3/README.md)
+
+---
+
 使用方式：
  1. 打开ACT->插件->伤害统计美化
- 2. 美化模板路径里填写 https://ccinos.gitee.io/act_dps_show/
+ 2. 美化模板路径里填写 https://ccinos.github.io/act_dps_show/
  3. 点击重新加载
-![使用方式](https://ccinos.gitee.io/act_dps_show/readme/settoact.png)
+![使用方式](https://ccinos.github.io/act_dps_show/readme/settoact.png)
 
 目前功能：
  1. 点击圆点可以最小化，只保留标题行
@@ -15,22 +44,22 @@ dps美化模板，时不时的会更新。
  3. 标题行显示的内容是：  #自己dps排名 自己dps/全队dps
 
 默认样式:  
-![默认样式](https://ccinos.gitee.io/act_dps_show/readme/default.png)
+![默认样式](https://ccinos.github.io/act_dps_show/readme/default.png)
  
 最小化:  
-![最小化](https://ccinos.gitee.io/act_dps_show/readme/minitype.png)
+![最小化](https://ccinos.github.io/act_dps_show/readme/minitype.png)
 
 按职业排序:  
-![按职业排序](https://ccinos.gitee.io/act_dps_show/readme/sortbyjob.png)
+![按职业排序](https://ccinos.github.io/act_dps_show/readme/sortbyjob.png)
 
 使用职业颜色代替职能颜色:  
-![使用职业颜色代替职能颜色](https://ccinos.gitee.io/act_dps_show/readme/colorbyjob.png)
+![使用职业颜色代替职能颜色](https://ccinos.github.io/act_dps_show/readme/colorbyjob.png)
 
 动画效果:  
-![动画效果](https://ccinos.gitee.io/act_dps_show/readme/animate.gif)
+![动画效果](https://ccinos.github.io/act_dps_show/readme/animate.gif)
 
 自定义显示内容设置:  
-![自定义显示内容设置](https://ccinos.gitee.io/act_dps_show/readme/setting.png)
+![自定义显示内容设置](https://ccinos.github.io/act_dps_show/readme/setting.png)
 
 ---
 
@@ -39,11 +68,11 @@ dps美化模板，时不时的会更新。
 
 ## 导入配置方法
 
-![导入](https://ccinos.gitee.io/act_dps_show/readme/optionimport.png)
-![导入](https://ccinos.gitee.io/act_dps_show/readme/importpage.png)
+![导入](https://ccinos.github.io/act_dps_show/readme/optionimport.png)
+![导入](https://ccinos.github.io/act_dps_show/readme/importpage.png)
 
 ### 极简配置
-![极简配置](https://ccinos.gitee.io/act_dps_show/readme/sortbyjob.png)
+![极简配置](https://ccinos.github.io/act_dps_show/readme/sortbyjob.png)
 ```json
 {"nameColumnWidth":20,"series":[{"name":"伤害","showColumnHeader":true,"columns":[
 {"name":"DPS","value":"dps","round":true,"size":"25","textAlign":"center"},
@@ -53,7 +82,7 @@ dps美化模板，时不时的会更新。
 ```
 ---
 ### 综合显示
-![默认样式](https://ccinos.gitee.io/act_dps_show/readme/default.png)
+![默认样式](https://ccinos.github.io/act_dps_show/readme/default.png)
 ```json
 {"nameColumnWidth":30,"series":[{"name":"综合","columns":
 [{"value":"dps","name":"DPS","round":true,"size":"15","textAlign":"center"},
@@ -158,5 +187,5 @@ dps美化模板，时不时的会更新。
 ```
 
 # timeline 时间轴
-通过 https://ccinos.github.io/act_dps_show/timeline.html 访问
+通过 https://ccinos.github.io/act_dps_show/v3/index.html#/timeline 访问
 有疑问加群 752190267
