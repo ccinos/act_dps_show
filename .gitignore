@@ -1,1 +1,3 @@
 .claude/
+__pycache__/
+v3/shared/backups/

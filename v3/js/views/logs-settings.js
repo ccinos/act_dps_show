@@ -2,7 +2,7 @@
 
 var LogsSettings = {
   template: `
-    <div id="container">
+    <div id="container" v-cloak>
       <div class="item">
         <div class="label">apiKey</div>
         <div class="value"><input type="text" v-model="option.apiKey"/></div>
@@ -61,7 +61,7 @@ var LogsSettings = {
         </div>
       </div>
       <div class="option-pad-mask" v-if="showOptionPad"></div>
-      <div class="option-pad" v-if="showOptionPad">
+      <div class="option-pad" v-if="showOptionPad" v-cloak>
         <span class="option-pad-close" @click="showOptionPad=false"></span>
         <textarea id="option_pad_textarea" v-model="optionStr" style="width:100%;height:calc(100% - 30px);resize:none"></textarea>
         <button @click="replaceOption" title="完全将配置替换为当前输入内容">覆盖配置</button>
