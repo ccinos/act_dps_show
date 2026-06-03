@@ -71,13 +71,13 @@
             <span>事件过滤(正则)</span><input class="form-control" v-model="setting.importLogEventFilterRegex" placeholder="攻击"/>
           </div>
           <ul class="list-group" style="max-height:300px;overflow:auto;margin-top:10px">
-            <a v-for="fight in temp.importLogsSet.report.fights.fights" class="list-group-item"
+            <template v-for="fight in temp.importLogsSet.report.fights.fights">
+            <a v-if="!(temp.importLogsSet.report.downloading&&temp.importLogsSet.report.downloaded)||temp.importLogsSet.report.selectedFight==fight" class="list-group-item"
               :class="{'list-group-item-success':fight.kill,'list-group-item-danger':!fight.kill,active:fight==temp.importLogsSet.report.selectedFight}"
-              v-if="!(temp.importLogsSet.report.downloading&&temp.importLogsSet.report.downloaded)||temp.importLogsSet.report.selectedFight==fight"
               href="javascript:;" @click="temp.importLogsSet.report.selectedFight=fight">
               {{fight.zoneName}} - {{timeFormat(fight.end_time-fight.start_time,'mm.ss')}}
               <span style="float:right">{{timeFormat(temp.importLogsSet.report.fights.start+fight.start_time+28800000,'hh:mm:ss')}}</span>
-            </a>
+            </a></template>
           </ul>
           <div v-if="temp.importLogsSet.report.downloading">
             技能数据<div v-if="temp.importLogsSet.import.job||temp.importLogsSet.import.gcd"><div class="progress" style="margin-top:10px;"><div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width:2em;" :style="{width:temp.importLogsSet.progress.casts+'%'}">{{temp.importLogsSet.progress.casts}}%</div></div></div>
@@ -86,20 +86,20 @@
           <div v-if="temp.importLogsSet.report.downloaded"><ul>
             <li class="list-group-item"><span class="value-name">事件来源</span><template v-if="temp.importLogsSet.import.event">
               <select class="form-control form-auto" style="width:20em;" multiple v-model="temp.importLogsSet.importSource.event">
-                <option v-for="player in temp.importLogsSet.report.boss" v-if="player" :value="player.id">{{player.name}} - BOSS</option>
-                <option v-for="player in temp.importLogsSet.report.npc" v-if="player" :value="player.id">{{player.name}} - NPC</option>
+                <template v-for="player in temp.importLogsSet.report.boss"><option v-if="player" :value="player.id">{{player.name}} - BOSS</option></template>
+                <template v-for="player in temp.importLogsSet.report.npc"><option v-if="player" :value="player.id">{{player.name}} - NPC</option></template>
               </select>按住ctrl多选<hr style="margin-left:120px">
               <div style="margin-left:120px"><span v-for="id in temp.importLogsSet.importSource.event" style="margin-right:10px;">{{temp.importLogsSet.report.targets[id].name}}</span></div>
             </template></li>
             <li class="list-group-item"><span class="value-name">能力技</span><template v-if="temp.importLogsSet.import.job">
               <div v-for="skill in skills"><span class="value-name">{{skill.name}}</span>
                 <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.job[skill.name]">
-                  <option v-for="player in temp.importLogsSet.report.players" v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]||[]).length}})</option>
+                  <template v-for="player in temp.importLogsSet.report.players"><option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]||[]).length}})</option></template>
                 </select></div></template></li>
             <li class="list-group-item"><span class="value-name">GCD技</span><template v-if="temp.importLogsSet.import.gcd">
               <div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span>
                 <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.gcd[skill.name]">
-                  <option v-for="player in temp.importLogsSet.report.players" v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]||[]).length}})</option>
+                  <template v-for="player in temp.importLogsSet.report.players"><option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]||[]).length}})</option></template>
                 </select></div></template></li>
           </ul></div>
         </div></div></div>
@@ -134,9 +134,9 @@
               <li class="list-group-item"><span class="value-name">事件来源<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.event"></ccino-switch></span>
                 <template v-if="temp.importDataTypes.event"><select class="form-control form-auto" style="width:20em;min-height:10em;" multiple v-model="temp.parseDataEventSource"><option v-for="(count,name) in temp.parseDatas.allPlayers" :value="name">{{name}}({{count}})</option></select><hr style="margin-left:120px"><div style="margin-left:120px"><span v-for="es in temp.parseDataEventSource" style="margin-right:10px;">{{es}}</span></div></template></li>
               <li class="list-group-item"><span class="value-name">能力技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.job"></ccino-switch></span>
-                <template v-if="temp.importDataTypes.job"><div v-for="skill in skills"><span class="value-name">{{skill.fullname||skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]"><option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})</option></select></div></template></li>
+                <template v-if="temp.importDataTypes.job"><div v-for="skill in skills"><span class="value-name">{{skill.fullname||skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players"><option v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})</option></template></select></div></template></li>
               <li class="list-group-item"><span class="value-name">GCD技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.gcd"></ccino-switch></span>
-                <template v-if="temp.importDataTypes.gcd"><div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]"><option v-for="name in temp.parseDatas.players" v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})</option></select></div></template></li>
+                <template v-if="temp.importDataTypes.gcd"><div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players"><option v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})</option></template></select></div></template></li>
             </ul>
           </div>
         </div></div>
@@ -290,7 +290,7 @@
   <script src="./js/views/dps-overlay.js"></script>
   <script src="./js/views/dps-settings.js"></script>
   <script src="./js/views/simple-dps.js"></script>
-  <script src="./js/views/timeline.js"></script>
+  <script src="./js/views/timeline.js?v3.001"></script>
   <script src="./js/views/simple-timeline.js"></script>
   <script src="./js/views/log-tool.js"></script>
   <script src="./js/views/log-tool-single.js"></script>

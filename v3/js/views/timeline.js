@@ -800,7 +800,7 @@ var Timeline = {
     // ===== LOGS IMPORT =====
     function downLoadLogsData() {
       var r = tempImportLogsSet.report; r.selectedFight = null; tempImportLogsSet.error = {}; tempImportLogsSet.loading = true; cancelCurrentDownload();
-      var code = tempImportLogsSet.code, m = /reports\/(\w+)#/.exec(code); if (m) code = m[1]; if (!code) { tempImportLogsSet.error = { error: "请输入LOGS战斗记录的CODE" }; return; }
+      var code = tempImportLogsSet.code, m = /reports\/(\w+)/i.exec(code); if (m) code = m[1]; if (!code) { tempImportLogsSet.error = { error: "请输入LOGS战斗记录的CODE" }; return; }
       tempImportLogsSet.selectedCode = code;
       axios.get("https://cn.fflogs.com/v1/report/fights/" + code + "?api_key=" + tempImportLogsSet.apiKey).then(function(res) {
         tempImportLogsSet.loading = false; r.fights = res.data; r.fights.fights.reverse(); r.players = []; r.boss = []; r.targets = []; r.npc = [];
@@ -814,7 +814,7 @@ var Timeline = {
       var r = tempImportLogsSet.report, f = r.selectedFight; if (!f) return;
       r.downloading = true; var code = tempImportLogsSet.selectedCode, st = f.start_time, et = f.end_time, ap = tempImportLogsSet.apiKey;
       tempImportLogsSet.progress.casts = 0; tempImportLogsSet.progress.events = 0; tempImportLogsSet.importSource = { job: {}, gcd: {}, event: [] };
-      function gpd(start, hostility, cb, translate, dl) { if (!r.downloading) throw "停止下载"; if (!start) start = 0; if (hostility == null) hostility = 0; if (!dl) dl = []; if (cb) cb(start, st, et); var u = "https://cn.fflogs.com/v1/report/events/casts/" + code + "?hostility=" + hostility + "&start=" + start + "&end=" + et + "&api_key=" + ap; if (translate) u += "&translate=true"; return axios.getUseCache(u).then(function(res) { var d = res.data; dl.push(d); if (d.nextPageTimestamp) return gpd(d.nextPageTimestamp, hostility, cb, translate, dl); else { if (cb) cb(et, st, et); return dl; } }); }
+      function gpd(start, hostility, cb, translate, dl) { if (!r.downloading) throw "停止下载"; if (!start) start = 0; if (hostility == null) hostility = 0; if (!dl) dl = []; if (cb) cb(start, st, et); var u = "https://cn.fflogs.com/v1/report/events/casts/" + code + "?hostility=" + hostility + "&start=" + start + "&end=" + et + "&api_key=" + ap; if (translate) u += "&translate=true"; return axios.get(u).then(function(res) { var d = res.data; dl.push(d); if (d.nextPageTimestamp) return gpd(d.nextPageTimestamp, hostility, cb, translate, dl); else { if (cb) cb(et, st, et); return dl; } }); }
       var pj = [];
       if (tempImportLogsSet.import.job || tempImportLogsSet.import.gcd) pj.push(gpd(st, 0, function(cur, s, e) { tempImportLogsSet.progress.casts = Math.round((cur - s) / (e - s) * 100); }).then(function(d) { r.downloadedCasts = d; }));
       if (tempImportLogsSet.import.event) pj.push(gpd(st, 1, function(cur, s, e) { tempImportLogsSet.progress.events = Math.round((cur - s) / (e - s) * 100); }).then(function(d) { r.downloadedEvents = d; }));
