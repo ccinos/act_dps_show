@@ -116,7 +116,7 @@
         <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
         <button class="btn btn-primary" @click="batchImportEvent">导入事件</button><button class="btn btn-info" @click="batchExportEvent">提取当前事件轴</button>
         <button class="btn btn-primary" @click="batchImportSkill">导入技能</button><button class="btn btn-info" @click="batchExportSkill">提取当前技能轴</button>
-        <textarea class="form-control" style="height:calc(100%-50px);resize:none;margin-top:10px;" v-model="temp.importEventSet.text" placeholder="每行一条事件"></textarea>
+        <textarea class="form-control" style="height:calc(100% - 50px);resize:none;margin-top:10px;" v-model="temp.importEventSet.text" placeholder="每行一条事件"></textarea>
       </div>
       <!-- ACT import panel -->
       <div class="float-window" v-if="temp.importActLogSet.enable" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;">

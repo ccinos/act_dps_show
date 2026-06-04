@@ -1,4 +1,5 @@
 .claude/
+.trae/
 __pycache__/
 v3/shared/backups/
 .playwright-mcp/
