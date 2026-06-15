@@ -1,302 +1,483 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Ccino dps v3</title>
-  <link href="./css/bootstrap.min.css" rel="stylesheet">
-  <link href="./css/shared.css" rel="stylesheet">
-  <link href="./css/dps-overlay.css" rel="stylesheet">
-  <link href="./css/timeline.css" rel="stylesheet">
-  <link href="./css/ccino-select.css" rel="stylesheet">
-  <link href="./css/ccino-switch.css" rel="stylesheet">
-  <link href="./css/settings.css" rel="stylesheet">
-</head>
-<body class="noselect">
-  <div id="app" v-cloak>
-    <router-view></router-view>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Ccino dps v3</title>
+    <link href="./css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./css/shared.css" rel="stylesheet" />
+    <link href="./css/dps-overlay.css" rel="stylesheet" />
+    <link href="./css/timeline.css" rel="stylesheet" />
+    <link href="./css/ccino-select.css" rel="stylesheet" />
+    <link href="./css/ccino-switch.css" rel="stylesheet" />
+    <link href="./css/settings.css" rel="stylesheet" />
+  </head>
 
-  <!-- Shared utilities (global functions: padLeft, mergeObj, formatDate) -->
-  <script src="./shared/common.js"></script>
-  <!-- OverlayPlugin communication layer (global: addOverlayListener, callOverlayHandler) -->
-  <script src="./shared/overlay-plugin.js"></script>
-  <!-- Data loader (registers window.loadSkillData(), called on demand by views) -->
-  <script src="./shared/data/index.js"></script>
-  <script src="./shared/timeline_lang.js"></script>
-  <script src="./shared/log_config.js"></script>
+  <body class="noselect">
+    <div id="app" v-cloak>
+      <router-view></router-view>
+    </div>
 
-  <!-- Axios -->
-  <script src="./lib/axios.min.js"></script>
-  <!-- Vue 3 + Vue Router 4 -->
-  <script src="./lib/vue.global.js"></script>
-  <script src="./lib/vue-router.global.prod.js"></script>
+    <!-- Shared utilities (global functions: padLeft, mergeObj, formatDate) -->
+    <script src="./shared/common.js"></script>
+    <!-- OverlayPlugin communication layer (global: addOverlayListener, callOverlayHandler) -->
+    <script src="./shared/overlay-plugin.js"></script>
+    <!-- Data loader (registers window.loadSkillData(), called on demand by views) -->
+    <script src="./shared/data/index.js"></script>
+    <script src="./shared/timeline_lang.js"></script>
+    <script src="./shared/log_config.js"></script>
 
-  <!-- Composables -->
-  <script src="./js/composables/useLocalStorage.js"></script>
-  <script src="./js/composables/useOverlayData.js"></script>
-  <script src="./js/composables/useWindowPopup.js"></script>
+    <!-- Axios -->
+    <script src="./lib/axios.min.js"></script>
+    <!-- Vue 3 + Vue Router 4 -->
+    <script src="./lib/vue.global.js"></script>
+    <script src="./lib/vue-router.global.prod.js"></script>
 
-  <!-- Global components -->
-  <script src="./js/components/ccino-select.js"></script>
-  <script src="./js/components/ccino-switch.js"></script>
+    <!-- Composables -->
+    <script src="./js/composables/useLocalStorage.js"></script>
+    <script src="./js/composables/useOverlayData.js"></script>
+    <script src="./js/composables/useWindowPopup.js"></script>
 
-  <!-- Timeline template (too large for inline JS) -->
-  <script type="text/x-template" id="timeline-template">
-    <div id="container" style="padding:10px 0;" @mouseup="onMouseDrag($event)">
-      <div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
-      <!-- LOGS import panel -->
-      <div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;" v-if="temp.importLogsSet.enable">
-        <div class="row"><div class="col-xs-12"><div style="width:700px;margin:0 auto;">
-          <button style="float:right;" class="btn btn-default" @click="temp.importLogsSet.enable=false">关闭</button>
-          LOGS CODE <input class="form-control form-auto" v-model="temp.importLogsSet.code">
-          <button class="btn btn-default" @click="downLoadLogsData" :disabled="temp.importLogsSet.loading">查询</button><br>
-          <span>示例地址 https://www.ffxivlogs.cn/reports/<span style="color:red;">9VcYMnPXHx3FCzgw</span>#fight=1&type=damage-done</span><br>
-          <span v-if="temp.importLogsSet.error&&temp.importLogsSet.error.error" style="color:red;">{{temp.importLogsSet.error.error}}</span>
+    <!-- Global components -->
+    <script src="./js/components/ccino-select.js"></script>
+    <script src="./js/components/ccino-switch.js"></script>
+
+    <!-- Timeline template (too large for inline JS) -->
+    <script type="text/x-template" id="timeline-template">
+      <div id="container" style="padding:10px 0;" @mouseup="onMouseDrag($event)">
+	<div class="mask" v-if="setting.skillSelectSet.enable||temp.importActLogSet.enable||temp.importLogsSet.enable"></div>
+	<!-- LOGS import panel -->
+	<div class="float-window" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;" v-if="temp.importLogsSet.enable">
+		<div class="row">
+			<div class="col-xs-12">
+				<div style="width:700px;margin:0 auto;">
+					<button style="float:right;" class="btn btn-default" @click="temp.importLogsSet.enable=false">关闭</button> LOGS CODE <input class="form-control form-auto" v-model="temp.importLogsSet.code">
+					<button class="btn btn-default" @click="downLoadLogsData" :disabled="temp.importLogsSet.loading">查询</button><br>
+					<span>示例地址 https://www.ffxivlogs.cn/reports/<span style="color:red;">9VcYMnPXHx3FCzgw</span>#fight=1&type=damage-done</span><br>
+					<span v-if="temp.importLogsSet.error&&temp.importLogsSet.error.error" style="color:red;">{{temp.importLogsSet.error.error}}</span>
+				</div>
+				<div style="width:700px;margin:0 auto;" v-if="temp.importLogsSet.report.fights">
+					<h3>{{temp.importLogsSet.report.fights.title}} <button @click="downloadSelectedFight" class="btn btn-primary btn-sm" :disabled="temp.importLogsSet.report.selectedFight==null||temp.importLogsSet.report.downloading">下载</button>
+						<button @click="importSelectedFight" class="btn btn-primary btn-sm" :disabled="!temp.importLogsSet.report.downloaded">导入</button>
+						<small>{{timeFormat(temp.importLogsSet.report.fights.start+28800000,'yyyy-MM-dd hh:mm:ss')}} 时长:{{timeFormat(temp.importLogsSet.report.fights.end-temp.importLogsSet.report.fights.start,'mm.ss')}}</small>
+					</h3>
+					<div style="display:flex;">
+						<span class="value-name">解析事件<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.event"></ccino-switch></span>
+						<span class="value-name" style="width:14em;" v-if="temp.importLogsSet.import.event">解析开始读条事件<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.begincast"></ccino-switch></span>
+						<span class="value-name">能力技<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.job"></ccino-switch></span>
+						<span class="value-name">GCD技<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.gcd"></ccino-switch></span>
+					</div>
+					<div v-if="temp.importLogsSet.import.event" class="form-group" :class="{'has-error':!isRegex(setting.importLogEventFilterRegex)}">
+						<span>事件过滤(正则)</span><input class="form-control" v-model="setting.importLogEventFilterRegex" placeholder="攻击" />
+					</div>
+					<ul class="list-group" style="max-height:300px;overflow:auto;margin-top:10px">
+						<template v-for="fight in temp.importLogsSet.report.fights.fights">
+							<a v-if="!(temp.importLogsSet.report.downloading&&temp.importLogsSet.report.downloaded)||temp.importLogsSet.report.selectedFight==fight" class="list-group-item"
+								:class="{'list-group-item-success':fight.kill,'list-group-item-danger':!fight.kill,active:fight==temp.importLogsSet.report.selectedFight}" href="javascript:;" @click="temp.importLogsSet.report.selectedFight=fight"> {{fight.zoneName}} -
+								{{timeFormat(fight.end_time-fight.start_time,'mm.ss')}} <span style="float:right">{{timeFormat(temp.importLogsSet.report.fights.start+fight.start_time+28800000,'hh:mm:ss')}}</span>
+							</a></template>
+					</ul>
+					<div v-if="temp.importLogsSet.report.downloading"> 技能数据<div v-if="temp.importLogsSet.import.job||temp.importLogsSet.import.gcd">
+							<div class="progress" style="margin-top:10px;">
+								<div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width:2em;" :style="{width:temp.importLogsSet.progress.casts+'%'}">{{temp.importLogsSet.progress.casts}}%</div>
+							</div>
+						</div> 事件数据<div v-if="temp.importLogsSet.import.event">
+							<div class="progress" style="margin-top:10px;">
+								<div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width:2em;" :style="{width:temp.importLogsSet.progress.events+'%'}">{{temp.importLogsSet.progress.events}}%</div>
+							</div>
+						</div>
+					</div>
+					<div v-if="temp.importLogsSet.report.downloaded">
+						<ul>
+							<li class="list-group-item"><span class="value-name">事件来源</span><template v-if="temp.importLogsSet.import.event">
+									<select class="form-control form-auto" style="width:20em;" multiple v-model="temp.importLogsSet.importSource.event">
+										<template v-for="player in temp.importLogsSet.report.boss">
+											<option v-if="player" :value="player.id">{{player.name}} - BOSS</option>
+										</template>
+										<template v-for="player in temp.importLogsSet.report.npc">
+											<option v-if="player" :value="player.id">{{player.name}} - NPC</option>
+										</template>
+									</select>按住ctrl多选
+									<hr style="margin-left:120px">
+									<div style="margin-left:120px"><span v-for="id in temp.importLogsSet.importSource.event" style="margin-right:10px;">{{temp.importLogsSet.report.targets[id].name}}</span></div>
+								</template></li>
+							<li class="list-group-item"><span class="value-name">能力技</span><template v-if="temp.importLogsSet.import.job">
+									<div v-for="skill in skills"><span class="value-name">{{skill.name}}</span>
+										<select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.job[skill.name]">
+											<template v-for="player in temp.importLogsSet.report.players">
+												<option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]||[]).length}})</option>
+											</template>
+										</select>
+									</div>
+								</template></li>
+							<li class="list-group-item"><span class="value-name">GCD技</span><template v-if="temp.importLogsSet.import.gcd">
+									<div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span>
+										<select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.gcd[skill.name]">
+											<template v-for="player in temp.importLogsSet.report.players">
+												<option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]||[]).length}})</option>
+											</template>
+										</select>
+									</div>
+								</template></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Align buttons -->
+	<div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="!dials.selectedRange&&dials.selectedLineY"> 由选定位置对齐到开始 <button class="btn btn-xs btn-primary" @click="alignToStart('event')">事件</button>
+		<button class="btn btn-xs btn-primary" @click="alignToStart('gcd')">GCD技</button>
+		<button class="btn btn-xs btn-primary" @click="alignToStart('job')">能力技</button>
+	</div>
+	<!-- Batch import panel -->
+	<div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
+		<button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
+		<button class="btn btn-primary" @click="batchImportEvent">导入事件</button><button class="btn btn-info" @click="batchExportEvent">提取当前事件轴</button>
+		<button class="btn btn-primary" @click="batchImportSkill">导入技能</button><button class="btn btn-info" @click="batchExportSkill">提取当前技能轴</button>
+		<textarea class="form-control" style="height:calc(100% - 50px);resize:none;margin-top:10px;" v-model="temp.importEventSet.text" placeholder="每行一条事件"></textarea>
+	</div>
+	<!-- ACT import panel -->
+	<div class="float-window" v-if="temp.importActLogSet.enable" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;">
+		<div class="row">
+			<div class="col-xs-12">
+				<div style="width:700px;margin:0 auto;">
+					<button class="btn btn-default" style="float:right;" @click="temp.importActLogSet.enable=false">关闭</button>ACT LOGS文件： <input id="actfile" type="file" accept=".log" @change="temp.selectedActLogFile=$event.target.files[0]" />
+					<button v-if="temp.selectedActLogFile" class="btn btn-default" @click="parseActLogFile" style="margin-top:10px;">解析</button>
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-12" style="text-align:center;">
+			<div style="width:700px;margin:0 auto;">
+				<div class="panel panel-default" v-if="temp.parseDatas" style="text-align:left;">
+					<div class="panel-heading">选择时间范围和技能对应人员<br><button v-if="temp.parseDatas" class="btn btn-primary" @click="importActLogFile" style="margin-top:10px;">导入</button></div>
+					<div class="panel-body">
+						<div>开始时间 {{timeFormat(+temp.parseDatas.startTimeCurrent,'yyyy-MM-dd hh:mm:ss')}}<input type="range" v-model="temp.parseDatas.startTimeCurrent" :min="temp.parseDatas.startTime" :max="temp.parseDatas.endTimeCurrent"><br> 结束时间
+							{{timeFormat(+temp.parseDatas.endTimeCurrent,'yyyy-MM-dd hh:mm:ss')}}<input type="range" v-model="temp.parseDatas.endTimeCurrent" :min="temp.parseDatas.startTimeCurrent" :max="temp.parseDatas.endTime"></div>
+					</div>
+					<ul class="list-group">
+						<li class="list-group-item"><span class="value-name">事件来源<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.event"></ccino-switch></span>
+							<template v-if="temp.importDataTypes.event"><select class="form-control form-auto" style="width:20em;min-height:10em;" multiple v-model="temp.parseDataEventSource">
+									<option v-for="(count,name) in temp.parseDatas.allPlayers" :value="name">{{name}}({{count}})</option>
+								</select>
+								<hr style="margin-left:120px">
+								<div style="margin-left:120px"><span v-for="es in temp.parseDataEventSource" style="margin-right:10px;">{{es}}</span></div>
+							</template>
+						</li>
+						<li class="list-group-item"><span class="value-name">能力技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.job"></ccino-switch></span>
+							<template v-if="temp.importDataTypes.job">
+								<div v-for="skill in skills"><span class="value-name">{{skill.fullname||skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players">
+											<option v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})</option>
+										</template></select></div>
+							</template>
+						</li>
+						<li class="list-group-item"><span class="value-name">GCD技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.gcd"></ccino-switch></span>
+							<template v-if="temp.importDataTypes.gcd">
+								<div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players">
+											<option v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})</option>
+										</template></select></div>
+							</template>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Skill hover popup -->
+	<div class="float-window" style="z-index:9999999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable" :style="{left:temp.hoverSkill.x+'px',top:temp.hoverSkill.y+'px'}">
+		<div>
+			<div style="font-size:120%;">{{skillNameFilter(temp.hoverSkill.skill.fullname||temp.hoverSkill.skill.name)}} <small v-if="temp.hoverSkill.skill.type">{{temp.hoverSkill.skill.type}}</small>
+			</div>
+			<span v-if="temp.hoverSkill.skill.cd">CD:{{temp.hoverSkill.skill.cd}}秒</span><span v-else>即时</span>
+		</div>
+		<div style="width:300px" v-if="temp.hoverSkill.skill.intro" v-html="temp.hoverSkill.skill.intro.replace(/\n|　/g,'<br>')"></div>
+	</div>
+	<!-- Skill select panel -->
+	<div class="float-window" v-if="setting.skillSelectSet.enable" style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;z-index:99999999">
+		<div class="row">
+			<div class="col-xs-12" style="padding:10px 10px 0px 30px"> 职业<select class="form-control form-auto" v-model="setting.skillSelectSet.jobName">
+					<option v-for="(js,jn) in jobSkillSetting" :value="jn">{{jn}}</option>
+				</select>
+				<button class="btn btn-success" @click="savePicked();temp.hoverSkill.enable=false;">保存</button>
+				<button class="btn btn-default" @click="setting.skillSelectSet.enable=false;temp.hoverSkill.enable=false;">关闭</button>
+				<span style="margin-left:50px;">GCD时间<input class="form-control form-auto" v-model="setting.skillSelectSet.gcdDuration" type="number" style="width:100px;">秒</span>
+			</div>
+		</div>
+		<hr>
+		<div class="row" style="overflow:auto;">
+			<div class="col-xs-6">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h4>已选技能<small>单击取消 右键修改别名</small></h4>
+					</div>
+					<div class="panel-body">
+						<ul>
+							<li>每个职业技能与职能技能都会单独一列显示</li>
+							<li>在顶部切换职业选择不同职业的技能</li>
+							<li>拖动技能以调整排序</li>
+						</ul>
+					</div>
+					<ul class="list-group">
+						<li class="list-group-item" v-for="st in [['能力技','job'],['GCD技能','gcd']]">{{st[0]}} <div class="skill-container">
+								<div v-for="(skill,i) in setting.skillSelectSet.selectedSkills[st[1]]" class="skill-list" draggable="true" @dragover.prevent="" @drop.prevent="pickedSkillDrop($event,i,st[1])" @drag="pickedSkillDrag($event,i,st[1])" @click="unpickSkill(i,st[1])"
+									@contextmenu.prevent="onMouseRightClickInPickedSkill(skill,i)" @mousemove="onSkillHover(skill,$event)" @mouseout="temp.hoverSkill.enable=false">
+									<img draggable="false" :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'" /><br><span style="font-size:12px">{{skill.name}}</span>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h4>预设技能<small>单击选择</small></h4>
+					</div>
+					<ul class="list-group">
+						<li class="list-group-item" v-for="st in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">{{st[0]}} <div class="skill-container"><template v-if="jobSkillSetting[setting.skillSelectSet.jobName]">
+								<div v-for="skill in jobSkillSetting[setting.skillSelectSet.jobName].skills[st[1]]" class="skill-list" @click="pickSkill(skill,st[1])" @mousemove="onSkillHover(skill,$event)" @mouseout="temp.hoverSkill.enable=false">
+									<img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'" /><br><span style="font-size:12px">{{skillNameFilter(skill.name)}}</span>
+								</div>
+							</template><template v-else>&nbsp;<br>&nbsp;</template></div>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="col-xs-6">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h4>自定技能<small>单击选择 右键修改</small></h4>
+					</div>
+					<ul class="list-group">
+						<li class="list-group-item" v-for="st in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">{{st[0]}} <div class="skill-container"><template v-if="userDefinedJobSkillRef[setting.skillSelectSet.jobName]">
+									<div v-for="skill in userDefinedJobSkillRef[setting.skillSelectSet.jobName].skills[st[1]]" class="skill-list" :class="{'skill-selected':setting.skillSelectSet.selectedUserDefinedSkill==skill}" @contextmenu.prevent="selectUserDefinedSkill(skill,st[1])"
+										@click="pickSkill(skill,st[1])">
+										<img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'" /><br><span style="font-size:12px">{{skill.name}}</span>
+									</div>
+								</template><template v-else>&nbsp;<br>&nbsp;</template></div>
+						</li>
+						<li class="list-group-item"><button class="btn btn-primary" v-if="!setting.skillSelectSet.userDefinedSkill.enable" @click="addNewUserDefinedSkill">添加</button>
+							<template v-if="setting.skillSelectSet.selectedUserDefinedSkill||setting.skillSelectSet.userDefinedSkill.new"><button class="btn btn-success" @click="saveNewUserDefinedSkill">保存</button><button class="btn btn-default"
+									@click="cancelSaveUserDefinedSkill">取消</button></template><br>
+							<template v-if="setting.skillSelectSet.userDefinedSkill.enable">
+								<div class="udf-grid">
+									<div class="udf-field">
+										<label>技能类型</label>
+										<select class="form-control" v-model="setting.skillSelectSet.userDefinedSkill.skillType">
+											<option v-for="st2 in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]" :value="st2[1]">{{st2[0]}}</option>
+										</select>
+									</div>
+									<div class="udf-field">
+										<label>技能名</label>
+										<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.name" placeholder="如：狂暴" />
+									</div>
+									<div class="udf-field">
+										<label>冷却时间</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.cd" placeholder="秒" />
+										<span class="udf-grid-hint">秒</span>
+									</div>
+									<div class="udf-field">
+										<label>伤害类型</label>
+										<select class="form-control" v-model="setting.skillSelectSet.userDefinedSkill.dmgType">
+											<option value="">未设置</option>
+											<option value="物理">物理</option>
+											<option value="魔法">魔法</option>
+										</select>
+									</div>
+									<div class="udf-field">
+										<label>威力</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.dmg" placeholder="如：300" />
+									</div>
+									<div class="udf-field">
+										<label>DOT威力</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.dot" placeholder="如：50" />
+									</div>
+									<div class="udf-field">
+										<label>咏唱时间</label>
+										<input class="form-control" type="number" step="0.1" min="0" v-model="setting.skillSelectSet.userDefinedSkill.read" placeholder="0=即时" />
+										<span class="udf-grid-hint">秒</span>
+									</div>
+									<div class="udf-field">
+										<label>使用次数</label>
+										<input class="form-control" type="number" min="1" v-model="setting.skillSelectSet.userDefinedSkill.count" placeholder="如：3" />
+									</div>
+									<div class="udf-field">
+										<label>消耗</label>
+										<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.cost" placeholder="如：800MP" />
+									</div>
+									<template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">
+										<div class="udf-field">
+											<label>技能全称</label>
+											<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.fullname" placeholder="图标查找用全称" />
+										</div>
+										<div class="udf-field">
+											<label>技能图标</label>
+											<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.icon" placeholder="图标路径或URL" />
+										</div>
+										<div class="udf-field">
+											<label>持续时间</label>
+											<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration" placeholder="秒" />
+											<span class="udf-grid-hint">秒</span>
+										</div>
+										<div class="udf-field">
+											<label>延迟触发</label>
+											<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.durationSlideRange" placeholder="秒" />
+											<span class="udf-grid-hint">秒</span>
+										</div>
+										<div class="udf-field">
+											<label>2段持续</label>
+											<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration2" placeholder="秒" />
+											<span class="udf-grid-hint">秒</span>
+										</div>
+									</template>
+									<div class="udf-field udf-field-full">
+										<label>描述</label>
+										<textarea class="form-control" v-model="setting.skillSelectSet.userDefinedSkill.intro" placeholder="技能说明文字，留空则不显示"></textarea>
+									</div>
+									<div class="udf-section-divider">Buff 效果</div>
+									<div class="udf-field">
+										<label>物伤增加</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseNormal" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>魔伤增加</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseMagic" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>暴击增加</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseCri" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>伤害减少</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceDmg" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>魔伤减少</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceMagic" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>物伤减少</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceNormal" placeholder="如：20 表示 20%" />
+									</div>
+									<div class="udf-field">
+										<label>增加盾值</label>
+										<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.addShield" placeholder="数值" />
+									</div>
+								</div>
+							</template>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Event popup -->
+	<div class="float-window" v-if="setting.eventSet.enable" style="z-index:500" :style="{top:setting.eventSet.y+'px',left:setting.eventSet.x+'px'}">
+		<div class="input-group" :style="{width:((+timeline.infoWidth)-100)+'px'}"><span class="input-group-btn"><button class="btn btn-danger" type="button" @click="deleteSelectedEvent">删除</button></span><input class="form-control" v-model="setting.eventSet.event.text" /></div>
+		<div style="margin-top:5px;">伤害：<input class="form-control form-auto" type="number" min="0" v-model="setting.eventSet.event.dmg" />类型：<select class="form-control form-auto" v-model="setting.eventSet.event.dmgType">
+				<option value="normal">物理</option>
+				<option value="magic">魔法</option>
+				<option value="true">真实</option>
+			</select></div>
+	</div>
+	<!-- Skill popup -->
+	<div class="float-window" v-if="setting.skillSet.enable" style="z-index:500" :style="{top:setting.skillSet.y+'px',left:setting.skillSet.x+'px'}">
+		<button class="btn btn-danger" type="button" @click="deleteSelectedSkill">删除</button>
+		<div v-if="setting.selectedSkill.skillInfo&&setting.selectedSkill.skillInfo.marks&&setting.selectedSkill.skillInfo.marks.length>0">
+			<table class="table table-hover" style="margin-top:3px">
+				<tr v-for="(m,i) in setting.selectedSkill.skillInfo.marks" @click="onSelectMark(m)" :class="{success:setting.selectedSkill.selectedMark==m}">
+					<td>{{m.time}}</td>
+					<td>{{{short:'短线',long:'长线'}[m.type]}}</td><td>{{m.text}}</td><td><button class="btn btn-default btn-xs" @click.stop="setting.selectedSkill.skillInfo.marks.splice(i,1)">删除</button></td></tr></table></div>
+          <div style="margin-top:5px;" v-if="setting.selectedSkill"><div>标签：<input class="form-control form-auto" v-model="setting.skillSet.markText"/></div>
+          <div class="input-wrapper">时间：<input class="form-control form-auto" type="number" step="0.1" min="0" v-model="setting.skillSet.markTime"/></div>
+          <div class="input-wrapper">线型：<select class="form-control form-auto" v-model="setting.skillSet.markType"><option value="long">长线</option><option value="short">短线</option></select>
+          <button class="btn btn-primary btn-sm" style="margin-top:-6px;" type="button" @click="addMarkOnSkill(setting.selectedSkill.skillInfo,setting.skillSet.markTime,setting.skillSet.markText,setting.skillSet.markType)"><span v-if="setting.selectedSkill.selectedMark!=null">修改</span><span v-else>添加</span></button>
+          <button v-if="setting.selectedSkill.selectedMark!=null" class="btn btn-default btn-sm" style="margin-top:-6px;" type="button" @click="setting.selectedSkill.selectedMark=null">取消</button></div></div>
         </div>
-        <div style="width:700px;margin:0 auto;" v-if="temp.importLogsSet.report.fights">
-          <h3>{{temp.importLogsSet.report.fights.title}}
-            <button @click="downloadSelectedFight" class="btn btn-primary btn-sm" :disabled="temp.importLogsSet.report.selectedFight==null||temp.importLogsSet.report.downloading">下载</button>
-            <button @click="importSelectedFight" class="btn btn-primary btn-sm" :disabled="!temp.importLogsSet.report.downloaded">导入</button>
-            <small>{{timeFormat(temp.importLogsSet.report.fights.start+28800000,'yyyy-MM-dd hh:mm:ss')}} 时长:{{timeFormat(temp.importLogsSet.report.fights.end-temp.importLogsSet.report.fights.start,'mm.ss')}}</small>
-          </h3>
-          <div style="display:flex;">
-            <span class="value-name">解析事件<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.event"></ccino-switch></span>
-            <span class="value-name" style="width:14em;" v-if="temp.importLogsSet.import.event">解析开始读条事件<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.begincast"></ccino-switch></span>
-            <span class="value-name">能力技<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.job"></ccino-switch></span>
-            <span class="value-name">GCD技<ccino-switch style="transform:scale(0.7);" v-model="temp.importLogsSet.import.gcd"></ccino-switch></span>
+        <!-- SVG / Sidebar layout -->
+        <div class="container-fluid" style="padding-right:0"><div class="row">
+          <div class="col-xs-12" style="overflow:hidden;transition:max-width 0.3s;" :style="{'max-width':showPannel?'calc(100% - 500px)':'100%'}">
+            <div id="svg_container" class="noselect" :class="{scrolling:drag.scrolling}" @scroll="onSvgScroll($event)" @mousewheel.alt.prevent="onMouseWheelScale($event)" @mousewheel="drag.scrollingTo=null" style="padding-right:10px;" :style="{height:option.svg.height+'px'}" @dblclick="insertNew" @click.alt="insertNew" @click="selectLine();" @contextmenu.prevent="cancelAllSelect()" @mousedown.right="scrollOnMouseDrag($event)" @mousedown.left="selectTimeRange($event)">
+              <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight" @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
+                <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" :y="dials.top" height="3000"/>
+                <g v-for="line in dialsLines[0]"><line class="dials" :x1="dials.left+70" :y1="line.y+timelineOffset" :x2="option.svg.width" :y2="line.y+timelineOffset"/><text class="dials" :x="dials.left+0" :y="line.y+timelineOffset" dy="4">{{line.text}}</text></g>
+                <g v-if="dials.mouseY"><line class="dials-mouse" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY"/><text class="dials-mouse" :x="dials.left+0" :y="dials.mouseY" dy="4">{{timeFormat(y2time(dials.mouseY-timelineOffset))}}</text></g>
+                <g v-if="dials.selectedLineY"><line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedLineY" :y2="dials.selectedLineY"/><text class="dials-select-line" :x="dials.left+0" :y="dials.selectedLineY" dy="4">{{timeFormat(y2time(dials.selectedLineY-timelineOffset))}}</text></g>
+                <g v-for="e in timeline.events" @mousedown.left.stop="onMouseDragSimple($event,e)"><line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/><text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4" @click.stop="onEventClick(e,$event)" :class="{'event-active':setting.eventSet.event==e}" xml:space="preserve">{{timeFormat(e.time)}}<tspan dx="1em">{{e.text}}</tspan><tspan v-if="e.dmg>0" class="event-summary" :class="{'dmg-normal':e.dmgType=='normal'||!e.dmgType,'dmg-magic':e.dmgType=='magic','dmg-true':e.dmgType=='true'}">{{e.dmg}}<tspan class="event-summary-reduce" v-if="dials.selectedRange&&e.reduceDmg>0">(-{{e.reduceDmg}}){{e.trueDmg}}</tspan></tspan></text></g>
+                <g><template v-for="(gcd,i) in timeline.gcd"><image :x="(+timeline.infoWidth)" :href="getGcdIcon(gcd.skill)" :y="time2yOffset(gcd.time)" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'" @click.stop="" @mousedown.left.stop="gcdOnMouseDrag($event,gcd,i)" @contextmenu.prevent="deleteGcd(i)"/><text v-if="dials.selectedRange&&gcd.dmg" style="font-size:13px;" class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}" :x="(+timeline.infoWidth)" dx="-50" dy="10" :y="time2yOffset(gcd.time)">{{(gcd.dmg||0)+(gcd.addDmg||0)+(gcd.dot||0)+(gcd.addDot||0)}}<tspan v-if="gcd.dotCount">({{gcd.dotCount}})</tspan></text><text v-if="dials.selectedRange&&gcd.addDmg" class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}" :x="(+timeline.infoWidth)" dx="-50" dy="20" :y="time2yOffset(gcd.time)">(+{{(gcd.addDmg||0)+(gcd.addDot||0)}})</text></template></g>
+                <g v-if="dials.selectedRange"><rect class="select-range" :x="0" :width="option.svg.width" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" :height="Math.abs(dials.selectedRange.y-dials.selectedRange.oy)"/><line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedRange.oy" :y2="dials.selectedRange.oy"/><text class="dials-select-line" :x="dials.left+0" :y="dials.selectedRange.oy" dy="4">{{timeFormat(y2time(dials.selectedRange.oy-timelineOffset))}}</text><text v-if="dials.selectedRange.dmgAll>0" class="dmg-normal dmg-all" :x="(+timeline.infoWidth)-50" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" dy="-8">{{dials.selectedRange.dmgAll}}</text></g>
+                <g v-for="(skill,i) in skills"><template v-if="timeline.skills[skill.name]"><g v-for="skillInfo in timeline.skills[skill.name]"><rect v-if="skill.cd" class="skill-cd-prev" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/></g>
+                <g v-for="(skillInfo,skillIndex) in timeline.skills[skill.name]" @mouseenter="skillOnHover(skillInfo,skill,true)" @mouseleave="skillOnHover(skillInfo,skill,false)" @mousedown.left.stop="skillOnMouseDrag(skillInfo,skill,true,$event,skillIndex)" @click.stop="onSelectSkill(skillInfo,skill,i,$event)" :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}" @contextmenu="onSkillRightClick(skillInfo,skill,i)">
+                  <rect v-if="skill.cd" class="skill-cd" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time)" :height="second2y((skillInfo.count>0)?0:(skillInfo.count==0?(skillInfo.remainToAdd/1000):skill.cd))" :width="(option.skill.cd)"/>
+                  <g><rect v-if="skill.durationSlideRange" class="skill-duration-slide-range" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-3" :y="time2yOffset(skillInfo.time)" :height="second2y(skill.durationSlideRange+skill.duration)" :width="option.skill.duration+7"/></g>
+                  <g @mousedown.left.stop="skillDurationSliderOnMouseDrag(skillInfo,skill,true,$event,skillIndex)"><rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration)" :width="(option.skill.duration)"/><rect v-if="skill.duration2" class="skill-duration2" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="second2y(skill.duration)+time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration2)" :width="(option.skill.duration)"/></g>
+                  <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :href="skill.icon||getSkillIcon(skill)" :y="time2yOffset(skillInfo.time)" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'"/>
+                  <text v-if="dials.selectedRange&&skillInfo.dmg" style="font-size:13px;" class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-2" :y="time2yOffset(skillInfo.time)">{{(skillInfo.dmg||0)+(skillInfo.addDmg||0)+(skillInfo.dot||0)+(skillInfo.addDot||0)}}<tspan v-if="skillInfo.dotCount">({{skillInfo.dotCount}})</tspan></text>
+                  <text v-if="dials.selectedRange&&skillInfo.addDmg" class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-15" :y="time2yOffset(skillInfo.time)">(+{{(skillInfo.addDmg||0)+(skillInfo.addDot||0)}})</text>
+                  <text v-if="skillInfo.count!=null" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-8" :y="time2yOffset(skillInfo.time)+8">{{skillInfo.count+1}}</text>
+                  <g v-if="skillInfo.marks&&skillInfo.marks.length>0"><g v-for="mark in skillInfo.marks">
+                    <g v-if="mark.type=='long'"><line class="dials-skill-mark" :x1="dials.left+70" :x2="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y1="time2yOffset(skillInfo.time+mark.time*1000)" :y2="time2yOffset(skillInfo.time+mark.time*1000)"/><text class="dials-skill-mark" :x="dials.left+0" :y="time2yOffset(skillInfo.time+mark.time*1000)" dy="-2">{{timeFormat(skillInfo.time+mark.time*1000)}} {{mark.text}}</text></g>
+                    <g v-else><line class="dials-skill-mark" :x1="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-4" :x2="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)+skillOption.width+3" :y1="time2yOffset(skillInfo.time+mark.time*1000)" :y2="time2yOffset(skillInfo.time+mark.time*1000)"/><text class="dials-skill-mark" font-size="12" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-4" :y="time2yOffset(skillInfo.time+mark.time*1000)" dy="-2">{{mark.text}}</text></g></g></g>
+                  </g></template></g>
+                <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="40"/>
+                <g v-for="(skill,i) in skills" @click.stop="onSelectSkillType(skill,i)"><text :x="(+timeline.infoWidth)+option.skill.nameOffset+(i+setting.reserveCols)*(skillOption.all)" text-anchor="middle" :y="dials.top+15" style="font-size:12px;" :class="{'skill-type-active':setting.selectedSkillType==skill}">{{skill.name}}</text><image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :href="skill.icon||getSkillIcon(skill)" :y="dials.top+25" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'"/></g>
+                <g v-for="shownSkill in shownSkillInfo"><line class="dials-skill" :x1="dials.left+70" :x2="option.svg.width" :y1="time2yOffset(shownSkill.skillInfo.time)" :y2="time2yOffset(shownSkill.skillInfo.time)"/><text class="dials-skill" :x="dials.left+0" :y="time2yOffset(shownSkill.skillInfo.time)" dy="4">{{timeFormat(shownSkill.skillInfo.time)}}</text></g>
+              </svg>
+            </div>
           </div>
-          <div v-if="temp.importLogsSet.import.event" class="form-group" :class="{'has-error':!isRegex(setting.importLogEventFilterRegex)}">
-            <span>事件过滤(正则)</span><input class="form-control" v-model="setting.importLogEventFilterRegex" placeholder="攻击"/>
+          <div :style="{right:showPannel?'0px':'-600px'}" style="overflow:auto;position:absolute;padding:10px;top:0;bottom:0;width:500px;transition:right 0.5s;">
+            <div :style="{height:option.svg.height+'px'}">
+              <div class="share-container" v-if="sharing"><button class="btn btn-success" @click="importData">导入</button><button class="btn btn-default" @click="clearData">清空</button><button class="btn btn-danger" @click="sharing=false">关闭</button><textarea class="form-control" v-model="sharingText" style="width:100%;height:90%;resize:none;margin-top:10px;"></textarea></div>
+              <select class="form-control" v-model="selectedDataIndex"><option v-for="(data,i) in savedDatas" :value="i">{{data.name}}(事件{{data.timeline.events.length}})</option></select>
+              <input class="form-control" style="width:100px;display:inline-block;" v-model="newDataName" placeholder="新名称">
+              <button class="btn btn-success" @click="dataSave">保存</button><button class="btn btn-primary" @click="dataLoad">读取</button><button class="btn btn-danger" @click="dataDelete">删除</button><button class="btn btn-info" @click="dataShare">分享</button><hr>
+              <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
+              <button class="btn btn-danger btn-sm" @click="timeline.events=[]">清空事件</button>
+              <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">导入ACT</button>
+              <button class="btn btn-primary btn-sm" @click="temp.importLogsSet.enable=true">导入LOGS</button>
+              <input style="margin-top:5px;" class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00开始(回车插入)" v-model="setting.inputText" @blur="setting.inputErrMsg=''" @keydown.esc="onClearInput">
+              <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span><hr>
+              <button class="btn btn-primary btn-sm" @click="setting.skillSelectSet.enable=true">技能设置</button>
+              <button class="btn btn-danger btn-sm" @click="timeline.gcd=[]">清空GCD技</button>
+              <button class="btn btn-danger btn-sm" @click="timeline.skills={}">清空能力技</button>
+              <div style="display:flex;flex-wrap:wrap;"><div v-for="(gcdSkill,i) in gcdSkills" class="gcd-skill" @click="addGcdSkill(gcdSkill.fullname||gcdSkill.name,gcdSetting.addIsInsert)" @mousemove="onSkillHover(gcdSkill,$event)" @mouseout="temp.hoverSkill.enable=false"><img :src="getGcdIcon(gcdSkill.fullname||gcdSkill.name)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'"/><br><span style="font-size:12px">{{gcdSkill.name}}</span></div></div><hr>
+              <ccino-switch style="transform:scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch>GCD技能允许推动<br>
+              <ccino-switch style="transform:scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch>GCD技能插入模式<br>
+              <ccino-switch style="transform:scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch>选择区域计算威力<br>
+              <ccino-switch style="transform:scale(0.7);" v-model="setting.showTimeBySecond"></ccino-switch>以秒显示刻度<br>
+              <ccino-switch style="transform:scale(0.7);" v-model="setting.pressDeleteKeyDeleteSelectedObject"></ccino-switch>按Delete键删除事件和技能<br>
+              <div>时间轴提前量{{(Math.round(timeline.offset/100)/10).toFixed(1)}}s<input type="range" v-model="timeline.offset" min="0" max="60000" step="100"></div>
+              <div>技能显示间隔{{option.skill.margin}}<input type="range" v-model="option.skill.margin" min="0" max="100"></div>
+              <div>事件显示宽度{{timeline.infoWidth}}<input type="range" v-model="timeline.infoWidth" min="100" max="3000" step="10"></div>
+              <div>时间轴长度(秒){{timeline.length}}<input type="range" v-model="timeline.length" min="60" max="10000" step="10"></div>
+              <div>图表宽度{{option.svg.width}}<input type="range" v-model="option.svg.width" min="800" max="8000" step="10"></div><hr>
+              <h2>操作说明<small>{{versions[0].ver}}</small></h2>
+              <ul><li>使用反馈：QQ群:552084996<br><a target="_blank" href="https://bbs.nga.cn/read.php?tid=20013978">NGA发布帖</a><br></li><li>FF14新人招待码【056x-ierk-k5xy-01hs】</li><li><span style="color:red">Alt+鼠标左键</span>（或双击）增加新事件/新技能</li><li>单击事件可以修改具体信息</li><li>按住alt+滚轮可以放大/缩小</li><li>拖动物件可以调整时间</li><li>技能绿色部分是持续时间，灰色为CD</li><li>左键点击图表，点击右侧的GCD技能，即可在选择的位置插入技能</li></ul>
+              <ul>
+                <template v-for="v in versions">
+                  <li>{{v.ver}} {{v.type}} {{v.date}}</li>
+                  <small v-html="v.info"></small>
+                </template>
+              </ul>
+            </div>
           </div>
-          <ul class="list-group" style="max-height:300px;overflow:auto;margin-top:10px">
-            <template v-for="fight in temp.importLogsSet.report.fights.fights">
-            <a v-if="!(temp.importLogsSet.report.downloading&&temp.importLogsSet.report.downloaded)||temp.importLogsSet.report.selectedFight==fight" class="list-group-item"
-              :class="{'list-group-item-success':fight.kill,'list-group-item-danger':!fight.kill,active:fight==temp.importLogsSet.report.selectedFight}"
-              href="javascript:;" @click="temp.importLogsSet.report.selectedFight=fight">
-              {{fight.zoneName}} - {{timeFormat(fight.end_time-fight.start_time,'mm.ss')}}
-              <span style="float:right">{{timeFormat(temp.importLogsSet.report.fights.start+fight.start_time+28800000,'hh:mm:ss')}}</span>
-            </a></template>
-          </ul>
-          <div v-if="temp.importLogsSet.report.downloading">
-            技能数据<div v-if="temp.importLogsSet.import.job||temp.importLogsSet.import.gcd"><div class="progress" style="margin-top:10px;"><div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width:2em;" :style="{width:temp.importLogsSet.progress.casts+'%'}">{{temp.importLogsSet.progress.casts}}%</div></div></div>
-            事件数据<div v-if="temp.importLogsSet.import.event"><div class="progress" style="margin-top:10px;"><div class="progress-bar progress-bar-info progress-bar-striped active" style="min-width:2em;" :style="{width:temp.importLogsSet.progress.events+'%'}">{{temp.importLogsSet.progress.events}}%</div></div></div>
-          </div>
-          <div v-if="temp.importLogsSet.report.downloaded"><ul>
-            <li class="list-group-item"><span class="value-name">事件来源</span><template v-if="temp.importLogsSet.import.event">
-              <select class="form-control form-auto" style="width:20em;" multiple v-model="temp.importLogsSet.importSource.event">
-                <template v-for="player in temp.importLogsSet.report.boss"><option v-if="player" :value="player.id">{{player.name}} - BOSS</option></template>
-                <template v-for="player in temp.importLogsSet.report.npc"><option v-if="player" :value="player.id">{{player.name}} - NPC</option></template>
-              </select>按住ctrl多选<hr style="margin-left:120px">
-              <div style="margin-left:120px"><span v-for="id in temp.importLogsSet.importSource.event" style="margin-right:10px;">{{temp.importLogsSet.report.targets[id].name}}</span></div>
-            </template></li>
-            <li class="list-group-item"><span class="value-name">能力技</span><template v-if="temp.importLogsSet.import.job">
-              <div v-for="skill in skills"><span class="value-name">{{skill.name}}</span>
-                <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.job[skill.name]">
-                  <template v-for="player in temp.importLogsSet.report.players"><option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].job[skill.name]||[]).length}})</option></template>
-                </select></div></template></li>
-            <li class="list-group-item"><span class="value-name">GCD技</span><template v-if="temp.importLogsSet.import.gcd">
-              <div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span>
-                <select class="form-control form-auto" style="width:20em;" v-model="temp.importLogsSet.importSource.gcd[skill.name]">
-                  <template v-for="player in temp.importLogsSet.report.players"><option v-if="player&&temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]" :value="player.id">{{player.name}}-{{player.type}}({{(temp.importLogsSet.report.parsedPlayerData[player.id].gcd[skill.name]||[]).length}})</option></template>
-                </select></div></template></li>
-          </ul></div>
-        </div></div></div>
-      </div>
-      <!-- Align buttons -->
-      <div class="float-window" style="top:10px;left:10px;z-index:10;" v-if="!dials.selectedRange&&dials.selectedLineY">
-        由选定位置对齐到开始
-        <button class="btn btn-xs btn-primary" @click="alignToStart('event')">事件</button>
-        <button class="btn btn-xs btn-primary" @click="alignToStart('gcd')">GCD技</button>
-        <button class="btn btn-xs btn-primary" @click="alignToStart('job')">能力技</button>
-      </div>
-      <!-- Batch import panel -->
-      <div class="float-window" v-if="temp.importEventSet.enable" style="top:10px;right:10px;width:600px;height:800px;">
-        <button class="btn btn-default" @click="temp.importEventSet.enable=false">取消</button>
-        <button class="btn btn-primary" @click="batchImportEvent">导入事件</button><button class="btn btn-info" @click="batchExportEvent">提取当前事件轴</button>
-        <button class="btn btn-primary" @click="batchImportSkill">导入技能</button><button class="btn btn-info" @click="batchExportSkill">提取当前技能轴</button>
-        <textarea class="form-control" style="height:calc(100% - 50px);resize:none;margin-top:10px;" v-model="temp.importEventSet.text" placeholder="每行一条事件"></textarea>
-      </div>
-      <!-- ACT import panel -->
-      <div class="float-window" v-if="temp.importActLogSet.enable" style="top:50px;bottom:50px;left:50%;margin-left:-400px;width:800px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;">
-        <div class="row"><div class="col-xs-12"><div style="width:700px;margin:0 auto;">
-          <button class="btn btn-default" style="float:right;" @click="temp.importActLogSet.enable=false">关闭</button>ACT LOGS文件：
-          <input id="actfile" type="file" accept=".log" @change="temp.selectedActLogFile=$event.target.files[0]"/>
-          <button v-if="temp.selectedActLogFile" class="btn btn-default" @click="parseActLogFile" style="margin-top:10px;">解析</button>
-        </div></div></div>
-        <div class="col-xs-12" style="text-align:center;"><div style="width:700px;margin:0 auto;">
-          <div class="panel panel-default" v-if="temp.parseDatas" style="text-align:left;">
-            <div class="panel-heading">选择时间范围和技能对应人员<br><button v-if="temp.parseDatas" class="btn btn-primary" @click="importActLogFile" style="margin-top:10px;">导入</button></div>
-            <div class="panel-body"><div>开始时间 {{timeFormat(+temp.parseDatas.startTimeCurrent,'yyyy-MM-dd hh:mm:ss')}}<input type="range" v-model="temp.parseDatas.startTimeCurrent" :min="temp.parseDatas.startTime" :max="temp.parseDatas.endTimeCurrent"><br>
-            结束时间 {{timeFormat(+temp.parseDatas.endTimeCurrent,'yyyy-MM-dd hh:mm:ss')}}<input type="range" v-model="temp.parseDatas.endTimeCurrent" :min="temp.parseDatas.startTimeCurrent" :max="temp.parseDatas.endTime"></div></div>
-            <ul class="list-group">
-              <li class="list-group-item"><span class="value-name">事件来源<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.event"></ccino-switch></span>
-                <template v-if="temp.importDataTypes.event"><select class="form-control form-auto" style="width:20em;min-height:10em;" multiple v-model="temp.parseDataEventSource"><option v-for="(count,name) in temp.parseDatas.allPlayers" :value="name">{{name}}({{count}})</option></select><hr style="margin-left:120px"><div style="margin-left:120px"><span v-for="es in temp.parseDataEventSource" style="margin-right:10px;">{{es}}</span></div></template></li>
-              <li class="list-group-item"><span class="value-name">能力技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.job"></ccino-switch></span>
-                <template v-if="temp.importDataTypes.job"><div v-for="skill in skills"><span class="value-name">{{skill.fullname||skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.job[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players"><option v-if="temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].jobCount[skill.fullname||skill.name]}})</option></template></select></div></template></li>
-              <li class="list-group-item"><span class="value-name">GCD技<ccino-switch style="transform:scale(0.7);" v-model="temp.importDataTypes.gcd"></ccino-switch></span>
-                <template v-if="temp.importDataTypes.gcd"><div v-for="skill in gcdSkills"><span class="value-name">{{skill.name}}</span><select class="form-control form-auto" style="width:20em;" v-model="temp.parseDatasSkillSet.gcd[skill.fullname||skill.name]"><template v-for="name in temp.parseDatas.players"><option v-if="temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]>0" :value="name">{{name}}({{temp.parseDatas.datas[name].gcdCount[skill.fullname||skill.name]}})</option></template></select></div></template></li>
-            </ul>
+          <div :style="{right:showPannel?'510px':'10px'}" style="overflow:auto;position:absolute;top:10px;width:50px;transition:right 0.3s;">
+            <button type="button" class="btn btn-default" aria-label="Left Align" @click="showPannel=!showPannel"><span v-if="showPannel" class="glyphicon glyphicon-chevron-right"></span><span v-else class="glyphicon glyphicon-chevron-left"></span></button>
           </div>
         </div></div>
       </div>
-      <!-- Skill hover popup -->
-      <div class="float-window" style="z-index:9999999999;background-color:rgba(0,0,0,0.8);color:wheat;font-size:14px;" v-if="temp.hoverSkill.enable" :style="{left:temp.hoverSkill.x+'px',top:temp.hoverSkill.y+'px'}">
-        <div><div style="font-size:120%;">{{skillNameFilter(temp.hoverSkill.skill.fullname||temp.hoverSkill.skill.name)}}
-          <small v-if="temp.hoverSkill.skill.type">{{temp.hoverSkill.skill.type}}</small>
-        </div>
-        <span v-if="temp.hoverSkill.skill.cd">CD:{{temp.hoverSkill.skill.cd}}秒</span><span v-else>即时</span></div>
-        <div style="width:300px" v-if="temp.hoverSkill.skill.intro" v-html="temp.hoverSkill.skill.intro.replace(/\n|　/g,'<br>')"></div>
-      </div>
-      <!-- Skill select panel -->
-      <div class="float-window" v-if="setting.skillSelectSet.enable" style="top:10px;left:10px;right:10px;bottom:10px;background-color:rgb(255,255,255);overflow-y:auto;overflow-x:hidden;z-index:99999999">
-        <div class="row"><div class="col-xs-12" style="padding:10px 10px 0px 30px">
-          职业<select class="form-control form-auto" v-model="setting.skillSelectSet.jobName"><option v-for="(js,jn) in jobSkillSetting" :value="jn">{{jn}}</option></select>
-          <button class="btn btn-success" @click="savePicked();temp.hoverSkill.enable=false;">保存</button>
-          <button class="btn btn-default" @click="setting.skillSelectSet.enable=false;temp.hoverSkill.enable=false;">关闭</button>
-          <span style="margin-left:50px;">GCD时间<input class="form-control form-auto" v-model="setting.skillSelectSet.gcdDuration" type="number" style="width:100px;">秒</span>
-        </div></div><hr>
-        <div class="row" style="overflow:auto;"><div class="col-xs-6">
-          <div class="panel panel-default"><div class="panel-heading"><h4>已选技能<small>单击取消 右键修改别名</small></h4></div>
-          <div class="panel-body"><ul><li>每个职业技能与职能技能都会单独一列显示</li><li>在顶部切换职业选择不同职业的技能</li><li>拖动技能以调整排序</li></ul></div>
-          <ul class="list-group"><li class="list-group-item" v-for="st in [['能力技','job'],['GCD技能','gcd']]">{{st[0]}}
-            <div class="skill-container"><div v-for="(skill,i) in setting.skillSelectSet.selectedSkills[st[1]]" class="skill-list"
-              draggable="true" @dragover.prevent="" @drop.prevent="pickedSkillDrop($event,i,st[1])" @drag="pickedSkillDrag($event,i,st[1])"
-              @click="unpickSkill(i,st[1])" @contextmenu.prevent="onMouseRightClickInPickedSkill(skill,i)"
-              @mousemove="onSkillHover(skill,$event)" @mouseout="temp.hoverSkill.enable=false">
-              <img draggable="false" :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'"/><br><span style="font-size:12px">{{skill.name}}</span></div></div></li></ul></div>
-          <div class="panel panel-default"><div class="panel-heading"><h4>预设技能<small>单击选择</small></h4></div>
-          <ul class="list-group"><li class="list-group-item" v-for="st in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">{{st[0]}}
-            <div class="skill-container"><div v-for="skill in jobSkillSetting[setting.skillSelectSet.jobName].skills[st[1]]" class="skill-list"
-              @click="pickSkill(skill,st[1])" @mousemove="onSkillHover(skill,$event)" @mouseout="temp.hoverSkill.enable=false">
-              <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'"/><br><span style="font-size:12px">{{skillNameFilter(skill.name)}}</span></div></div></li></ul></div>
-        </div>
-        <div class="col-xs-6"><div class="panel panel-default"><div class="panel-heading"><h4>自定技能<small>单击选择 右键修改</small></h4></div>
-          <ul class="list-group"><li class="list-group-item" v-for="st in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]">{{st[0]}}
-            <div class="skill-container"><template v-if="userDefinedJobSkillRef[setting.skillSelectSet.jobName]">
-              <div v-for="skill in userDefinedJobSkillRef[setting.skillSelectSet.jobName].skills[st[1]]" class="skill-list"
-                :class="{'skill-selected':setting.skillSelectSet.selectedUserDefinedSkill==skill}"
-                @contextmenu.prevent="selectUserDefinedSkill(skill,st[1])" @click="pickSkill(skill,st[1])">
-                <img :src="getSkillIcon(skill)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'"/><br><span style="font-size:12px">{{skill.name}}</span></div></template><template v-else>&nbsp;<br>&nbsp;</template></div></li>
-            <li class="list-group-item"><button class="btn btn-primary" v-if="!setting.skillSelectSet.userDefinedSkill.enable" @click="addNewUserDefinedSkill">添加</button>
-            <template v-if="setting.skillSelectSet.selectedUserDefinedSkill||setting.skillSelectSet.userDefinedSkill.new"><button class="btn btn-success" @click="saveNewUserDefinedSkill">保存</button><button class="btn btn-default" @click="cancelSaveUserDefinedSkill">取消</button></template><br>
-            <template v-if="setting.skillSelectSet.userDefinedSkill.enable">
-              技能类型<select class="form-control" v-model="setting.skillSelectSet.userDefinedSkill.skillType"><option v-for="st2 in [['职业技能','job'],['职能技能','jobType'],['GCD技能','gcd']]" :value="st2[1]">{{st2[0]}}</option></select>
-              技能名<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.name"/>
-              <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">技能全称<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.fullname"/>技能图标<input class="form-control" type="text" v-model="setting.skillSelectSet.userDefinedSkill.icon"/></template>
-              冷却时间<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.cd"/>
-              <template v-if="setting.skillSelectSet.userDefinedSkill.skillType!='gcd'">持续时间<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration"/>延迟触发秒数<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.durationSlideRange"/>2段持续时间<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.duration2"/></template>
-              增加物理伤害<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseNormal"/>
-              增加魔法伤害<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseMagic"/>
-              增加暴击率<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.increaseCri"/>
-              减少伤害<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceDmg"/>
-              减少魔法伤害<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceMagic"/>
-              减少物理伤害<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.reduceNormal"/>
-              增加盾值<input class="form-control" type="number" v-model="setting.skillSelectSet.userDefinedSkill.addShield"/>
-            </template></li></ul>
-        </div></div></div>
-      </div>
-      <!-- Event popup -->
-      <div class="float-window" v-if="setting.eventSet.enable" style="z-index:500" :style="{top:setting.eventSet.y+'px',left:setting.eventSet.x+'px'}">
-        <div class="input-group" :style="{width:((+timeline.infoWidth)-100)+'px'}"><span class="input-group-btn"><button class="btn btn-danger" type="button" @click="deleteSelectedEvent">删除</button></span><input class="form-control" v-model="setting.eventSet.event.text"/></div>
-        <div style="margin-top:5px;">伤害：<input class="form-control form-auto" type="number" min="0" v-model="setting.eventSet.event.dmg"/>类型：<select class="form-control form-auto" v-model="setting.eventSet.event.dmgType"><option value="normal">物理</option><option value="magic">魔法</option><option value="true">真实</option></select></div>
-      </div>
-      <!-- Skill popup -->
-      <div class="float-window" v-if="setting.skillSet.enable" style="z-index:500" :style="{top:setting.skillSet.y+'px',left:setting.skillSet.x+'px'}">
-        <button class="btn btn-danger" type="button" @click="deleteSelectedSkill">删除</button>
-        <div v-if="setting.selectedSkill.skillInfo&&setting.selectedSkill.skillInfo.marks&&setting.selectedSkill.skillInfo.marks.length>0"><table class="table table-hover" style="margin-top:3px"><tr v-for="(m,i) in setting.selectedSkill.skillInfo.marks" @click="onSelectMark(m)" :class="{success:setting.selectedSkill.selectedMark==m}"><td>{{m.time}}</td><td>{{{short:'短线',long:'长线'}[m.type]}}</td><td>{{m.text}}</td><td><button class="btn btn-default btn-xs" @click.stop="setting.selectedSkill.skillInfo.marks.splice(i,1)">删除</button></td></tr></table></div>
-        <div style="margin-top:5px;" v-if="setting.selectedSkill"><div>标签：<input class="form-control form-auto" v-model="setting.skillSet.markText"/></div>
-        <div class="input-wrapper">时间：<input class="form-control form-auto" type="number" step="0.1" min="0" v-model="setting.skillSet.markTime"/></div>
-        <div class="input-wrapper">线型：<select class="form-control form-auto" v-model="setting.skillSet.markType"><option value="long">长线</option><option value="short">短线</option></select>
-        <button class="btn btn-primary btn-sm" style="margin-top:-6px;" type="button" @click="addMarkOnSkill(setting.selectedSkill.skillInfo,setting.skillSet.markTime,setting.skillSet.markText,setting.skillSet.markType)"><span v-if="setting.selectedSkill.selectedMark!=null">修改</span><span v-else>添加</span></button>
-        <button v-if="setting.selectedSkill.selectedMark!=null" class="btn btn-default btn-sm" style="margin-top:-6px;" type="button" @click="setting.selectedSkill.selectedMark=null">取消</button></div></div>
-      </div>
-      <!-- SVG / Sidebar layout -->
-      <div class="container-fluid" style="padding-right:0"><div class="row">
-        <div class="col-xs-12" style="overflow:hidden;transition:max-width 0.3s;" :style="{'max-width':showPannel?'calc(100% - 500px)':'100%'}">
-          <div id="svg_container" class="noselect" :class="{scrolling:drag.scrolling}" @scroll="onSvgScroll($event)" @mousewheel.alt.prevent="onMouseWheelScale($event)" @mousewheel="drag.scrollingTo=null" style="padding-right:10px;" :style="{height:option.svg.height+'px'}" @dblclick="insertNew" @click.alt="insertNew" @click="selectLine();" @contextmenu.prevent="cancelAllSelect()" @mousedown.right="scrollOnMouseDrag($event)" @mousedown.left="selectTimeRange($event)">
-            <svg xmlns="http://www.w3.org/2000/svg" :width="option.svg.width" :height="svgHeight" @mousemove="onSvgMouseMove($event),onMouseDrag($event)">
-              <rect v-if="hover.rect.enable" class="hover-rect" :x="hover.rect.x" :width="hover.rect.width" :y="dials.top" height="3000"/>
-              <g v-for="line in dialsLines[0]"><line class="dials" :x1="dials.left+70" :y1="line.y+timelineOffset" :x2="option.svg.width" :y2="line.y+timelineOffset"/><text class="dials" :x="dials.left+0" :y="line.y+timelineOffset" dy="4">{{line.text}}</text></g>
-              <g v-if="dials.mouseY"><line class="dials-mouse" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.mouseY" :y2="dials.mouseY"/><text class="dials-mouse" :x="dials.left+0" :y="dials.mouseY" dy="4">{{timeFormat(y2time(dials.mouseY-timelineOffset))}}</text></g>
-              <g v-if="dials.selectedLineY"><line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedLineY" :y2="dials.selectedLineY"/><text class="dials-select-line" :x="dials.left+0" :y="dials.selectedLineY" dy="4">{{timeFormat(y2time(dials.selectedLineY-timelineOffset))}}</text></g>
-              <g v-for="e in timeline.events" @mousedown.left.stop="onMouseDragSimple($event,e)"><line class="events" :key="e.time" :x1="dials.left+70" :y1="time2yOffset(e.time)" :x2="option.svg.width" :y2="time2yOffset(e.time)"/><text class="events" :x="dials.left+70" :y="time2yOffset(e.time)" dy="-4" @click.stop="onEventClick(e,$event)" :class="{'event-active':setting.eventSet.event==e}" xml:space="preserve">{{timeFormat(e.time)}}<tspan dx="1em">{{e.text}}</tspan><tspan v-if="e.dmg>0" class="event-summary" :class="{'dmg-normal':e.dmgType=='normal'||!e.dmgType,'dmg-magic':e.dmgType=='magic','dmg-true':e.dmgType=='true'}">{{e.dmg}}<tspan class="event-summary-reduce" v-if="dials.selectedRange&&e.reduceDmg>0">(-{{e.reduceDmg}}){{e.trueDmg}}</tspan></tspan></text></g>
-              <g><template v-for="(gcd,i) in timeline.gcd"><image :x="(+timeline.infoWidth)" :href="getGcdIcon(gcd.skill)" :y="time2yOffset(gcd.time)" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'" @click.stop="" @mousedown.left.stop="gcdOnMouseDrag($event,gcd,i)" @contextmenu.prevent="deleteGcd(i)"/><text v-if="dials.selectedRange&&gcd.dmg" style="font-size:13px;" class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}" :x="(+timeline.infoWidth)" dx="-50" dy="10" :y="time2yOffset(gcd.time)">{{(gcd.dmg||0)+(gcd.addDmg||0)+(gcd.dot||0)+(gcd.addDot||0)}}<tspan v-if="gcd.dotCount">({{gcd.dotCount}})</tspan></text><text v-if="dials.selectedRange&&gcd.addDmg" class="dmg" :class="{'dmg-normal':gcd.dmgType=='物理','dmg-magic':gcd.dmgType=='魔法'}" :x="(+timeline.infoWidth)" dx="-50" dy="20" :y="time2yOffset(gcd.time)">(+{{(gcd.addDmg||0)+(gcd.addDot||0)}})</text></template></g>
-              <g v-if="dials.selectedRange"><rect class="select-range" :x="0" :width="option.svg.width" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" :height="Math.abs(dials.selectedRange.y-dials.selectedRange.oy)"/><line class="dials-select-line" :x1="dials.left+70" :x2="option.svg.width" :y1="dials.selectedRange.oy" :y2="dials.selectedRange.oy"/><text class="dials-select-line" :x="dials.left+0" :y="dials.selectedRange.oy" dy="4">{{timeFormat(y2time(dials.selectedRange.oy-timelineOffset))}}</text><text v-if="dials.selectedRange.dmgAll>0" class="dmg-normal dmg-all" :x="(+timeline.infoWidth)-50" :y="Math.min(dials.selectedRange.y,dials.selectedRange.oy)" dy="-8">{{dials.selectedRange.dmgAll}}</text></g>
-              <g v-for="(skill,i) in skills"><template v-if="timeline.skills[skill.name]"><g v-for="skillInfo in timeline.skills[skill.name]"><rect v-if="skill.cd" class="skill-cd-prev" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time)-second2y(skill.cd)" :height="second2y(skill.cd)" :width="(option.skill.cd)"/></g>
-              <g v-for="(skillInfo,skillIndex) in timeline.skills[skill.name]" @mouseenter="skillOnHover(skillInfo,skill,true)" @mouseleave="skillOnHover(skillInfo,skill,false)" @mousedown.left.stop="skillOnMouseDrag(skillInfo,skill,true,$event,skillIndex)" @click.stop="onSelectSkill(skillInfo,skill,i,$event)" :class="{'skill-active':setting.selectedSkill&&setting.selectedSkill.skillInfo==skillInfo}" @contextmenu="onSkillRightClick(skillInfo,skill,i)">
-                <rect v-if="skill.cd" class="skill-cd" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time)" :height="second2y((skillInfo.count>0)?0:(skillInfo.count==0?(skillInfo.remainToAdd/1000):skill.cd))" :width="(option.skill.cd)"/>
-                <g><rect v-if="skill.durationSlideRange" class="skill-duration-slide-range" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-3" :y="time2yOffset(skillInfo.time)" :height="second2y(skill.durationSlideRange+skill.duration)" :width="option.skill.duration+7"/></g>
-                <g @mousedown.left.stop="skillDurationSliderOnMouseDrag(skillInfo,skill,true,$event,skillIndex)"><rect v-if="skill.duration" class="skill-duration" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration)" :width="(option.skill.duration)"/><rect v-if="skill.duration2" class="skill-duration2" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y="second2y(skill.duration)+time2yOffset(skillInfo.time+(skillInfo.slideTime||0))" :height="second2y(skill.duration2)" :width="(option.skill.duration)"/></g>
-                <image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :href="skill.icon||getSkillIcon(skill)" :y="time2yOffset(skillInfo.time)" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'"/>
-                <text v-if="dials.selectedRange&&skillInfo.dmg" style="font-size:13px;" class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-2" :y="time2yOffset(skillInfo.time)">{{(skillInfo.dmg||0)+(skillInfo.addDmg||0)+(skillInfo.dot||0)+(skillInfo.addDot||0)}}<tspan v-if="skillInfo.dotCount">({{skillInfo.dotCount}})</tspan></text>
-                <text v-if="dials.selectedRange&&skillInfo.addDmg" class="dmg" :class="{'dmg-normal':skillInfo.dmgType=='物理','dmg-magic':skillInfo.dmgType=='魔法'}" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" dx="1" dy="-15" :y="time2yOffset(skillInfo.time)">(+{{(skillInfo.addDmg||0)+(skillInfo.addDot||0)}})</text>
-                <text v-if="skillInfo.count!=null" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-8" :y="time2yOffset(skillInfo.time)+8">{{skillInfo.count+1}}</text>
-                <g v-if="skillInfo.marks&&skillInfo.marks.length>0"><g v-for="mark in skillInfo.marks">
-                  <g v-if="mark.type=='long'"><line class="dials-skill-mark" :x1="dials.left+70" :x2="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :y1="time2yOffset(skillInfo.time+mark.time*1000)" :y2="time2yOffset(skillInfo.time+mark.time*1000)"/><text class="dials-skill-mark" :x="dials.left+0" :y="time2yOffset(skillInfo.time+mark.time*1000)" dy="-2">{{timeFormat(skillInfo.time+mark.time*1000)}} {{mark.text}}</text></g>
-                  <g v-else><line class="dials-skill-mark" :x1="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-4" :x2="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)+skillOption.width+3" :y1="time2yOffset(skillInfo.time+mark.time*1000)" :y2="time2yOffset(skillInfo.time+mark.time*1000)"/><text class="dials-skill-mark" font-size="12" :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)-4" :y="time2yOffset(skillInfo.time+mark.time*1000)" dy="-2">{{mark.text}}</text></g></g></g>
-                </g></template></g>
-              <rect class="skill-name-background" x="0" :y="dials.top" :width="option.svg.width" :height="40"/>
-              <g v-for="(skill,i) in skills" @click.stop="onSelectSkillType(skill,i)"><text :x="(+timeline.infoWidth)+option.skill.nameOffset+(i+setting.reserveCols)*(skillOption.all)" text-anchor="middle" :y="dials.top+15" style="font-size:12px;" :class="{'skill-type-active':setting.selectedSkillType==skill}">{{skill.name}}</text><image :x="(+timeline.infoWidth)+(i+setting.reserveCols)*(skillOption.all)" :href="skill.icon||getSkillIcon(skill)" :y="dials.top+25" width="20" height="20" onerror="this.href='../icons/skill/unknown.png'"/></g>
-              <g v-for="shownSkill in shownSkillInfo"><line class="dials-skill" :x1="dials.left+70" :x2="option.svg.width" :y1="time2yOffset(shownSkill.skillInfo.time)" :y2="time2yOffset(shownSkill.skillInfo.time)"/><text class="dials-skill" :x="dials.left+0" :y="time2yOffset(shownSkill.skillInfo.time)" dy="4">{{timeFormat(shownSkill.skillInfo.time)}}</text></g>
-            </svg>
-          </div>
-        </div>
-        <div :style="{right:showPannel?'0px':'-600px'}" style="overflow:auto;position:absolute;padding:10px;top:0;bottom:0;width:500px;transition:right 0.5s;">
-          <div :style="{height:option.svg.height+'px'}">
-            <div class="share-container" v-if="sharing"><button class="btn btn-success" @click="importData">导入</button><button class="btn btn-default" @click="clearData">清空</button><button class="btn btn-danger" @click="sharing=false">关闭</button><textarea class="form-control" v-model="sharingText" style="width:100%;height:90%;resize:none;margin-top:10px;"></textarea></div>
-            <select class="form-control" v-model="selectedDataIndex"><option v-for="(data,i) in savedDatas" :value="i">{{data.name}}(事件{{data.timeline.events.length}})</option></select>
-            <input class="form-control" style="width:100px;display:inline-block;" v-model="newDataName" placeholder="新名称">
-            <button class="btn btn-success" @click="dataSave">保存</button><button class="btn btn-primary" @click="dataLoad">读取</button><button class="btn btn-danger" @click="dataDelete">删除</button><button class="btn btn-info" @click="dataShare">分享</button><hr>
-            <button class="btn btn-primary btn-sm" @click="temp.importEventSet.enable=true;temp.importActLogSet.text=''">批量导入事件</button>
-            <button class="btn btn-danger btn-sm" @click="timeline.events=[]">清空事件</button>
-            <button class="btn btn-primary btn-sm" @click="temp.importActLogSet.enable=true;temp.parseDatas=null">导入ACT</button>
-            <button class="btn btn-primary btn-sm" @click="temp.importLogsSet.enable=true">导入LOGS</button>
-            <input style="margin-top:5px;" class="form-control" @keydown.enter="enterEvent($event)" placeholder="0:00开始(回车插入)" v-model="setting.inputText" @blur="setting.inputErrMsg=''" @keydown.esc="onClearInput">
-            <span v-if="setting.inputErrMsg" style="color:red;">{{setting.inputErrMsg}}</span><hr>
-            <button class="btn btn-primary btn-sm" @click="setting.skillSelectSet.enable=true">技能设置</button>
-            <button class="btn btn-danger btn-sm" @click="timeline.gcd=[]">清空GCD技</button>
-            <button class="btn btn-danger btn-sm" @click="timeline.skills={}">清空能力技</button>
-            <div style="display:flex;flex-wrap:wrap;"><div v-for="(gcdSkill,i) in gcdSkills" class="gcd-skill" @click="addGcdSkill(gcdSkill.fullname||gcdSkill.name,gcdSetting.addIsInsert)" @mousemove="onSkillHover(gcdSkill,$event)" @mouseout="temp.hoverSkill.enable=false"><img :src="getGcdIcon(gcdSkill.fullname||gcdSkill.name)" width="32" height="32" onerror="this.src='../icons/skill/unknown.png'"/><br><span style="font-size:12px">{{gcdSkill.name}}</span></div></div><hr>
-            <ccino-switch style="transform:scale(0.7);" v-model="gcdSetting.dragAllMove"></ccino-switch>GCD技能允许推动<br>
-            <ccino-switch style="transform:scale(0.7);" v-model="gcdSetting.addIsInsert"></ccino-switch>GCD技能插入模式<br>
-            <ccino-switch style="transform:scale(0.7);" v-model="setting.selectRangeComputeDmg"></ccino-switch>选择区域计算威力<br>
-            <ccino-switch style="transform:scale(0.7);" v-model="setting.showTimeBySecond"></ccino-switch>以秒显示刻度<br>
-            <ccino-switch style="transform:scale(0.7);" v-model="setting.pressDeleteKeyDeleteSelectedObject"></ccino-switch>按Delete键删除事件和技能<br>
-            <div>时间轴提前量{{(Math.round(timeline.offset/100)/10).toFixed(1)}}s<input type="range" v-model="timeline.offset" min="0" max="60000" step="100"></div>
-            <div>技能显示间隔{{option.skill.margin}}<input type="range" v-model="option.skill.margin" min="0" max="100"></div>
-            <div>事件显示宽度{{timeline.infoWidth}}<input type="range" v-model="timeline.infoWidth" min="100" max="3000" step="10"></div>
-            <div>时间轴长度(秒){{timeline.length}}<input type="range" v-model="timeline.length" min="60" max="10000" step="10"></div>
-            <div>图表宽度{{option.svg.width}}<input type="range" v-model="option.svg.width" min="800" max="8000" step="10"></div><hr>
-            <h2>操作说明<small>{{versions[0].ver}}</small></h2>
-            <ul><li>使用反馈：QQ群:552084996<br><a target="_blank" href="https://bbs.nga.cn/read.php?tid=20013978">NGA发布帖</a><br></li><li>FF14新人招待码【056x-ierk-k5xy-01hs】</li><li><span style="color:red">Alt+鼠标左键</span>（或双击）增加新事件/新技能</li><li>单击事件可以修改具体信息</li><li>按住alt+滚轮可以放大/缩小</li><li>拖动物件可以调整时间</li><li>技能绿色部分是持续时间，灰色为CD</li><li>左键点击图表，点击右侧的GCD技能，即可在选择的位置插入技能</li></ul>
-            <ul>
-              <template v-for="v in versions">
-                <li>{{v.ver}} {{v.type}} {{v.date}}</li>
-                <small v-html="v.info"></small>
-              </template>
-            </ul>
-          </div>
-        </div>
-        <div :style="{right:showPannel?'510px':'10px'}" style="overflow:auto;position:absolute;top:10px;width:50px;transition:right 0.3s;">
-          <button type="button" class="btn btn-default" aria-label="Left Align" @click="showPannel=!showPannel"><span v-if="showPannel" class="glyphicon glyphicon-chevron-right"></span><span v-else class="glyphicon glyphicon-chevron-left"></span></button>
-        </div>
-      </div></div>
-    </div>
-  </script>
+    </script>
 
-  <!-- View components -->
-  <script src="./js/views/dps-overlay.js"></script>
-  <script src="./js/views/dps-settings.js"></script>
-  <script src="./js/views/simple-dps.js"></script>
-  <script src="./js/views/timeline.js?v3.001"></script>
-  <script src="./js/views/simple-timeline.js"></script>
-  <script src="./js/views/log-tool.js"></script>
-  <script src="./js/views/log-tool-single.js"></script>
-  <script src="./js/views/logs-settings.js"></script>
+    <!-- View components -->
+    <script src="./js/views/dps-overlay.js"></script>
+    <script src="./js/views/dps-settings.js"></script>
+    <script src="./js/views/simple-dps.js"></script>
+    <script src="./js/views/timeline.js?v3.001"></script>
+    <script src="./js/views/simple-timeline.js"></script>
+    <script src="./js/views/log-tool.js"></script>
+    <script src="./js/views/log-tool-single.js"></script>
+    <script src="./js/views/logs-settings.js"></script>
 
-  <!-- App bootstrap -->
-  <script src="./js/app.js"></script>
-</body>
+    <!-- App bootstrap -->
+    <script src="./js/app.js"></script>
+  </body>
 </html>

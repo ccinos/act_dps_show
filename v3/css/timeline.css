@@ -125,3 +125,55 @@ span.value-name{ display:inline-block; width:8em; text-align: right; margin-righ
   text-overflow: clip;
   display: list-item;
 }
+
+/* ===== 自定技能表单栅格布局 ===== */
+.udf-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px 16px;
+}
+@media (min-width: 768px) {
+  .udf-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.udf-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+}
+.udf-field label {
+  white-space: nowrap;
+  min-width: 6.5em;
+  margin-bottom: 0;
+  font-weight: normal;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.udf-field .form-control {
+  flex: 1;
+  min-width: 0;
+}
+.udf-field-full {
+  grid-column: 1 / -1;
+}
+.udf-field-full textarea.form-control {
+  min-height: 60px;
+  height: auto;
+  resize: vertical;
+}
+.udf-grid-hint {
+  font-size: 11px;
+  color: #999;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.udf-section-divider {
+  grid-column: 1 / -1;
+  margin: 4px 0 2px;
+  font-size: 12px;
+  color: #888;
+  border-top: 1px solid #ddd;
+  padding-top: 4px;
+}

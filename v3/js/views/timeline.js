@@ -51,7 +51,7 @@ var Timeline = {
       skillSet: { enable: false, x: 100, y: 100, selectedMark: null, markTime: 0, markText: "", markType: "short" },
       eventSet: { enable: false, x: 100, y: 100, event: {} },
       importLogEventFilterRegex: "攻击",
-      skillSelectSet: { enable: false, jobName: "骑士", userDefinedSkill: { enable: false, name: null, cd: null, skillType: "gcd", duration: null, new: false }, selectedUserDefinedSkill: null, selectedSkills: { job: [], jobType: [], gcd: [] }, gcdDuration: 2.5 }
+      skillSelectSet: { enable: false, jobName: "骑士", userDefinedSkill: { enable: false, name: null, cd: null, skillType: "gcd", duration: null, new: false, fullname: null, icon: null, durationSlideRange: null, duration2: null, dmgType: null, dmg: null, dot: null, count: null, read: null, cost: null, intro: null, increaseNormal: null, increaseMagic: null, increaseCri: null, reduceDmg: null, reduceMagic: null, reduceNormal: null, addShield: null }, selectedUserDefinedSkill: null, selectedSkills: { job: [], jobType: [], gcd: [] }, gcdDuration: 2.5 }
     });
     const option = reactive(copy(defaultOption));
     const userDefinedDatas = ["userDefinedSkills", "userDefinedjobTypeSkill", "userDefinedJobSkill", "skills", "gcdSkills", "setting", "gcdSetting", "timeline"];
@@ -528,7 +528,7 @@ var Timeline = {
     function pickedSkillDrag(e, i, type) { drag.dragingPickedSkill.index = i; drag.dragingPickedSkill.type = type; }
     function pickedSkillDrop(e, i, type) { if (type !== drag.dragingPickedSkill.type) return; var oi = drag.dragingPickedSkill.index; if (i !== oi) { var s = setting.skillSelectSet.selectedSkills[type].splice(oi, 1); if (i > oi) --i; setting.skillSelectSet.selectedSkills[type].splice(i, 0, s[0]); } setting.skillSelectSet.selectedSkills[type] = setting.skillSelectSet.selectedSkills[type].filter(function(a) { return a; }); }
     function selectUserDefinedSkill(skill, t) { setting.skillSelectSet.userDefinedSkill = {}; copy(skill, setting.skillSelectSet.userDefinedSkill); setting.skillSelectSet.userDefinedSkill.enable = true; setting.skillSelectSet.userDefinedSkill.new = false; setting.skillSelectSet.selectedUserDefinedSkill = skill; }
-    function addNewUserDefinedSkill() { setting.skillSelectSet.userDefinedSkill = { enable: true, name: null, cd: null, fullname: null, skillType: setting.skillSelectSet.userDefinedSkill.skillType, duration: null, new: true }; }
+    function addNewUserDefinedSkill() { setting.skillSelectSet.userDefinedSkill = { enable: true, name: null, cd: null, fullname: null, icon: null, skillType: setting.skillSelectSet.userDefinedSkill.skillType, duration: null, durationSlideRange: null, duration2: null, new: true, dmgType: null, dmg: null, dot: null, count: null, read: null, cost: null, intro: null, increaseNormal: null, increaseMagic: null, increaseCri: null, reduceDmg: null, reduceMagic: null, reduceNormal: null, addShield: null }; }
     function cancelSaveUserDefinedSkill() { setting.skillSelectSet.userDefinedSkill.enable = false; setting.skillSelectSet.userDefinedSkill.new = false; setting.skillSelectSet.selectedUserDefinedSkill = null; }
     function saveNewUserDefinedSkill() {
       var name = setting.skillSelectSet.userDefinedSkill.name;
